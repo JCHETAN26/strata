@@ -66,6 +66,40 @@
         "VCPKG_TARGET_TRIPLET": "x64-osx",
         "STRATA_BUILD_BENCHMARKS": "OFF"
       }
+    },
+    {
+      "name": "linux-base",
+      "hidden": true,
+      "inherits": "base",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-13",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-13"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug (GCC 13)",
+      "inherits": ["debug", "linux-base"]
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release (GCC 13)",
+      "inherits": ["release", "linux-base"]
+    },
+    {
+      "name": "linux-asan",
+      "displayName": "Linux Debug + ASan/UBSan (GCC 13)",
+      "inherits": ["asan", "linux-base"]
+    },
+    {
+      "name": "linux-tsan",
+      "displayName": "Linux Debug + ThreadSanitizer (GCC 13)",
+      "inherits": ["tsan", "linux-base"]
     }
   ],
   "buildPresets": [
@@ -88,6 +122,22 @@
     {
       "name": "rosetta-avx2",
       "configurePreset": "rosetta-avx2"
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug"
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release"
+    },
+    {
+      "name": "linux-asan",
+      "configurePreset": "linux-asan"
+    },
+    {
+      "name": "linux-tsan",
+      "configurePreset": "linux-tsan"
     }
   ],
   "testPresets": [
@@ -129,6 +179,26 @@
       "name": "rosetta-avx2",
       "inherits": "base",
       "configurePreset": "rosetta-avx2"
+    },
+    {
+      "name": "linux-debug",
+      "inherits": "debug",
+      "configurePreset": "linux-debug"
+    },
+    {
+      "name": "linux-release",
+      "inherits": "release",
+      "configurePreset": "linux-release"
+    },
+    {
+      "name": "linux-asan",
+      "inherits": "asan",
+      "configurePreset": "linux-asan"
+    },
+    {
+      "name": "linux-tsan",
+      "inherits": "tsan",
+      "configurePreset": "linux-tsan"
     }
   ]
 }
