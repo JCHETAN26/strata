@@ -133,10 +133,10 @@ First version will likely be slower than hnswlib. That's expected.
 
 ## Phase 5 — Product quantization (≈1 week, Mac)
 
-- [ ] Split vectors into sub-vectors; k-means codebook per sub-space
-- [ ] Asymmetric distance computation with precomputed lookup tables
-- [ ] Re-rank top candidates with full-precision vectors
-- [ ] Combine PQ with HNSW
+- [x] Split vectors into sub-vectors; k-means codebook per sub-space
+- [x] Asymmetric distance computation with precomputed lookup tables
+- [x] Re-rank top candidates with full-precision vectors
+- [ ] Combine PQ with HNSW (waits for HNSW)
 
 **Measure:** memory reduction and recall at several compression levels (memory vs. recall chart).
 

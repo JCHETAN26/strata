@@ -62,10 +62,12 @@ uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss -
 uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss --index flat
 uv run python bench/run_search_bench.py --dataset siftsmall --kernel scalar   # without SIMD
 uv run python bench/run_search_bench.py --dataset siftsmall --threads 4        # throughput mode
+uv run python bench/run_search_bench.py --dataset siftsmall --index pq --pq-m 16   # rerank sweep
 uv run python bench/run_storage_bench.py --dataset siftsmall   # WAL, checkpoint, recovery
 uv run python bench/run_micro_bench.py --repetitions 5
 uv run python bench/make_tables.py        # writes results/tables.md
 uv run python bench/plot_recall_qps.py    # writes results/plots/recall_qps_<dataset>.png
+uv run python bench/plot_pq_memory.py     # writes results/plots/pq_memory_<dataset>.png
 ```
 
 HNSW is compiled in only when `src/index/hnsw.cpp` exists; until then `--index hnsw` is

@@ -179,3 +179,36 @@ build (the `ThreadPool` is ready for it), and profiling the graph search.
   Unacknowledged writes may or may not survive; the test now allows exactly that.
 - **ThreadPool-style destruction order** was not an issue here: `Collection` holds its
   `shared_mutex` behind a `unique_ptr` so the class stays movable.
+
+## 2026-09-25 — Phase 5: product quantization
+
+**Done**
+- `kmeans` (Lloyd + k-means++, parallel assignment, empty-cluster splitting),
+  `ProductQuantizer` (8-bit codes, ADC tables for L2 / IP / cosine), flat `PqIndex` with optional
+  exact reranking. Harness `--index pq` sweeps rerank depth and reports memory.
+- Harness now judges recall on exact distances recomputed for the returned ids, so indexes that
+  return estimated distances (PQ without rerank) are scored correctly.
+
+**Measured (SIFT10K, Apple M2, 1 thread; `results/plots/pq_memory_siftsmall.png`)**
+
+| m (bytes/vector) | compression | recall@10 ADC only | recall@10 rerank 100 |
+|---|---|---|---|
+| 4 | 128x | 0.42 | 0.92 |
+| 8 | 64x | 0.60 | 0.99 |
+| 16 | 32x | 0.73 | 1.00 |
+| 32 | 16x | 0.83 | 1.00 |
+| 64 | 8x | 0.94 | 1.00 |
+
+(Numbers from `results/tables.md`; this table is a summary for the log.)
+
+**Decisions**
+- **Rerank memory is reported separately.** Reranking reads full-precision vectors; the chart's
+  x-axis counts codes only, as if originals were on disk. Stated on the chart.
+- **Four accumulators in the ADC sum.** Measured: m=16 11.8k → 17.6k QPS, m=64 2.6k → 5.4k QPS.
+
+**Weaknesses (honest)**
+- On SIFT10K everything fits in cache, so NEON brute force (8.3k QPS) beats ADC at m=64
+  (5.4k QPS): 64 table lookups cost more than one 128-d SIMD distance. PQ's win is memory, and
+  speed only once the raw vectors no longer fit in cache/RAM. FAISS's 4-bit "fast scan" does ADC
+  with SIMD shuffles; Strata's ADC is scalar.
+- "Combine PQ with HNSW" waits for the HNSW implementation.

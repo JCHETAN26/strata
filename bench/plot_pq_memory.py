@@ -63,7 +63,7 @@ def plot(dataset: str, pq: list[dict[str, Any]], brute: dict[str, Any] | None) -
         )
         ax.annotate("float32", (full, 1.0), xytext=(-8, 6), textcoords="offset points",
                     ha="right", fontsize=8, color=TEXT)  # fmt: skip
-    ax.annotate("PQ + rerank", (xs[0], reranked[0]), xytext=(6, 4), textcoords="offset points",
+    ax.annotate("PQ + rerank", (xs[0], reranked[0]), xytext=(6, -12), textcoords="offset points",
                 fontsize=8, color=TEXT)  # fmt: skip
     ax.annotate("ADC only", (xs[0], adc[0]), xytext=(6, 4), textcoords="offset points",
                 fontsize=8, color=TEXT)  # fmt: skip
