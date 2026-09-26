@@ -1,0 +1,161 @@
+{
+  "timestamp": "2026-09-26T00:59:38.586980+00:00",
+  "git": {
+    "commit": "1c7e1b15cccc309ef0ff1a4be7b033a8f7782109",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      7.31,
+      5.04,
+      5.16
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "dataset": "siftsmall",
+  "command": [
+    "/Users/chetan/Strata/build/release/bench/strata_storage_bench",
+    "--data",
+    "/Users/chetan/Strata/data/siftsmall",
+    "--dir",
+    "/var/folders/pk/f2plptpx0jj8x3dybtfdrxr80000gn/T/strata_storage",
+    "--runs",
+    "3",
+    "--fsync-inserts",
+    "500"
+  ],
+  "filesystem": "/dev/disk3s5  965595304 772947608  87893264    90%    /System/Volumes/Data",
+  "result": {
+    "harness": "strata_storage_bench",
+    "asserts": false,
+    "num_vectors": 10000,
+    "fsync_inserts": 500,
+    "dim": 128,
+    "dir": "/var/folders/pk/f2plptpx0jj8x3dybtfdrxr80000gn/T/strata_storage",
+    "runs": [
+      {
+        "insert_nosync_ops": 260256.263,
+        "insert_nosync_p50_us": 3.208,
+        "insert_nosync_p99_us": 7.25,
+        "insert_fsync_ops": 321.755705,
+        "insert_fsync_p50_us": 3022.375,
+        "insert_fsync_p99_us": 4992.292,
+        "checkpoint_seconds": 0.033120042,
+        "recovery_wal_seconds": 0.01486525,
+        "recovery_snapshot_seconds": 0.013876709,
+        "wal_bytes": 5360032,
+        "snapshot_bytes": 5121302
+      },
+      {
+        "insert_nosync_ops": 306676.35,
+        "insert_nosync_p50_us": 2.75,
+        "insert_nosync_p99_us": 5.958,
+        "insert_fsync_ops": 338.604149,
+        "insert_fsync_p50_us": 3013.417,
+        "insert_fsync_p99_us": 4689.875,
+        "checkpoint_seconds": 0.02904125,
+        "recovery_wal_seconds": 0.014614042,
+        "recovery_snapshot_seconds": 0.013378084,
+        "wal_bytes": 5360032,
+        "snapshot_bytes": 5121302
+      },
+      {
+        "insert_nosync_ops": 307907.843,
+        "insert_nosync_p50_us": 2.75,
+        "insert_nosync_p99_us": 6.25,
+        "insert_fsync_ops": 324.235168,
+        "insert_fsync_p50_us": 3022.25,
+        "insert_fsync_p99_us": 5091.917,
+        "checkpoint_seconds": 0.0315435,
+        "recovery_wal_seconds": 0.020330208,
+        "recovery_snapshot_seconds": 0.014794791,
+        "wal_bytes": 5360032,
+        "snapshot_bytes": 5121302
+      }
+    ]
+  },
+  "summary": {
+    "insert_nosync_ops": {
+      "mean": 291613.4853333333,
+      "median": 306676.35,
+      "stdev": 27163.131043729765,
+      "min": 260256.263,
+      "max": 307907.843
+    },
+    "insert_nosync_p50_us": {
+      "mean": 2.9026666666666667,
+      "median": 2.75,
+      "stdev": 0.2644264232888487,
+      "min": 2.75,
+      "max": 3.208
+    },
+    "insert_nosync_p99_us": {
+      "mean": 6.486,
+      "median": 6.25,
+      "stdev": 0.6775603294172409,
+      "min": 5.958,
+      "max": 7.25
+    },
+    "insert_fsync_ops": {
+      "mean": 328.19834066666664,
+      "median": 324.235168,
+      "stdev": 9.096569105692794,
+      "min": 321.755705,
+      "max": 338.604149
+    },
+    "insert_fsync_p50_us": {
+      "mean": 3019.347333333333,
+      "median": 3022.25,
+      "stdev": 5.136199600223285,
+      "min": 3013.417,
+      "max": 3022.375
+    },
+    "insert_fsync_p99_us": {
+      "mean": 4924.694666666667,
+      "median": 4992.292,
+      "stdev": 209.37166008400808,
+      "min": 4689.875,
+      "max": 5091.917
+    },
+    "checkpoint_seconds": {
+      "mean": 0.03123493066666667,
+      "median": 0.0315435,
+      "stdev": 0.002056829433842616,
+      "min": 0.02904125,
+      "max": 0.033120042
+    },
+    "recovery_wal_seconds": {
+      "mean": 0.016603166666666665,
+      "median": 0.01486525,
+      "stdev": 0.003230155443643127,
+      "min": 0.014614042,
+      "max": 0.020330208
+    },
+    "recovery_snapshot_seconds": {
+      "mean": 0.014016528,
+      "median": 0.013876709,
+      "stdev": 0.0007186283431183326,
+      "min": 0.013378084,
+      "max": 0.014794791
+    },
+    "wal_bytes": {
+      "mean": 5360032.0,
+      "median": 5360032,
+      "stdev": 0.0,
+      "min": 5360032,
+      "max": 5360032
+    },
+    "snapshot_bytes": {
+      "mean": 5121302.0,
+      "median": 5121302,
+      "stdev": 0.0,
+      "min": 5121302,
+      "max": 5121302
+    }
+  }
+}

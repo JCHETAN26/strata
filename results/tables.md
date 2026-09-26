@@ -33,6 +33,15 @@ than the k-th true neighbor. Recall by id is strict id matching; it can be lower
 several vectors tie at the k-th distance. hnswlib/FAISS latencies include Python call
 overhead (their QPS does not). `*` = uncommitted changes when measured.
 
+## Storage (Collection: WAL + snapshot)
+
+| Dataset | Machine | Vectors | Inserts/s no sync | Inserts/s fsync | fsync p99 µs | Checkpoint ms | Recover from WAL ms | Recover from snapshot ms | Commit |
+|---|---|---|---|---|---|---|---|---|---|
+| siftsmall | Apple M2 | 10000 | 291613 ± 27163 | 328 ± 9 | 4925 ± 209 | 31.2 ± 2.1 | 16.6 ± 3.2 | 14.0 ± 0.7 | `1c7e1b15` |
+
+fsync = `F_FULLFSYNC` on macOS (flushes the drive cache), `fsync` on Linux; one per
+insert, no group commit. The fsync column uses the first `fsync_inserts` vectors only.
+
 ## Microbenchmarks
 
 | Benchmark | Machine | ns/op (mean ± stdev) | Commit |

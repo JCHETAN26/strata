@@ -122,10 +122,10 @@ First version will likely be slower than hnswlib. That's expected.
 
 ## Phase 4 — Persistence & crash recovery (≈1 week, Mac)
 
-- [ ] Save and load index to/from disk
-- [ ] Write-ahead log: log every insert before applying it
-- [ ] Deletes via tombstones
-- [ ] Crash tests: kill mid-insert, restart, verify no acknowledged write is lost or corrupted
+- [x] Save and load index to/from disk (snapshot of vectors + tombstones; HNSW graph pending)
+- [x] Write-ahead log: log every insert before applying it
+- [x] Deletes via tombstones (brute force; HNSW pending)
+- [x] Crash tests: kill mid-insert, restart, verify no acknowledged write is lost or corrupted
 
 **Measure:** save/load time; recovery correctness across repeated crash tests.
 

@@ -139,3 +139,43 @@
 
 **Left for the HNSW implementation (hand-written):** compact neighbor lists, prefetching, parallel
 build (the `ThreadPool` is ready for it), and profiling the graph search.
+
+## 2026-09-25 — Phase 4: persistence and crash recovery
+
+**Done**
+- `WriteAheadLog` (CRC32C + LSN per record), `Snapshot` (checksummed, atomic write),
+  tombstone deletes in `BruteForceIndex`, and `Collection` (WAL-first writes, checkpoint =
+  snapshot + WAL reset, shared/exclusive locking).
+- Crash tests: a forked writer is SIGKILLed at random points across 49 rounds (WAL only,
+  frequent/rare checkpoints, fsync); every acknowledged write must survive intact. Plus
+  byte-level tests: every snapshot byte flip and truncation, WAL torn tail at every offset,
+  mid-log corruption, crash between snapshot and WAL reset.
+- `strata_storage_bench`: SIFT10K on the M2: ~290k inserts/s without sync, ~330/s with
+  `F_FULLFSYNC` (p99 ~4.9 ms), checkpoint 31 ms, recovery ~15 ms.
+
+**Decisions**
+- **Torn tail vs corruption.** A bad record is treated as a torn write (and truncated) only if
+  it reaches EOF *and* the remaining bytes fit in one record. Anything else fails the open
+  with `kCorruptData`: silently truncating would drop acknowledged writes.
+- **Acknowledgment = WAL append returned.** With `kNone` that survives a process crash; with
+  `kFsync` it also survives power loss. On macOS `fsync` alone only reaches the drive cache, so
+  `kFsync` uses `F_FULLFSYNC`.
+- **Snapshots are index-independent** (vectors + tombstones + LSN). Brute force rebuilds
+  trivially; the HNSW graph can be added to the snapshot once it exists (rebuilding from vectors
+  is the fallback).
+- **Checkpoint ordering.** Snapshot first (atomic rename), then WAL reset (also an atomic
+  rename). A crash between them leaves WAL records the snapshot already holds; recovery skips
+  records with LSN <= the snapshot's LSN.
+- **No group commit yet.** One fsync per insert caps durable inserts at ~330/s here. Batching
+  concurrent writers behind one fsync is the obvious next step if write throughput matters.
+
+**Problems**
+- **Review found a hole the first tests missed:** a corrupted *length* field in the middle of the
+  log made the record appear to run past EOF, so recovery classified it as a torn tail and
+  would have truncated every later (acknowledged) record. Added the one-record size bound and a
+  test that fails without it (checked by temporarily reverting the fix).
+- **The first crash test was wrong, not the code:** it demanded that a vector be present when its
+  delete had become durable but the delete's ack hadn't reached the parent before SIGKILL.
+  Unacknowledged writes may or may not survive; the test now allows exactly that.
+- **ThreadPool-style destruction order** was not an issue here: `Collection` holds its
+  `shared_mutex` behind a `unique_ptr` so the class stays movable.

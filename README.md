@@ -3,7 +3,7 @@
 Distributed vector search engine written from scratch in C++20 (HNSW, SIMD, product quantization,
 filtered search, sharding), with a retrieval-augmented generation layer on top.
 
-> Status: Phase 1 (baseline: distances, brute-force search, recall, benchmark harness). See [`buildplan.md`](buildplan.md) for the roadmap.
+> Status: Phases 0–4 done except the hand-written HNSW core (Phase 2). See `docs/devlog.md`. See [`buildplan.md`](buildplan.md) for the roadmap.
 
 ## Build
 
@@ -62,6 +62,7 @@ uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss -
 uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss --index flat
 uv run python bench/run_search_bench.py --dataset siftsmall --kernel scalar   # without SIMD
 uv run python bench/run_search_bench.py --dataset siftsmall --threads 4        # throughput mode
+uv run python bench/run_storage_bench.py --dataset siftsmall   # WAL, checkpoint, recovery
 uv run python bench/run_micro_bench.py --repetitions 5
 uv run python bench/make_tables.py        # writes results/tables.md
 uv run python bench/plot_recall_qps.py    # writes results/plots/recall_qps_<dataset>.png
