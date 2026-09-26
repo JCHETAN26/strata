@@ -33,6 +33,8 @@ from strata._core import (
     build_info,
     cosine_distance,
     distances,
+    fuse_rrf,
+    fuse_weighted,
     has_hnsw,
     inner_product,
     l2_squared,
@@ -57,6 +59,8 @@ else:
             )
 
 
+from strata.hybrid import HybridIndex
+
 __all__ = [
     "Analyzer",
     "AttributeTable",
@@ -65,11 +69,14 @@ __all__ = [
     "CompiledFilter",
     "Filter",
     "HnswIndex",
+    "HybridIndex",
     "PqIndex",
     "ProductQuantizer",
     "build_info",
     "cosine_distance",
     "distances",
+    "fuse_rrf",
+    "fuse_weighted",
     "has_hnsw",
     "inner_product",
     "l2_squared",

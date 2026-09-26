@@ -78,6 +78,10 @@ ids, scores = bm25.search("does aspirin reduce strokes", k=10)
 strata.Analyzer.anserini_english().analyze("John's running")   # ['john', 'run']
 
 # BM25 and vector indexes share one id space: add document i to both in the same order.
+# HybridIndex does that for you and fuses the results.
+hybrid = strata.HybridIndex(dim=128, metric="cosine")
+hybrid.add(["doc-a", "doc-b"], ["aspirin and stroke", "statins"], base[:2])
+docs, scores = hybrid.search_doc_ids(["aspirin"], queries[:1], k=2, method="rrf")
 ```
 
 - Results are `(ids, distances)`; missing results (fewer than k matches) are id `-1`,
@@ -125,6 +129,9 @@ uv run python bench/run_storage_bench.py --dataset siftsmall   # WAL, checkpoint
 uv run python bench/run_filter_bench.py --dataset siftsmall    # filtered search by selectivity
 uv run python scripts/prepare_beir.py scifact
 uv run python bench/validate_bm25_beir.py --dataset scifact    # reproduces Anserini's BM25
+uv sync --group embed                                           # sentence-transformers + torch
+uv run python scripts/embed_beir.py --dataset scifact --model bge-small-en-v1.5
+uv run python bench/eval_hybrid_beir.py --dataset scifact      # BM25 / dense / RRF / weighted
 uv run python bench/run_micro_bench.py --repetitions 5
 uv run python bench/make_tables.py        # writes results/tables.md
 uv run python bench/plot_recall_qps.py    # writes results/plots/recall_qps_<dataset>.png

@@ -40,8 +40,7 @@ def main() -> int:
         f"// {URL} (version {version.group(1) if version else 'unknown'}). Do not edit.",
         "// Emoji=Yes ranges, excluding ASCII.",
         "",
-        "constexpr std::array<std::pair<char32_t, char32_t>, "
-        f"{len(merged)}> kEmojiRanges = {{{{",
+        f"constexpr std::array<std::pair<char32_t, char32_t>, {len(merged)}> kEmojiRanges = {{{{",
     ]
     lines += [f"    {{0x{lo:X}, 0x{hi:X}}}," for lo, hi in merged]
     lines += ["}};", ""]

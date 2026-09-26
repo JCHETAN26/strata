@@ -1,0 +1,14 @@
+{
+  "scifact": {
+    "bge-small-en-v1.5": {
+      "system": "MTEB results published in the model card (model-index metadata)",
+      "model": "BAAI/bge-small-en-v1.5",
+      "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+      "task": "MTEB SciFact, split test",
+      "published": {"nDCG@10": 0.71275, "R@100": 0.94167},
+      "source_url": "https://huggingface.co/BAAI/bge-small-en-v1.5/blob/5c38ec7c405ec4b44b94cc5a9bb96e735b38267a/README.md",
+      "retrieved": "2026-09-25",
+      "notes": "Sanity check for the dense pipeline (prefixes, normalization, pooling, revision); MTEB uses title + ' ' + text and the query instruction."
+    }
+  }
+}

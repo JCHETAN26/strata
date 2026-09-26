@@ -360,3 +360,49 @@ the JSON, so the reference lives in one place).
 - Unicode Word_Break classes come from general categories plus UAX #29's explicit punctuation
   lists, not the full Word_Break property table. The one-term gap on SciFact says this is close;
   other corpora (non-Latin scripts) may show larger differences.
+
+## 2026-09-25 — Hybrid retrieval
+
+**Done**
+- C++ fusion (`include/strata/fusion.hpp`): reciprocal rank fusion (k = 60) and weighted
+  fusion of min-max-normalized scores; bound as `strata.fuse_rrf` / `strata.fuse_weighted`
+  (batched, GIL released).
+- `strata.HybridIndex` (Python): one vector index + one `Bm25Index`, ids aligned by
+  construction (validate, then add to both under one lock), external doc ids, removal from both.
+- `scripts/embed_beir.py`: pinned models (Hugging Face commit hashes) with each model's
+  required input formatting; L2-normalized; model, revision, formatting, pooling, device, and
+  library versions recorded in `meta.json`.
+- `bench/eval_hybrid_beir.py`: BM25, dense, RRF, weighted on the test split, fusion weight tuned
+  on the train split; baselines checked against published references.
+
+**Result (SciFact test, 300 queries; bge-small-en-v1.5 @ 5c38ec7c405e, CPU)**
+
+| Method | nDCG@10 | R@100 | Reference |
+|---|---|---|---|
+| BM25 | 0.6789 | 0.9253 | Anserini 2.3.0 flat: 0.6789 / 0.9253 |
+| Dense (bge-small) | 0.7127 | 0.9417 | MTEB (model card): 0.71275 / 0.94167 |
+| RRF (k = 60, not tuned) | 0.7273 | 0.9683 | |
+| Weighted (dense 0.65, tuned on train) | 0.7316 | 0.9667 | |
+
+Both fusions beat either retriever alone; RRF gets the best recall, weighted the best nDCG@10.
+
+**Protocol decisions (fixed before looking at test numbers)**
+- **RRF k = 60** from the paper, not tuned.
+- **Weighted fusion weight** tuned on SciFact's *train* split (809 queries; grid 0.00..1.00 in
+  steps of 0.05, best nDCG@10, ties to the smaller weight) and applied unchanged to test. The
+  script refuses to run if train and test query ids overlap. Train curve saved with the result.
+- **Candidates:** top 100 from each retriever.
+- **Documents:** BM25 indexes title + "\n" + text (Anserini flat); the embedding model sees
+  title + " " + text (BEIR's dense convention, and what MTEB used for the reference).
+- **Embeddings:** bge's retrieval instruction is prepended to queries only (model card); e5
+  (available, not yet run) uses "query: " / "passage: ". Embeddings are L2-normalized and
+  searched with negated inner product, which ranks exactly like cosine. The revision is pinned
+  in `MODELS`, so the IdeaPad run loads identical weights; the device is recorded because CPU,
+  CUDA, and MPS arithmetic differ slightly.
+- **Identical query ids removed** from results for every method (Anserini `-removeQuery`,
+  BEIR `ignore_identical_ids`).
+
+**Notes**
+- Embedding SciFact (5,183 docs + 1,109 queries) with bge-small took 243 s on the M2 CPU.
+- The dense pipeline reproduces MTEB's published SciFact numbers to 4 decimals, which checks
+  the prefix, normalization, pooling (CLS), and revision together.

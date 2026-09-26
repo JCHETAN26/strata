@@ -169,7 +169,7 @@ First version will likely be slower than hnswlib. That's expected.
 
 - [x] Python bindings (nanobind or pybind11) — nanobind; HNSW bound once the core exists
 - [x] BM25 inverted index in C++ (Lucene/Anserini-exact; SciFact nDCG@10 0.6789 = published)
-- [ ] Hybrid retrieval with reciprocal rank fusion
+- [x] Hybrid retrieval with reciprocal rank fusion
 - [ ] Cross-encoder reranking
 - [ ] Cited answer generation with Claude Haiku
 - [ ] Generate embeddings for BEIR corpora on the IdeaPad GPU

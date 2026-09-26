@@ -87,7 +87,7 @@ After the core works (I can build these, on the Mac):
 
 - [x] Python bindings (nanobind): brute force, PQ, filtered search, distances; HNSW switches on with the core
 - [x] BM25 inverted index in C++, with bindings — reproduces Anserini's SciFact BM25 exactly
-- [ ] Hybrid retrieval with reciprocal rank fusion
+- [x] Hybrid retrieval with reciprocal rank fusion (+ train-tuned weighted fusion); SciFact nDCG@10 0.7273 RRF / 0.7316 weighted vs 0.6789 BM25, 0.7127 dense
 - [ ] Cited answer generation with Claude Haiku (API call, not local compute)
 - [ ] BEIR and HotpotQA evaluation scripts (write and test on a small subset)
 - [ ] Cross-encoder reranking (runs on the CPU for small subsets; the full evaluation goes on the

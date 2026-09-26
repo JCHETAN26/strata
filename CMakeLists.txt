@@ -58,6 +58,7 @@ add_library(strata STATIC
   src/eval/recall.cpp
   src/filter/filter.cpp
   src/index/brute_force.cpp
+  src/index/fusion.cpp
   src/pq/kmeans.cpp
   src/pq/pq.cpp
   src/storage/collection.cpp

@@ -38,6 +38,7 @@
 #include "strata/build_info.hpp"
 #include "strata/distance.hpp"
 #include "strata/filter.hpp"
+#include "strata/fusion.hpp"
 #include "strata/pq.hpp"
 #include "strata/text.hpp"
 #include "strata/thread_pool.hpp"
@@ -1109,6 +1110,100 @@ take an exclusive lock, so inserts are serialized.)doc")
                                ? "lucene"
                                : "exact");
       });
+
+  // --- Fusion ----------
+
+  // Converts row `row` of each (ids, scores) pair into Neighbor lists (distance = -score),
+  // skipping -1 padding. Scores must be higher-is-better similarities.
+  using IdMatrix = nb::ndarray<const std::int64_t, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+  using ScoreMatrix = nb::ndarray<const float, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+
+  auto check_shapes = [](const std::vector<IdMatrix>& ids, const std::vector<ScoreMatrix>* scores) {
+    if (ids.empty()) {
+      throw nb::value_error("need at least one result list");
+    }
+    const std::size_t rows = ids[0].shape(0);
+    for (std::size_t i = 0; i < ids.size(); ++i) {
+      if (ids[i].shape(0) != rows) {
+        throw nb::value_error("every list must have the same number of queries (rows)");
+      }
+      if (scores != nullptr &&
+          ((*scores)[i].shape(0) != rows || (*scores)[i].shape(1) != ids[i].shape(1))) {
+        throw nb::value_error("scores must have the same shape as ids");
+      }
+    }
+    return rows;
+  };
+
+  m.def(
+      "fuse_rrf",
+      [check_shapes](const std::vector<IdMatrix>& ids, std::size_t k, double rrf_k,
+                     std::optional<std::size_t> threads) {
+        const std::size_t rows = check_shapes(ids, nullptr);
+        std::optional<ResultBuffers> out;
+        {
+          nb::gil_scoped_release release;
+          out.emplace(search_rows(
+              rows, k, threads,
+              [&](std::size_t row) {
+                std::vector<std::vector<strata::Neighbor>> lists(ids.size());
+                for (std::size_t i = 0; i < ids.size(); ++i) {
+                  const std::size_t n = ids[i].shape(1);
+                  const std::int64_t* r = ids[i].data() + row * n;
+                  for (std::size_t j = 0; j < n && r[j] >= 0; ++j) {
+                    lists[i].push_back(
+                        {static_cast<strata::VectorId>(r[j]), static_cast<float>(j)});
+                  }
+                }
+                return strata::reciprocal_rank_fusion(lists, k, rrf_k);
+              },
+              true));
+        }
+        return std::move(*out).to_python(rows, false);
+      },
+      "ids"_a, "k"_a, "rrf_k"_a = 60.0, "threads"_a = nb::none(),
+      R"doc(Reciprocal rank fusion of ranked id lists.
+
+ids: list of (num_queries, n_i) int64 arrays, each row ranked best first, -1 padding ignored
+(e.g. the ids from a vector search and a BM25 search). score = sum 1 / (rrf_k + rank), rank from 1.
+Returns (ids, scores) of shape (num_queries, k); ties by ascending id; padding -1 / -inf.)doc");
+
+  m.def(
+      "fuse_weighted",
+      [check_shapes](const std::vector<IdMatrix>& ids, const std::vector<ScoreMatrix>& scores,
+                     const std::vector<double>& weights, std::size_t k,
+                     std::optional<std::size_t> threads) {
+        if (scores.size() != ids.size()) {
+          throw nb::value_error("one scores array per ids array required");
+        }
+        const std::size_t rows = check_shapes(ids, &scores);
+        std::optional<ResultBuffers> out;
+        {
+          nb::gil_scoped_release release;
+          out.emplace(search_rows(
+              rows, k, threads,
+              [&](std::size_t row) {
+                std::vector<std::vector<strata::Neighbor>> lists(ids.size());
+                for (std::size_t i = 0; i < ids.size(); ++i) {
+                  const std::size_t n = ids[i].shape(1);
+                  const std::int64_t* r = ids[i].data() + row * n;
+                  const float* s = scores[i].data() + row * n;
+                  for (std::size_t j = 0; j < n && r[j] >= 0; ++j) {
+                    lists[i].push_back({static_cast<strata::VectorId>(r[j]), -s[j]});
+                  }
+                }
+                return strata::weighted_score_fusion(lists, weights, k);
+              },
+              true));
+        }
+        return std::move(*out).to_python(rows, false);
+      },
+      "ids"_a, "scores"_a, "weights"_a, "k"_a, "threads"_a = nb::none(),
+      R"doc(Weighted fusion of min-max-normalized scores.
+
+scores: higher-is-better similarities with the same shapes as ids (negate distances first).
+Each list is min-max scaled to [0, 1] per query over its candidates; a document missing from a
+list gets 0; fused = sum weights[i] * norm_i. Returns (ids, scores), shape (num_queries, k).)doc");
 
   // --- HNSW ----------
   // Bound only when src/index/hnsw.cpp exists; otherwise strata.HnswIndex (in __init__.py) raises
