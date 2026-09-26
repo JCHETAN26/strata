@@ -99,3 +99,43 @@
   cause: the FAISS wheel is built with NEON, while hnswlib's SIMD paths are SSE/AVX only, so on ARM
   it runs scalar distances. Expect hnswlib to look much stronger on the Ryzen.
 - FAISS flat (BLAS) brute force: ~10.5k QPS vs Strata scalar brute force ~1.6k on SIFT10K.
+
+## 2026-09-25 — Phase 3: SIMD and threads
+
+**Done**
+- NEON (arm64) and AVX2+FMA (x86_64) kernels for L2, inner product, cosine. Compile-time
+  selection; `KernelSet::kScalar` keeps the reference selectable, and `--kernel scalar` gives the
+  "without SIMD" line for every comparison.
+- `ThreadPool` (dynamic chunking over an atomic counter, caller participates),
+  `BruteForceIndex::search_batch`, harness `--threads N`.
+- Presets: `tsan` (ThreadSanitizer) and `rosetta-avx2` (x86_64 AVX2 build on macOS, run under
+  Rosetta 2, so AVX2 kernels are tested before they reach the Ryzen).
+
+**Measured (Apple M2; `results/tables.md`)**
+- Kernels at d=128: L2 66 → 7.9 ns (8.4x), IP 55 → 6.9 ns (~8x), cosine 81 → 13.6 ns (~6x).
+- SIFT10K brute force, 1 thread: 1,583 → 8,321 QPS (5.3x end to end; heap updates and loop
+  overhead don't vectorize).
+- Thread scaling (NEON): 1 → 2 → 4 → 8 threads: 8.3k → 17.1k → 26.2k → 41.9k QPS. Past 4 threads
+  the work lands on efficiency cores; the curve is noisy because of background load on the laptop.
+
+**Decisions**
+- **4 accumulators on NEON, 2 on AVX2.** FMA latency is ~4 cycles on both, so one accumulator
+  stalls every iteration; independent accumulators let consecutive FMAs overlap. Each loop
+  iteration covers 16 floats either way.
+- **Tolerance:** `|simd - scalar| <= 1e-5 * sum|term_i|`. Worst observed: 23% of the bound
+  (NEON L2) over dims 0..130 and 255..4096. Integer inputs (SIFT) match exactly.
+- **Rosetta 2 executes AVX2/FMA** (CPUID doesn't advertise them). Good enough for correctness
+  tests; timings under translation are meaningless and never recorded.
+
+**Problems**
+- **ThreadSanitizer caught a real bug** in the first thread pool: `workers_` (the `jthread`s) was
+  declared first, so member destruction joined the threads *last*, after the mutex and condition
+  variables they were waiting on were gone. The destructor now joins explicitly.
+- **Result files overwrote each other**: three fast runs finished within one second and shared a
+  filename. Filenames and timestamps now carry microseconds, and writes refuse to overwrite.
+- **SIFT1M on the laptop is unreliable** (runs varied 30–61 QPS within one set; a Chrome tab at
+  ~50% CPU, a VM, and a system service were competing). Not used for any claim; the Ryzen will
+  produce the SIFT1M numbers.
+
+**Left for the HNSW implementation (hand-written):** compact neighbor lists, prefetching, parallel
+build (the `ThreadPool` is ready for it), and profiling the graph search.

@@ -56,7 +56,7 @@ def hardware_info() -> dict[str, Any]:
 
 def metadata() -> dict[str, Any]:
     return {
-        "timestamp": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
+        "timestamp": dt.datetime.now(dt.UTC).isoformat(timespec="microseconds"),
         "git": git_info(),
         "hardware": hardware_info(),
     }

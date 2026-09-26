@@ -109,10 +109,10 @@ First version will likely be slower than hnswlib. That's expected.
 
 ## Phase 3 — Performance (1–2 weeks, Mac → IdeaPad)
 
-- [ ] SIMD distance kernels: NEON (Mac), AVX2 (IdeaPad), scalar fallback
-- [ ] Test: all kernels return identical results to scalar
+- [x] SIMD distance kernels: NEON (Mac), AVX2 (IdeaPad), scalar fallback
+- [x] Test: all kernels return identical results to scalar
 - [ ] Contiguous vector storage, compact neighbor lists, prefetching
-- [ ] Thread pool: parallel batch queries and parallel index build
+- [x] Thread pool: parallel batch queries (parallel index build waits for HNSW)
 - [ ] Profile hotspots (Instruments on Mac, `perf` on Linux)
 - [ ] Record the effect of each optimization separately
 
