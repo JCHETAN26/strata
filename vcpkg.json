@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "strata",
+  "version": "0.1.0",
+  "builtin-baseline": "617ef1c0c422737d117eda00a471ea1be5bad088",
+  "dependencies": [
+    "gtest",
+    "benchmark"
+  ]
+}

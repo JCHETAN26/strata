@@ -1,1 +1,47 @@
-# strata
+# Strata
+
+Distributed vector search engine written from scratch in C++20 (HNSW, SIMD, product quantization,
+filtered search, sharding), with a retrieval-augmented generation layer on top.
+
+> Status: Phase 0 (project setup). See [`buildplan.md`](buildplan.md) for the roadmap.
+
+## Build
+
+Requirements: CMake ≥ 3.25, Ninja, a C++20 compiler (Apple clang 15+ or GCC 12+/Clang 16+), and
+[vcpkg](https://github.com/microsoft/vcpkg). Dependencies (GoogleTest, Google Benchmark) are pinned
+in `vcpkg.json` and installed automatically on first configure.
+
+```sh
+# one-time vcpkg setup
+git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
+~/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+export VCPKG_ROOT=~/vcpkg   # add to your shell profile
+
+# configure, build, test
+cmake --preset debug
+cmake --build --preset debug
+ctest --preset debug
+```
+
+| Preset    | Build type | Notes                                                        |
+|-----------|------------|--------------------------------------------------------------|
+| `debug`   | Debug      | Day-to-day development                                       |
+| `release` | Release    | Benchmarks                                                   |
+| `asan`    | Debug      | AddressSanitizer + UndefinedBehaviorSanitizer; run before committing memory-handling changes |
+
+Build output goes to `build/<preset>/`. Run benchmarks with `./build/release/bench/strata_bench`.
+
+## Datasets
+
+Python tooling uses [uv](https://docs.astral.sh/uv/) with Python 3.11.
+
+```sh
+uv sync
+uv run python scripts/prepare_datasets.py siftsmall       # SIFT10K, ~5 MB
+uv run python scripts/prepare_datasets.py sift1m glove100 # ~500 MB and ~460 MB downloads
+uv run pytest
+```
+
+Datasets are written to `data/<name>/` (gitignored) as `base.fbin`, `query.fbin`,
+`groundtruth.ibin`, and `meta.json`. The binary format is a little-endian `uint32` header
+`(num_vectors, dimension)` followed by row-major `float32` or `int32` values.
