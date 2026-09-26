@@ -112,7 +112,11 @@ Expected<Snapshot> read_snapshot(const std::filesystem::path& path) {
   snapshot.metric = static_cast<Metric>(metric);
   snapshot.last_lsn = last_lsn;
   snapshot.vectors = Matrix<float>(count, dim);
-  std::memcpy(snapshot.vectors.data().data(), bytes.data() + kHeaderSize, vector_bytes);
+  // An empty snapshot (count == 0) has a null vectors.data(); memcpy with a null
+  // pointer is undefined even for a zero byte count, so guard the copy.
+  if (vector_bytes != 0) {
+    std::memcpy(snapshot.vectors.data().data(), bytes.data() + kHeaderSize, vector_bytes);
+  }
   snapshot.deleted.resize(count);
   std::uint64_t deleted = 0;
   for (std::size_t i = 0; i < count; ++i) {
