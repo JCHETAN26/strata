@@ -116,7 +116,7 @@ Python tooling uses [uv](https://docs.astral.sh/uv/) with Python 3.11.
 uv sync                        # builds the strata package too (needs VCPKG_ROOT)
 uv run python scripts/prepare_datasets.py siftsmall       # SIFT10K, ~5 MB
 uv run python scripts/prepare_datasets.py sift1m glove100 # ~500 MB and ~460 MB downloads
-uv run pytest
+make test-python     # env -u PYTHONPATH PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest
 ```
 
 Datasets are written to `data/<name>/` (gitignored) as `base.fbin`, `query.fbin`,

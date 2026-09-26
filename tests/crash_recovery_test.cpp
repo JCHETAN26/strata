@@ -15,12 +15,14 @@
 #include <csignal>
 #include <cstdint>
 #include <filesystem>
+#include <ostream>
 #include <random>
 #include <set>
 #include <string>
 #include <vector>
 
 #include "strata/collection.hpp"
+#include "test_util.hpp"
 
 namespace strata {
 namespace {
@@ -125,6 +127,9 @@ struct CrashCase {
   int rounds;
 };
 
+// Printed as its name ("wal_only"), not as bytes of the struct (which include a heap pointer).
+void PrintTo(const CrashCase& c, std::ostream* os) { *os << c.name; }
+
 class CrashRecovery : public ::testing::TestWithParam<CrashCase> {
  protected:
   void SetUp() override {
@@ -182,7 +187,7 @@ INSTANTIATE_TEST_SUITE_P(Modes, CrashRecovery,
                                                      15},
                                            CrashCase{"rare_checkpoints", SyncMode::kNone, 97, 15},
                                            CrashCase{"fsync", SyncMode::kFsync, 13, 4}),
-                         [](const auto& info) { return info.param.name; });
+                         test::PrintedName{});
 
 }  // namespace
 }  // namespace strata

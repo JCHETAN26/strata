@@ -192,7 +192,7 @@ TEST_P(PqAdc, TableDistanceEqualsDistanceToReconstruction) {
 
 INSTANTIATE_TEST_SUITE_P(AllMetrics, PqAdc,
                          ::testing::Values(Metric::kL2, Metric::kInnerProduct, Metric::kCosine),
-                         [](const auto& info) { return std::string(to_string(info.param)); });
+                         test::PrintedName{});
 
 // --- PQ index
 // -------------------------------------------------------------------------------------

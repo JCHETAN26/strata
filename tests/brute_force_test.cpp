@@ -124,7 +124,7 @@ TEST_P(BruteForceMetric, MatchesFullSort) {
 
 INSTANTIATE_TEST_SUITE_P(AllMetrics, BruteForceMetric,
                          ::testing::Values(Metric::kL2, Metric::kInnerProduct, Metric::kCosine),
-                         [](const auto& info) { return std::string(to_string(info.param)); });
+                         test::PrintedName{});
 
 // End-to-end check against the published SIFT10K ground truth. Skips if the dataset is absent
 // (run `uv run python scripts/prepare_datasets.py siftsmall`).

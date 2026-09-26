@@ -5,11 +5,13 @@
 
 #include <cmath>
 #include <cstddef>
+#include <ostream>
 #include <random>
 #include <string>
 #include <vector>
 
 #include "strata/distance.hpp"
+#include "test_util.hpp"
 
 namespace strata {
 namespace {
@@ -41,6 +43,9 @@ float dot_magnitude(std::span<const float> a, std::span<const float> b) {
 
 // Cosine: error in 1 - ab/sqrt(aa*bb) is relative, so scale is 1 (plus the ratio's magnitude).
 float cosine_magnitude(std::span<const float> /*a*/, std::span<const float> /*b*/) { return 1.0F; }
+
+// Printed as its name ("neon_l2"), not as bytes of the struct (which include function pointers).
+void PrintTo(const KernelCase& kc, std::ostream* os) { *os << kc.name; }
 
 std::vector<KernelCase> simd_kernels() {
   std::vector<KernelCase> cases;
@@ -155,7 +160,7 @@ TEST_P(SimdKernel, NoReadPastEnd) {
 }
 
 INSTANTIATE_TEST_SUITE_P(Kernels, SimdKernel, ::testing::ValuesIn(simd_kernels()),
-                         [](const auto& info) { return info.param.name; });
+                         test::PrintedName{});
 // No SIMD kernels on this architecture is fine: the scalar path is the only one.
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SimdKernel);
 

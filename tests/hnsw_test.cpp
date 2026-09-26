@@ -260,7 +260,7 @@ TEST_P(HnswRecall, HighRecallOnRandomData) {
 
 INSTANTIATE_TEST_SUITE_P(AllMetrics, HnswRecall,
                          ::testing::Values(Metric::kL2, Metric::kInnerProduct, Metric::kCosine),
-                         [](const auto& info) { return std::string(to_string(info.param)); });
+                         test::PrintedName{});
 
 TEST(Hnsw, RecallImprovesWithEf) {
   const auto base = test::random_matrix(3000, 32, 13);

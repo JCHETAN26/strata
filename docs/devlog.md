@@ -479,3 +479,24 @@ env var, no `.env`). Everything up to the API call runs and is tested:
 - Two conditions separate retrieval errors from generation errors.
 - `answer-in-citations` is a simple string check (normalized short answer inside normalized cited
   text); it is reported next to the official metrics, not instead of them.
+
+## 2026-09-26 — Readable parameterized test names; isolated Python test runs
+
+**Problem:** on the Mac, ctest listed every value-parameterized test with a raw hex dump
+(`Kernels/SimdKernel.MatchesScalarWithinTolerance/48-byte object <6E-65 6F-6E ...>`), and
+so did `BruteForceMetric`, `PqAdc`, and `CrashRecovery`. CMake's `gtest_discover_tests` names
+ctest tests from gtest's *printed parameter value*, not from the name generator, and gtest
+prints types it has no printer for as bytes. For `KernelCase` and `CrashCase` those bytes include
+function pointers and heap addresses, so the names could also change between builds.
+
+**Fix:** a `PrintTo` for every parameter type (`Metric`, `KernelCase`, `CrashCase`), and one
+explicit name generator, `test::PrintedName`, that returns the `PrintTo` string. The gtest name
+and the printed value are the same string, so ctest names are readable and have the same format
+on every platform. Verified after a clean rebuild: `ctest -N` shows `.../neon_cosine` on arm64
+and `.../avx2_cosine` on the x86_64 build, with no hex names left in either.
+
+**Python tests** now run through `make test-python`:
+`env -u PYTHONPATH PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest`. Checked the effect: plain
+`pytest` autoloaded the `anyio` plugin (pulled in by the Anthropic SDK) and put an inherited
+`PYTHONPATH` entry on `sys.path`; under `make test-python` neither happens, and the suite still
+passes (94 passed, 2 skipped).
