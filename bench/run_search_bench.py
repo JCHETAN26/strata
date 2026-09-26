@@ -90,10 +90,8 @@ def main(argv: list[str] | None = None) -> int:
         num_queries=raw["num_queries"],
         command=cmd,
         points=[{"search_params": p["search_params"], "runs": p["runs"]} for p in raw["points"]],
-        raw={
-            key: raw[key]
-            for key in ("build_type", "asserts", "compiler", "warmup_passes", "kernel")
-        },
+        # Everything the harness reported except the points, which are stored above.
+        raw={key: value for key, value in raw.items() if key != "points"},
     )
     record = json.loads(path.read_text())
     for point in record["points"]:
