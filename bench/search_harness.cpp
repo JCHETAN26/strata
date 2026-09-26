@@ -51,6 +51,7 @@ struct Options {
   std::size_t runs = 5;
   std::size_t max_queries = 0;  // 0 = all
   std::size_t warmup = 1;       // untimed passes over the queries before each timed run
+  std::string kernel = "best";  // "best" (SIMD for this build) or "scalar"
   // HNSW
   std::size_t m = 16;
   std::size_t ef_construction = 200;
@@ -61,7 +62,7 @@ struct Options {
   std::cerr << "error: " << error << "\n\n"
             << "usage: strata_search --data DIR [--metric l2|ip|cosine|angular]\n"
             << "                     [--index brute_force|hnsw] [--k 10] [--runs 5]\n"
-            << "                     [--max-queries N] [--warmup 1]\n"
+            << "                     [--max-queries N] [--warmup 1] [--kernel best|scalar]\n"
             << "       hnsw only:    [--M 16] [--ef-construction 200]\n"
             << "                     [--ef-search 10,20,40,80,160,320]\n";
   std::exit(2);
@@ -115,6 +116,11 @@ Options parse_args(int argc, char** argv) {
       opt.max_queries = parse_size(flag, value);
     } else if (flag == "--warmup") {
       opt.warmup = parse_size(flag, value);
+    } else if (flag == "--kernel") {
+      if (value != "best" && value != "scalar") {
+        usage("--kernel must be best or scalar");
+      }
+      opt.kernel = value;
     } else if (flag == "--M") {
       opt.m = parse_size(flag, value);
     } else if (flag == "--ef-construction") {
@@ -241,6 +247,7 @@ strata::Expected<Point> run_point(const SweepPoint& point, const strata::Matrix<
 struct RunInfo {
   const Options& opt;
   std::string_view metric;
+  std::string_view kernel;
   std::string_view build_params_json;
   double build_seconds;
   std::size_t num_base;
@@ -264,6 +271,7 @@ void write_json(std::ostream& os, const RunInfo& info, const std::vector<Point>&
       << "  \"build_params\": " << info.build_params_json << ",\n"
       << "  \"build_seconds\": " << info.build_seconds << ",\n"
       << "  \"metric\": " << json_string(info.metric) << ",\n"
+      << "  \"kernel\": " << json_string(info.kernel) << ",\n"
       << "  \"k\": " << info.opt.k << ",\n"
       << "  \"threads\": 1,\n"
       << "  \"warmup_passes\": " << info.opt.warmup << ",\n"
@@ -330,6 +338,11 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  const auto kernels =
+      opt.kernel == "scalar" ? strata::KernelSet::kScalar : strata::KernelSet::kBest;
+  const std::string_view kernel_name =
+      opt.kernel == "scalar" ? std::string_view("scalar") : strata::best_kernel_name();
+
   // Build the index once.
   std::string build_params_json = "{}";
   std::vector<SweepPoint> sweep;
@@ -339,7 +352,7 @@ int main(int argc, char** argv) {
 #endif
   const auto build_start = Clock::now();
   if (opt.index == "brute_force") {
-    auto index = strata::BruteForceIndex::create(dim, *metric);
+    auto index = strata::BruteForceIndex::create(dim, *metric, kernels);
     if (!index || !index->add_batch(dataset->base)) {
       std::cerr << "error: failed to build index\n";
       return 1;
@@ -384,13 +397,14 @@ int main(int argc, char** argv) {
     points.push_back(std::move(*result));
   }
 
-  const RunInfo info{opt,
-                     strata::to_string(*metric),
-                     build_params_json,
-                     build_seconds,
-                     dataset->base.rows(),
-                     num_queries,
-                     dim};
+  const RunInfo info{.opt = opt,
+                     .metric = strata::to_string(*metric),
+                     .kernel = kernel_name,
+                     .build_params_json = build_params_json,
+                     .build_seconds = build_seconds,
+                     .num_base = dataset->base.rows(),
+                     .num_queries = num_queries,
+                     .dim = dim};
   write_json(std::cout, info, points);
   return 0;
 }

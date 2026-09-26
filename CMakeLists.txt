@@ -11,6 +11,14 @@ option(STRATA_BUILD_TESTS "Build unit tests" ON)
 option(STRATA_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(STRATA_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
 
+# SIMD kernels are selected at compile time. NEON is baseline on arm64; AVX2 + FMA must be enabled
+# explicitly on x86_64 (on by default there; turn off for machines without AVX2).
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64" OR CMAKE_OSX_ARCHITECTURES STREQUAL "x86_64")
+  set(STRATA_IS_X86_64 ON)
+endif()
+include(CMakeDependentOption)
+cmake_dependent_option(STRATA_AVX2 "Compile AVX2 + FMA kernels (x86_64)" ON "STRATA_IS_X86_64" OFF)
+
 # Warnings and sanitizers apply to every Strata target through this interface library.
 add_library(strata_options INTERFACE)
 target_compile_options(strata_options INTERFACE
@@ -24,6 +32,9 @@ endif()
 find_package(tl-expected CONFIG REQUIRED)
 
 add_library(strata STATIC
+  src/distance/avx2.cpp
+  src/distance/dispatch.cpp
+  src/distance/neon.cpp
   src/distance/scalar.cpp
   src/eval/recall.cpp
   src/index/brute_force.cpp
@@ -46,6 +57,10 @@ target_compile_features(strata PUBLIC cxx_std_20)
 target_link_libraries(strata
   PUBLIC tl::expected
   PRIVATE strata_options)
+if(STRATA_AVX2)
+  # PUBLIC: headers test __AVX2__ to declare the avx2:: kernels, so every consumer needs the flags.
+  target_compile_options(strata PUBLIC -mavx2 -mfma)
+endif()
 
 if(STRATA_BUILD_TESTS)
   enable_testing()

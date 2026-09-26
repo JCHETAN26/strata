@@ -37,4 +37,16 @@ BENCHMARK(BM_Distance<&strata::scalar::l2_squared>)->Name("scalar/l2")->STRATA_D
 BENCHMARK(BM_Distance<&strata::scalar::inner_product>)->Name("scalar/ip")->STRATA_DIMS;
 BENCHMARK(BM_Distance<&strata::scalar::cosine_distance>)->Name("scalar/cosine")->STRATA_DIMS;
 
+#if defined(STRATA_HAS_NEON)
+BENCHMARK(BM_Distance<&strata::neon::l2_squared>)->Name("neon/l2")->STRATA_DIMS;
+BENCHMARK(BM_Distance<&strata::neon::inner_product>)->Name("neon/ip")->STRATA_DIMS;
+BENCHMARK(BM_Distance<&strata::neon::cosine_distance>)->Name("neon/cosine")->STRATA_DIMS;
+#endif
+
+#if defined(STRATA_HAS_AVX2)
+BENCHMARK(BM_Distance<&strata::avx2::l2_squared>)->Name("avx2/l2")->STRATA_DIMS;
+BENCHMARK(BM_Distance<&strata::avx2::inner_product>)->Name("avx2/ip")->STRATA_DIMS;
+BENCHMARK(BM_Distance<&strata::avx2::cosine_distance>)->Name("avx2/cosine")->STRATA_DIMS;
+#endif
+
 }  // namespace

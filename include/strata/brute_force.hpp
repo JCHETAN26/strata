@@ -20,8 +20,9 @@ namespace strata {
 // require exclusive access: no other call may run concurrently with them.
 class BruteForceIndex {
  public:
-  // Fails if dim == 0.
-  [[nodiscard]] static Expected<BruteForceIndex> create(std::size_t dim, Metric metric);
+  // Fails if dim == 0. `kernels` selects SIMD or the scalar reference (for comparisons).
+  [[nodiscard]] static Expected<BruteForceIndex> create(std::size_t dim, Metric metric,
+                                                        KernelSet kernels = KernelSet::kBest);
 
   // Appends a vector and returns its id. Fails on dimension mismatch.
   Expected<VectorId> add(std::span<const float> vector);
@@ -39,7 +40,7 @@ class BruteForceIndex {
   [[nodiscard]] std::span<const float> vector(VectorId id) const noexcept;
 
  private:
-  BruteForceIndex(std::size_t dim, Metric metric);
+  BruteForceIndex(std::size_t dim, Metric metric, KernelSet kernels);
 
   std::size_t dim_;
   Metric metric_;

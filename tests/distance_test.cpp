@@ -63,12 +63,13 @@ TEST(Distance, EmptyVectors) {
   EXPECT_EQ(scalar::cosine_distance(empty, empty), 1.0F);
 }
 
-TEST(Distance, DispatchMatchesScalar) {
+TEST(Distance, DispatchAgreesWithScalar) {
+  // Small integer inputs: every kernel family is exact here.
   const std::vector<float> a{1, 2, 3};
-  const std::vector<float> b{-1, 0.5F, 2};
+  const std::vector<float> b{-1, 0, 2};
   EXPECT_EQ(distance(Metric::kL2, a, b), scalar::l2_squared(a, b));
   EXPECT_EQ(distance(Metric::kInnerProduct, a, b), scalar::inner_product(a, b));
-  EXPECT_EQ(distance(Metric::kCosine, a, b), scalar::cosine_distance(a, b));
+  EXPECT_NEAR(distance(Metric::kCosine, a, b), scalar::cosine_distance(a, b), 1e-6F);
 }
 
 TEST(Distance, MetricNamesRoundTrip) {

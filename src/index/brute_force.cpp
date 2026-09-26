@@ -17,14 +17,15 @@ tl::unexpected<Error> dimension_error(std::size_t expected, std::size_t got) {
 
 }  // namespace
 
-BruteForceIndex::BruteForceIndex(std::size_t dim, Metric metric)
-    : dim_(dim), metric_(metric), distance_(distance_function(metric)) {}
+BruteForceIndex::BruteForceIndex(std::size_t dim, Metric metric, KernelSet kernels)
+    : dim_(dim), metric_(metric), distance_(distance_function(metric, kernels)) {}
 
-Expected<BruteForceIndex> BruteForceIndex::create(std::size_t dim, Metric metric) {
+Expected<BruteForceIndex> BruteForceIndex::create(std::size_t dim, Metric metric,
+                                                  KernelSet kernels) {
   if (dim == 0) {
     return make_error(ErrorCode::kInvalidArgument, "dimension must be positive");
   }
-  return BruteForceIndex(dim, metric);
+  return BruteForceIndex(dim, metric, kernels);
 }
 
 Expected<VectorId> BruteForceIndex::add(std::span<const float> vector) {

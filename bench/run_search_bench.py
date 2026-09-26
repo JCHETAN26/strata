@@ -28,6 +28,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--k", type=int, default=10)
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--max-queries", type=int, default=0, help="0 = all queries")
+    parser.add_argument("--kernel", default="best", choices=["best", "scalar"])
     parser.add_argument("--M", type=int, default=16)
     parser.add_argument("--ef-construction", type=int, default=200)
     parser.add_argument("--ef-search", default="10,20,40,80,160,320")
@@ -51,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         "--k", str(args.k),
         "--runs", str(args.runs),
         "--max-queries", str(args.max_queries),
+        "--kernel", args.kernel,
     ]  # fmt: skip
     if args.index == "hnsw":
         cmd += [
@@ -75,14 +77,17 @@ def main(argv: list[str] | None = None) -> int:
         dataset=args.dataset,
         library="strata",
         index=raw["index"],
-        build_params=raw["build_params"],
+        build_params={**raw["build_params"], "kernel": raw["kernel"]},
         build_seconds=raw["build_seconds"],
         k=raw["k"],
         threads=raw["threads"],
         num_queries=raw["num_queries"],
         command=cmd,
         points=[{"search_params": p["search_params"], "runs": p["runs"]} for p in raw["points"]],
-        raw={key: raw[key] for key in ("build_type", "asserts", "compiler", "warmup_passes")},
+        raw={
+            key: raw[key]
+            for key in ("build_type", "asserts", "compiler", "warmup_passes", "kernel")
+        },
     )
     record = json.loads(path.read_text())
     for point in record["points"]:

@@ -29,8 +29,44 @@ namespace scalar {
 [[nodiscard]] float cosine_distance(std::span<const float> a, std::span<const float> b) noexcept;
 }  // namespace scalar
 
+#if defined(__ARM_NEON)
+#define STRATA_HAS_NEON 1
+// NEON kernels (arm64). 4 independent 4-lane FMA accumulators, scalar tail.
+namespace neon {
+[[nodiscard]] float l2_squared(std::span<const float> a, std::span<const float> b) noexcept;
+[[nodiscard]] float inner_product(std::span<const float> a, std::span<const float> b) noexcept;
+[[nodiscard]] float cosine_distance(std::span<const float> a, std::span<const float> b) noexcept;
+}  // namespace neon
+#endif
+
+#if defined(__AVX2__) && defined(__FMA__)
+#define STRATA_HAS_AVX2 1
+// AVX2 + FMA kernels (x86_64). 2 independent 8-lane FMA accumulators, scalar tail.
+namespace avx2 {
+[[nodiscard]] float l2_squared(std::span<const float> a, std::span<const float> b) noexcept;
+[[nodiscard]] float inner_product(std::span<const float> a, std::span<const float> b) noexcept;
+[[nodiscard]] float cosine_distance(std::span<const float> a, std::span<const float> b) noexcept;
+}  // namespace avx2
+#endif
+
+// SIMD kernels sum in a different order than the scalar reference, so results differ by
+// rounding. Tested bound: |simd - scalar| <= kSimdTolerance * sum_i |term_i|, where term_i is
+// (a_i - b_i)^2 or a_i * b_i. On integer-valued inputs whose sums stay below 2^24 (e.g. SIFT)
+// every partial sum is exact, so results are bit-identical.
+inline constexpr float kSimdTolerance = 1e-5F;
+
+// Which kernel family distance_function returns.
+enum class KernelSet {
+  kBest,    // the SIMD family compiled for this architecture, else scalar
+  kScalar,  // always the scalar reference (for with/without-SIMD comparisons)
+};
+
+// Name of the family kBest resolves to in this build: "neon", "avx2", or "scalar".
+[[nodiscard]] std::string_view best_kernel_name() noexcept;
+
 // Kernel for the metric. Look it up once, outside the loop.
-[[nodiscard]] DistanceFn distance_function(Metric metric) noexcept;
+[[nodiscard]] DistanceFn distance_function(Metric metric,
+                                           KernelSet kernels = KernelSet::kBest) noexcept;
 
 // Convenience for non-hot-path code.
 [[nodiscard]] inline float distance(Metric metric, std::span<const float> a,

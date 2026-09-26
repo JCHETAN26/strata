@@ -77,16 +77,4 @@ std::optional<Metric> parse_metric(std::string_view name) noexcept {
   return std::nullopt;
 }
 
-DistanceFn distance_function(Metric metric) noexcept {
-  switch (metric) {
-    case Metric::kL2:
-      return &scalar::l2_squared;
-    case Metric::kInnerProduct:
-      return &scalar::inner_product;
-    case Metric::kCosine:
-      return &scalar::cosine_distance;
-  }
-  return &scalar::l2_squared;
-}
-
 }  // namespace strata
