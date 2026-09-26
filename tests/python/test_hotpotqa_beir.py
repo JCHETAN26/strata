@@ -9,9 +9,9 @@ from typing import Any
 
 import pytest
 from answer import (
-    CHARS_PER_TOKEN,
-    CITATION_OVERHEAD,
     MAX_TOKENS,
+    PER_REQUEST_TOKENS,
+    TOKENS_PER_CHAR,
     Passage,
     build_request,
     cost_usd,
@@ -53,7 +53,7 @@ def test_offline_estimate_and_pricing() -> None:
     request = build_request("q?", [Passage("d", "T", ["One sentence.", " Two."])])
     tokens, method = estimate_input_tokens(request)
     assert method == "estimate"
-    assert tokens == round(request_chars(request) / CHARS_PER_TOKEN * CITATION_OVERHEAD)
+    assert tokens == round(PER_REQUEST_TOKENS + TOKENS_PER_CHAR * request_chars(request))
     assert cost_usd(1_000_000, 0) == pytest.approx(1.0)
     assert cost_usd(0, 1_000_000) == pytest.approx(5.0)
 
@@ -83,8 +83,11 @@ class OracleGenerator:
     cache_dir = None
     client = None
 
-    def __init__(self, by_question: dict[str, dict]) -> None:
+    def __init__(
+        self, by_question: dict[str, dict], stop_reasons: dict[str, str] | None = None
+    ) -> None:
         self.by_question = by_question
+        self.stop_reasons = stop_reasons or {}
         self.calls = 0
 
     def is_cached(self, question: str, passages: list[Passage]) -> bool:
@@ -112,7 +115,7 @@ class OracleGenerator:
         response = {
             "model": "fake",
             "content": blocks,
-            "stop_reason": "end_turn",
+            "stop_reason": self.stop_reasons.get(question, "end_turn"),
             "usage": {"input_tokens": 100, "output_tokens": 10},
         }
         return parse_response(response, question, passages, digest="x", from_cache=False)
@@ -150,4 +153,33 @@ def test_eval_estimates_by_default_and_scores_an_oracle(tmp_path: Path) -> None:
     assert retrieved["summary"]["sp_recall"] < 1.0  # both gold in top 5 for < 100% of queries
     assert record["cost_estimate"]["gold"]["worst_case_cost_usd"] > 0
     assert record["dataset"]["comparable_to_full_beir"] is False
-    assert MAX_TOKENS == 1024
+    assert MAX_TOKENS == 512
+    assert record["results"]["gold"]["stop_reasons"] == {"end_turn": 100}
+    assert record["results"]["gold"]["flagged"] == []
+    per_request = record["cost_estimate"]["gold"]["per_request"]
+    assert len(per_request) == 100 and all(r["chars"] > 0 for r in per_request.values())
+
+
+@pytest.mark.skipif(not EMBEDDINGS.exists(), reason="build the subset and run the estimate once")
+def test_truncated_answers_are_flagged_not_scored(tmp_path: Path) -> None:
+    import eval_hotpotqa_beir
+
+    queries = [json.loads(line) for line in (SUBSET / "queries.jsonl").open()]
+    answers = {
+        json.loads(line)["_id"]: json.loads(line) for line in (SUBSET / "answers.jsonl").open()
+    }
+    truncated = queries[0]
+    oracle = OracleGenerator(
+        {q["text"]: answers[q["_id"]] for q in queries}, {truncated["text"]: "max_tokens"}
+    )
+    args = ["--subset", SUBSET.name, "--out-dir", str(tmp_path), "--run", "--max-cost-usd", "100"]
+    assert eval_hotpotqa_beir.main(args, oracle) == 0
+    record = json.loads(next(tmp_path.glob("*.json")).read_text())
+    gold = record["results"]["gold"]
+    assert gold["flagged"] == [
+        {"id": truncated["_id"], "stop_reason": "max_tokens", "output_tokens": 10}
+    ]
+    assert gold["stop_reasons"] == {"end_turn": 99, "max_tokens": 1}
+    assert gold["summary"]["questions"] == 99 and gold["summary"]["em"] == pytest.approx(1.0)
+    assert gold["summary_flagged_as_zero"]["em"] == pytest.approx(0.99)
+    assert all(c["queries"] == 99 for c in record["significance"]["f1"])  # paired on complete ones

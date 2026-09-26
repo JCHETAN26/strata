@@ -54,6 +54,7 @@ from answer import (
     cost_usd,
     estimate_input_tokens,
     load_env,
+    request_chars,
 )
 from hotpot_metrics import score_example
 
@@ -137,8 +138,18 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
     estimate = {}
     for name, per_q in conditions.items():
         tokens, method, uncached_in, uncached = 0, "estimate", 0, 0
+        per_request = {}
         for qid, ps in per_q.items():
-            n, method = estimate_input_tokens(build_request(question[qid], ps), counter)
+            request = build_request(question[qid], ps)
+            n, method = estimate_input_tokens(request, counter)
+            offline, _ = estimate_input_tokens(request)
+            per_request[qid] = {
+                "chars": request_chars(request),
+                "passages": len(ps),
+                "input_tokens": n,
+                "method": method,
+                "offline_estimate": offline,
+            }
             tokens += n
             if not generator.is_cached(question[qid], ps):
                 uncached += 1
@@ -150,6 +161,8 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
             "input_token_method": method,
             "expected_cost_usd": cost_usd(uncached_in, uncached * EXPECTED_OUTPUT_TOKENS),
             "worst_case_cost_usd": cost_usd(uncached_in, uncached * MAX_TOKENS),
+            "offline_estimate_tokens": sum(r["offline_estimate"] for r in per_request.values()),
+            "per_request": per_request,
         }
     total_expected = sum(e["expected_cost_usd"] for e in estimate.values())
     total_worst = sum(e["worst_case_cost_usd"] for e in estimate.values())
@@ -212,16 +225,54 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
                     "from_cache": a.from_cache,
                     "text": a.text,
                     "stop_reason": a.stop_reason,
+                    # Not a complete answer: truncated (max_tokens), refused, or other non-end_turn.
+                    "flagged": a.stop_reason != "end_turn",
                 }
             )
-        results[name] = {"summary": summarize(records), "records": records}
+        complete = [r for r in records if not r["flagged"]]
+        results[name] = {
+            # Headline metrics: complete answers only. Flagged responses are listed, not scored.
+            "summary": summarize(complete) if complete else {},
+            # For transparency: every question, flagged ones scored as zero.
+            "summary_flagged_as_zero": summarize(
+                [
+                    r if not r["flagged"] else {**r, "scores": dict.fromkeys(r["scores"], 0.0)}
+                    for r in records
+                ]
+            ),
+            "stop_reasons": {
+                s: sum(r["stop_reason"] == s for r in records)
+                for s in {r["stop_reason"] for r in records}
+            },
+            "flagged": [
+                {
+                    "id": r["id"],
+                    "stop_reason": r["stop_reason"],
+                    "output_tokens": r["output_tokens"],
+                }
+                for r in records
+                if r["flagged"]
+            ],
+            "records": records,
+        }
     seconds = time.perf_counter() - start
+    # Paired tests on questions answered completely in every condition.
+    flagged_ids = {f["id"] for c in conditions for f in results[c]["flagged"]}
     per_question = {
-        m: {c: {r["id"]: r["scores"][m] for r in results[c]["records"]} for c in conditions}
+        m: {
+            c: {
+                r["id"]: r["scores"][m] for r in results[c]["records"] if r["id"] not in flagged_ids
+            }
+            for c in conditions
+        }
         for m in ("f1", "sp_f1", "joint_f1")
     }
     significance = {m: [x.to_dict() for x in compare_all(pq)] for m, pq in per_question.items()}
     for name, r in results.items():
+        print(
+            f"  {name:9s} stop reasons {r['stop_reasons']}; flagged (not scored): "
+            f"{[f['id'] for f in r['flagged']] or 'none'}"
+        )
         s = r["summary"]
         print(
             f"  {name:9s} EM {s['em']:.3f}  F1 {s['f1']:.3f}  | cited SP F1 {s['sp_f1']:.3f} "

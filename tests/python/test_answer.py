@@ -55,7 +55,8 @@ def cite(doc: int, start: int, end: int, text: str = "") -> dict[str, Any]:
 def test_request_shape() -> None:
     request = build_request("When did the tower open?", PASSAGES)
     assert request["model"] == "claude-haiku-4-5"
-    assert request["temperature"] == 0.0
+    # SDK 1.x rejects temperature= as a keyword; it travels in extra_body instead.
+    assert "temperature" not in request and request["extra_body"] == {"temperature": 0.0}
     assert request["system"] == SYSTEM_PROMPT
     assert "output_config" not in request  # incompatible with citations
     content = request["messages"][0]["content"]

@@ -543,3 +543,49 @@ The default cap ($1.00) is below the worst case on purpose: a run needs an expli
   retrieved condition; it was 0.99 because one question had no gold passage retrieved, and the
   official metric scores an empty prediction as precision 0. The test was wrong; it now checks
   that every citation is a gold fact.
+
+## 2026-09-26 — First live run: HotpotQA (BEIR subset) with cited answers
+
+Run: `results/rag/hotpotqa-subset-n100-seed0-bg20000-20260926-121603-008304.json`
+(claude-haiku-4-5, temperature 0, max_tokens 512, prompt `cited-answer-v1`; 100 BEIR test queries
+over a 20,906-passage subset corpus).
+
+**Tokens and cost**
+
+| Condition | Offline estimate (old) | Exact (count_tokens) | Billed input | Output | Actual cost |
+|---|---|---|---|---|---|
+| retrieved (top 5) | 111,258 | 173,263 | 173,263 | 9,643 | $0.2215 |
+| gold (2 passages) | 52,079 | 102,350 | 102,350 | 9,622 | $0.1505 |
+| total | 163,337 | 275,613 | 275,613 | 19,265 | **$0.372** |
+
+Pre-run estimate with exact counts: expected $0.426, worst case $0.788 (cap $1.25). All 200
+responses ended with `end_turn`: none hit max_tokens (longest answer 191 tokens, mean 96), so
+nothing was flagged and every answer is scored.
+
+**Results**
+
+| Condition | EM | F1 | Cited-sentence precision | Cited-sentence recall | SP F1 | Joint F1 | Abstained |
+|---|---|---|---|---|---|---|---|
+| retrieved | 0.380 | 0.517 | 0.852 | 0.644 | 0.703 | 0.411 | 28% |
+| gold | 0.550 | 0.739 | 0.941 | 0.803 | 0.844 | 0.634 | 3% |
+
+Gap (retrieved − gold, 100 questions, 95% paired bootstrap CI, randomization p):
+answer F1 −0.221 [−0.298, −0.148], p = 0.0001 (retrieved better on 0, worse on 27, tied on 73);
+SP F1 −0.140 [−0.190, −0.093], p = 0.0001; joint F1 −0.223 [−0.297, −0.151], p = 0.0001.
+
+**Where the gap comes from:** retrieval. On the 65 questions where both gold passages were in the
+top 5, answer F1 is 0.736 retrieved vs 0.754 gold. On the other 35 it is 0.111 vs 0.710, and the
+model abstained ("Answer: unknown") on 71% of them rather than guessing. Every answered question
+carried citations (coverage 1.00).
+
+**Bug found by the first live call:** anthropic SDK 1.x removed `temperature` from
+`messages.create()`'s signature (TypeError), though the API still accepts it for Haiku 4.5. It now
+goes in `extra_body` (the SDK upgrade guide's documented path for models that honour it). The
+fake client in the offline tests accepted any keyword, so only the live test caught it.
+
+**Estimator calibration** (`bench/calibrate_token_estimate.py`): least squares on the 200 exact
+counts gives tokens ≈ 481 + 0.392 × characters (about 2.5 characters per token plus a fixed
+~481-token citation overhead per request). Mean absolute error: old estimator 43% (41% low in
+total), new 4.0% in-sample (max 14%); cross-condition (fit on one condition, predict the other)
+10–19%. Adding a per-sentence-block term only reached 3.2% in-sample and 8–17% cross-condition,
+so the two-term model was kept. Exact counts equalled billed usage for all 200 requests.

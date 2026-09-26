@@ -25,7 +25,9 @@ from typing import Any
 
 MODEL = "claude-haiku-4-5"
 PROMPT_VERSION = "cited-answer-v1"
-MAX_TOKENS = 1024
+# 512 bounds the worst-case cost; answers are 1-3 sentences plus an Answer line (~150 tokens).
+# Responses that hit it (stop_reason == "max_tokens") are flagged, not scored as answers.
+MAX_TOKENS = 512
 TEMPERATURE = 0.0
 # Claude Haiku 4.5 list prices (USD per million tokens), for cost reporting.
 PRICE_PER_MTOK = {"input": 1.00, "output": 5.00}
@@ -139,7 +141,10 @@ def build_request(
     return {
         "model": model,
         "max_tokens": max_tokens,
-        "temperature": temperature,
+        # anthropic SDK 1.x dropped temperature/top_p/top_k from messages.create()'s signature
+        # (the API still accepts them for Haiku 4.5), so it goes in extra_body, which the SDK
+        # merges into the request JSON unchanged. Temperature 0 is kept for reproducibility.
+        "extra_body": {"temperature": temperature},
         "system": SYSTEM_PROMPT,
         "messages": [{"role": "user", "content": content}],
     }
@@ -260,11 +265,16 @@ class AnswerGenerator:
 
 # --- Cost estimation ----------
 
-# Offline token estimate: English prose runs about 4 characters per token; 3.5 is used to lean
-# high, and citation-enabled documents add chunk markup and a system-prompt addition (the API
-# docs say "a slight increase in input tokens"), budgeted at 25%.
-CHARS_PER_TOKEN = 3.5
-CITATION_OVERHEAD = 1.25
+# Offline token estimate: tokens = PER_REQUEST_TOKENS + TOKENS_PER_CHAR * request_chars().
+# Fitted by least squares to 200 exact count_tokens values from the HotpotQA (BEIR) subset run of
+# 2026-09-26 (bench/calibrate_token_estimate.py): about 481 tokens of fixed per-request overhead
+# (citations add a system-prompt addition and chunk markup) plus ~2.5 characters per token.
+# In-sample mean error 4.0% (max 14%); fitting on one condition and predicting the other gave
+# 10-19%, so treat estimates for very different request shapes as rough. The exact counts
+# matched billed usage.input_tokens for all 200 requests. The previous estimator
+# (chars / 3.5 * 1.25) was 41% low.
+PER_REQUEST_TOKENS = 481
+TOKENS_PER_CHAR = 0.392
 EXPECTED_OUTPUT_TOKENS = 150  # a 1-3 sentence cited explanation plus the Answer line
 
 
@@ -287,7 +297,7 @@ def estimate_input_tokens(request: dict[str, Any], client: Any | None = None) ->
             model=request["model"], system=request["system"], messages=request["messages"]
         )
         return counted.input_tokens, "count_tokens"
-    return round(request_chars(request) / CHARS_PER_TOKEN * CITATION_OVERHEAD), "estimate"
+    return round(PER_REQUEST_TOKENS + TOKENS_PER_CHAR * request_chars(request)), "estimate"
 
 
 def cost_usd(input_tokens: int, output_tokens: int) -> float:
