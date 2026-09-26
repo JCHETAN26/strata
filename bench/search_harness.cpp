@@ -31,6 +31,7 @@
 
 #include "strata/brute_force.hpp"
 #include "strata/dataset.hpp"
+#include "strata/pq.hpp"
 #include "strata/recall.hpp"
 #include "strata/thread_pool.hpp"
 #ifdef STRATA_HAS_HNSW
@@ -59,6 +60,9 @@ struct Options {
   std::size_t m = 16;
   std::size_t ef_construction = 200;
   std::vector<std::size_t> ef_search{10, 20, 40, 80, 160, 320};
+  // PQ
+  std::size_t pq_m = 16;
+  std::vector<std::size_t> rerank{0, 10, 20, 50, 100, 200, 500};
 };
 
 [[noreturn]] void usage(std::string_view error) {
@@ -68,7 +72,8 @@ struct Options {
             << "                     [--max-queries N] [--warmup 1] [--kernel best|scalar]\n"
             << "                     [--threads 1]\n"
             << "       hnsw only:    [--M 16] [--ef-construction 200]\n"
-            << "                     [--ef-search 10,20,40,80,160,320]\n";
+            << "                     [--ef-search 10,20,40,80,160,320]\n"
+            << "       pq only:      [--pq-m 16] [--rerank 0,10,20,50,100,200,500]\n";
   std::exit(2);
 }
 
@@ -133,6 +138,10 @@ Options parse_args(int argc, char** argv) {
       opt.ef_construction = parse_size(flag, value);
     } else if (flag == "--ef-search") {
       opt.ef_search = parse_list(flag, value);
+    } else if (flag == "--pq-m") {
+      opt.pq_m = parse_size(flag, value);
+    } else if (flag == "--rerank") {
+      opt.rerank = parse_list(flag, value);
     } else {
       usage("unknown flag " + std::string(flag));
     }
@@ -195,7 +204,9 @@ struct SweepPoint {
 };
 
 // Times one sweep point: `opt.runs` runs, each after `opt.warmup` untimed passes.
-strata::Expected<Point> run_point(const SweepPoint& point, const strata::Matrix<float>& queries,
+strata::Expected<Point> run_point(const SweepPoint& point, const strata::Matrix<float>& base,
+                                  strata::DistanceFn exact_distance,
+                                  const strata::Matrix<float>& queries,
                                   const strata::Matrix<std::int32_t>& groundtruth,
                                   std::span<const float> kth_distances, const Options& opt,
                                   strata::ThreadPool& pool) {
@@ -217,12 +228,17 @@ strata::Expected<Point> run_point(const SweepPoint& point, const strata::Matrix<
     });
     const double search_seconds = seconds_since(search_start);
 
+    // Recall is judged on exact distances to the returned ids, since some indexes (PQ without
+    // reranking) return estimated distances. Outside the timed region.
     std::vector<std::vector<strata::Neighbor>> results(num_queries);
     for (std::size_t q = 0; q < num_queries; ++q) {
       if (!answers[q]) {
         return tl::unexpected(answers[q].error());
       }
       results[q] = std::move(*answers[q]);
+      for (auto& n : results[q]) {
+        n.distance = exact_distance(queries.row(q), base.row(n.id));
+      }
     }
 
     auto recall = strata::recall_at_k_with_ties(results, kth_distances, opt.k);
@@ -261,6 +277,8 @@ struct RunInfo {
   std::string_view build_params_json;
   double build_seconds;
   std::size_t num_base;
+  std::size_t index_bytes;
+  std::size_t rerank_bytes;
   std::size_t num_queries;
   std::size_t dim;
 };
@@ -286,6 +304,8 @@ void write_json(std::ostream& os, const RunInfo& info, const std::vector<Point>&
       << "  \"threads\": " << info.opt.threads << ",\n"
       << "  \"warmup_passes\": " << info.opt.warmup << ",\n"
       << "  \"num_base\": " << info.num_base << ",\n"
+      << "  \"index_bytes\": " << info.index_bytes << ",\n"
+      << "  \"rerank_bytes\": " << info.rerank_bytes << ",\n"
       << "  \"num_queries\": " << info.num_queries << ",\n"
       << "  \"dim\": " << info.dim << ",\n"
       << "  \"points\": [\n";
@@ -353,10 +373,17 @@ int main(int argc, char** argv) {
   const std::string_view kernel_name =
       opt.kernel == "scalar" ? std::string_view("scalar") : strata::best_kernel_name();
 
+  // Used for the timed searches and (for PQ) for parallel training/encoding.
+  strata::ThreadPool pool(opt.threads);
+
   // Build the index once.
   std::string build_params_json = "{}";
+  // Bytes the index needs to answer queries (excluding originals kept only for reranking).
+  std::size_t index_bytes = dataset->base.data().size_bytes();
+  std::size_t rerank_bytes = 0;
   std::vector<SweepPoint> sweep;
   std::optional<strata::BruteForceIndex> brute_force;
+  std::optional<strata::PqIndex> pq_index;
 #ifdef STRATA_HAS_HNSW
   std::optional<strata::HnswIndex> hnsw;
 #endif
@@ -391,16 +418,37 @@ int main(int argc, char** argv) {
            [&, ef](std::span<const float> q, std::size_t k) { return hnsw->search(q, k, ef); }});
     }
 #endif
+  } else if (opt.index == "pq") {
+    auto pq = strata::ProductQuantizer::train(dataset->base, *metric, {.m = opt.pq_m}, &pool);
+    if (!pq) {
+      std::cerr << "error: " << pq.error().message << "\n";
+      return 1;
+    }
+    auto index = strata::PqIndex::create(std::move(*pq), /*keep_originals=*/true);
+    if (!index || !index->add_batch(dataset->base, &pool)) {
+      std::cerr << "error: failed to build PQ index\n";
+      return 1;
+    }
+    pq_index.emplace(std::move(*index));
+    index_bytes = pq_index->code_bytes() + pq_index->codebook_bytes();
+    rerank_bytes = pq_index->original_bytes();
+    build_params_json = "{\"m\": " + std::to_string(opt.pq_m) + "}";
+    for (std::size_t rerank : opt.rerank) {
+      sweep.push_back({"{\"rerank\": " + std::to_string(rerank) + "}",
+                       [&, rerank](std::span<const float> q, std::size_t k) {
+                         return pq_index->search(q, k, {.rerank = rerank});
+                       }});
+    }
   } else {
     usage("unknown or unavailable index " + opt.index);
   }
   const double build_seconds = seconds_since(build_start);
   std::cerr << opt.index << ": built in " << build_seconds << " s\n";
 
-  strata::ThreadPool pool(opt.threads);
   std::vector<Point> points;
   for (const auto& point : sweep) {
-    auto result = run_point(point, queries, groundtruth, *kth_distances, opt, pool);
+    auto result = run_point(point, dataset->base, strata::distance_function(*metric, kernels),
+                            queries, groundtruth, *kth_distances, opt, pool);
     if (!result) {
       std::cerr << "error: " << result.error().message << "\n";
       return 1;
@@ -414,6 +462,8 @@ int main(int argc, char** argv) {
                      .build_params_json = build_params_json,
                      .build_seconds = build_seconds,
                      .num_base = dataset->base.rows(),
+                     .index_bytes = index_bytes,
+                     .rerank_bytes = rerank_bytes,
                      .num_queries = num_queries,
                      .dim = dim};
   write_json(std::cout, info, points);

@@ -26,6 +26,7 @@ STYLES: dict[tuple[str, str], tuple[str, str]] = {
     ("faiss", "hnsw"): ("#1baf7a", "^"),
     ("strata", "brute_force"): ("#eda100", "D"),
     ("faiss", "flat"): ("#e87ba4", "v"),
+    ("strata", "pq"): ("#008300", "P"),
 }
 SURFACE = "#fcfcfb"
 TEXT = "#0b0b0b"

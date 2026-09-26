@@ -43,6 +43,8 @@ add_library(strata STATIC
   src/distance/scalar.cpp
   src/eval/recall.cpp
   src/index/brute_force.cpp
+  src/pq/kmeans.cpp
+  src/pq/pq.cpp
   src/storage/collection.cpp
   src/storage/crc32c.cpp
   src/storage/dataset.cpp

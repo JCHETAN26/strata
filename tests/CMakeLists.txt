@@ -9,6 +9,7 @@ add_executable(strata_tests
   recall_test.cpp
   simd_test.cpp
   smoke_test.cpp
+  pq_test.cpp
   storage_test.cpp
   thread_pool_test.cpp)
 if(STRATA_HAS_HNSW)

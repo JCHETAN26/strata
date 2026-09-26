@@ -24,7 +24,7 @@ from records import save_record
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--dataset", required=True, help="directory name under data/")
-    parser.add_argument("--index", default="brute_force", choices=["brute_force", "hnsw"])
+    parser.add_argument("--index", default="brute_force", choices=["brute_force", "hnsw", "pq"])
     parser.add_argument("--k", type=int, default=10)
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--max-queries", type=int, default=0, help="0 = all queries")
@@ -33,6 +33,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--M", type=int, default=16)
     parser.add_argument("--ef-construction", type=int, default=200)
     parser.add_argument("--ef-search", default="10,20,40,80,160,320")
+    parser.add_argument("--pq-m", type=int, default=16)
+    parser.add_argument("--rerank", default="0,10,20,50,100,200,500")
     parser.add_argument("--build-dir", type=Path, default=REPO_ROOT / "build" / "release")
     parser.add_argument(
         "--allow-debug", action="store_true", help="allow non-Release builds (not for results)"
@@ -62,6 +64,8 @@ def main(argv: list[str] | None = None) -> int:
             "--ef-construction", str(args.ef_construction),
             "--ef-search", args.ef_search,
         ]  # fmt: skip
+    if args.index == "pq":
+        cmd += ["--pq-m", str(args.pq_m), "--rerank", args.rerank]
     print("$", " ".join(cmd), file=sys.stderr)
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, check=True)
     raw: dict[str, Any] = json.loads(proc.stdout)
