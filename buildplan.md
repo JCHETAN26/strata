@@ -144,10 +144,10 @@ First version will likely be slower than hnswlib. That's expected.
 
 ## Phase 6 — Filtered search (≈1 week, Mac)
 
-- [ ] Metadata attributes per vector (e.g., year, category)
-- [ ] Strategy A: pre-filter + brute force (best for very selective filters)
-- [ ] Strategy B: filter during graph traversal (best for broad filters)
-- [ ] Automatic strategy selection based on estimated selectivity
+- [x] Metadata attributes per vector (e.g., year, category)
+- [x] Strategy A: pre-filter + brute force (best for very selective filters)
+- [ ] Strategy B: filter during graph traversal (best for broad filters) — waits for HNSW
+- [ ] Automatic strategy selection based on estimated selectivity — needs the measured crossover; `estimate_selectivity` exists
 
 **Measure:** recall and QPS at 1%, 10%, 50% filter selectivity for each strategy (crossover chart).
 

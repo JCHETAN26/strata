@@ -212,3 +212,30 @@ build (the `ThreadPool` is ready for it), and profiling the graph search.
   speed only once the raw vectors no longer fit in cache/RAM. FAISS's 4-bit "fast scan" does ADC
   with SIMD shuffles; Strata's ADC is scalar.
 - "Combine PQ with HNSW" waits for the HNSW implementation.
+
+## 2026-09-25 — Phase 6: filtered search (non-HNSW parts)
+
+**Done**
+- `AttributeTable` (columnar int + interned category columns), `Filter` expressions
+  (equals / range / in, all_of / any_of / negate), `CompiledFilter` (per-id check, `Bitset`
+  evaluation, sampled selectivity estimate).
+- Strategy A: `BruteForceIndex::search_filtered` (iterate set bits of the pre-filter bitset) and
+  `search_predicate` (scan and check) as its baseline.
+- `strata_filter_bench`: synthetic `bucket = hash(id) % 1000` attribute for exact selectivity,
+  exact filtered ground truth, filter evaluation timed per query. `bench/plot_filter.py`.
+
+**Measured (SIFT10K, Apple M2; noisy, see below)**
+- At 1% selectivity pre-filtering is ~1.6x faster than scan-and-check (42.8k vs 26.5k QPS); at
+  10–50% they converge because distance computations dominate.
+- At 100% selectivity, median latency is ~140 µs vs ~120 µs unfiltered: filter evaluation costs
+  ~2 ns per row.
+
+**Problems**
+- The laptop was under background load again (load average ~5.7): individual runs of the same
+  configuration varied 3.0k–6.9k QPS. Medians are stable; means and the chart's error bars are
+  not. Final filtered-search numbers come from the Ryzen.
+
+**Waits for HNSW**
+- Strategy B (filter during graph traversal) and automatic strategy selection. The selection
+  threshold should come from the measured crossover between pre-filter + brute force and
+  in-graph filtering, not a guess; `estimate_selectivity` is ready for it.
