@@ -24,20 +24,31 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 OUT = REPO_ROOT / "data" / "hotpotqa"
 REPO = "hotpotqa/hotpot_qa"
 REVISION = "1908d6afbbead072334abe2965f91bd2709910ab"
-URL = (
-    f"https://huggingface.co/datasets/{REPO}/resolve/{REVISION}/"
-    "distractor/validation-00000-of-00001.parquet"
-)
+FILES = {
+    "validation": ["distractor/validation-00000-of-00001.parquet"],
+    "train": ["distractor/train-00000-of-00002.parquet", "distractor/train-00001-of-00002.parquet"],
+}
+URL = f"https://huggingface.co/datasets/{REPO}/resolve/{REVISION}/" + FILES["validation"][0]
+
+
+def download_split(split: str) -> list[tuple[Path, str]]:
+    """Download (once) and checksum the parquet files of a HotpotQA split."""
+    out = []
+    for name in FILES[split]:
+        path = OUT / name.replace("distractor/", "distractor_").replace("-00000-of-00001", "")
+        if not path.exists():
+            OUT.mkdir(parents=True, exist_ok=True)
+            url = f"https://huggingface.co/datasets/{REPO}/resolve/{REVISION}/{name}"
+            request = urllib.request.Request(url, headers={"User-Agent": "strata/0.1"})
+            with urllib.request.urlopen(request) as response:
+                path.write_bytes(response.read())
+        out.append((path, hashlib.sha256(path.read_bytes()).hexdigest()))
+    return out
 
 
 def download() -> tuple[Path, str]:
-    path = OUT / "distractor_validation.parquet"
-    if not path.exists():
-        OUT.mkdir(parents=True, exist_ok=True)
-        request = urllib.request.Request(URL, headers={"User-Agent": "strata/0.1"})
-        with urllib.request.urlopen(request) as response:
-            path.write_bytes(response.read())
-    return path, hashlib.sha256(path.read_bytes()).hexdigest()
+    """The dev ("validation") split, as used by the distractor-setting evaluation."""
+    return download_split("validation")[0]
 
 
 def load_questions(path: Path) -> list[dict]:

@@ -43,8 +43,11 @@ import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
-from prepare_hotpotqa import download as download_hotpotqa  # noqa: E402
-from prepare_hotpotqa import load_questions  # noqa: E402
+from prepare_hotpotqa import download_split, load_questions  # noqa: E402
+
+# BEIR split -> the HotpotQA split its questions come from. BEIR's test split is HotpotQA's dev
+# ("validation") set; BEIR's dev split is carved from HotpotQA's train set.
+HOTPOTQA_SPLIT = {"test": "validation", "dev": "train"}
 
 BEIR_URL = "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/hotpotqa.zip"
 BEIR_ZIP = REPO_ROOT / "data" / "beir" / "hotpotqa.zip"
@@ -89,24 +92,33 @@ def keep_background(doc_id: str, seed: int, fraction: float) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument(
+        "--split",
+        default="test",
+        choices=sorted(HOTPOTQA_SPLIT),
+        help="BEIR split to sample queries from (dev is for tuning)",
+    )
     parser.add_argument("--n", type=int, default=100)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--background", type=int, default=20_000)
     args = parser.parse_args(argv)
 
     ensure_zip()
-    hf_path, hf_sha = download_hotpotqa()
-    hf = {q["id"]: q for q in load_questions(hf_path)}
+    hf_files = download_split(HOTPOTQA_SPLIT[args.split])
+    hf = {q["id"]: q for path, _ in hf_files for q in load_questions(path)}
+    hf_sha = {path.name: sha for path, sha in hf_files}
     z = zipfile.ZipFile(BEIR_ZIP)
 
     qrels: dict[str, dict[str, int]] = {}
-    with z.open("hotpotqa/qrels/test.tsv") as f:
+    with z.open(f"hotpotqa/qrels/{args.split}.tsv") as f:
         reader = csv.reader(io.TextIOWrapper(f), delimiter="\t")
         next(reader)
         for qid, doc, score in reader:
             qrels.setdefault(qid, {})[doc] = int(score)
     if not set(qrels) <= set(hf):
-        raise SystemExit("BEIR test queries are not all HotpotQA dev questions")
+        raise SystemExit(
+            f"BEIR {args.split} queries are not all in HotpotQA {HOTPOTQA_SPLIT[args.split]}"
+        )
 
     rng = np.random.default_rng(args.seed)
     all_ids = sorted(qrels)
@@ -157,7 +169,8 @@ def main(argv: list[str] | None = None) -> int:
             if q["_id"] in qrels and q["_id"] in set(qids):
                 queries[q["_id"]] = q
 
-    name = f"hotpotqa-subset-n{args.n}-seed{args.seed}-bg{args.background}"
+    prefix = "hotpotqa" if args.split == "test" else f"hotpotqa-{args.split}"
+    name = f"{prefix}-subset-n{args.n}-seed{args.seed}-bg{args.background}"
     out = REPO_ROOT / "data" / "beir" / name
     (out / "qrels").mkdir(parents=True, exist_ok=True)
     with (out / "corpus.jsonl").open("w") as f:
@@ -166,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
     with (out / "queries.jsonl").open("w") as f:
         for q in qids:
             f.write(json.dumps(queries[q]) + "\n")
-    with (out / "qrels" / "test.tsv").open("w") as f:
+    with (out / "qrels" / f"{args.split}.tsv").open("w") as f:
         f.write("query-id\tcorpus-id\tscore\n")
         for q in qids:
             for d, s in sorted(qrels[q].items()):
@@ -191,12 +204,14 @@ def main(argv: list[str] | None = None) -> int:
         for s in ("gold", "distractor", "background")
     }
     meta = {
-        "setting": "BEIR HotpotQA (test split), subset corpus",
+        "setting": f"BEIR HotpotQA ({args.split} split), subset corpus",
+        "split": args.split,
         "beir_source": BEIR_URL,
         "beir_sha256": BEIR_SHA256,
         "beir_corpus_size": CORPUS_SIZE,
         "hotpotqa_source": "https://huggingface.co/datasets/hotpotqa/hotpot_qa",
         "hotpotqa_revision": "1908d6afbbead072334abe2965f91bd2709910ab",
+        "hotpotqa_split": HOTPOTQA_SPLIT[args.split],
         "hotpotqa_sha256": hf_sha,
         "n": args.n,
         "seed": args.seed,
