@@ -748,3 +748,41 @@ The dev-to-test drops (0.885 → 0.885 and 0.940 → 0.905) are consistent with 
 variant. Obvious next steps, not done: rerank the union of the single-hop and hop-2 pools
 together (the 0.98 ceiling is there to be had), or skip hop 2 for questions classified as
 comparisons.
+
+## 2026-09-26: Joint bge reranking of single-hop and hop-2 candidates
+
+`bench/eval_multihop_joint.py`, `rag/multihop.py` `joint_rank`. The keep rule is gone. The
+single-hop pool (BM25 top N ∪ dense top N, scored against the question) and the hop-2 pools
+(fused top m, full-text expansion, BM25/dense top `depth`, each scored against its hop-2 query)
+are merged. Each candidate gets its best bge score. The grid was kept to 8 settings to limit
+overfitting (m ∈ {1,2} × depth ∈ {5,10} × N ∈ {10,20}), dev only. Chosen: m=2, depth 5, N=10
+(dev R@5 0.945; every setting was 0.92–0.945). Code `d86cb53`, clean tree. No API spend. Result:
+`results/multihop/hotpotqa-subset-n100-seed0-bg20000-joint-20260926-140113-567318.json`.
+
+| Method | R@5 | bridge | comparison | All-relevant@5 |
+|---|---|---|---|---|
+| fused top 5 | 0.820 | 0.778 | 1.000 | 0.65 |
+| bge rerank (single hop) | 0.915 | 0.895 | 1.000 | 0.83 |
+| two-hop, no model | 0.885 | 0.858 | 1.000 | 0.78 |
+| two-hop, bge (keep 2) | 0.905 | 0.889 | 0.974 | 0.82 |
+| **joint bge** | **0.935** | **0.926** | 0.974 | **0.87** |
+
+Joint: pool 18.4 passages, pool ceiling 0.95, 3333 ms/query end to end (p50 3174, p95 5299;
+nearly all bge scoring). Planned comparisons (Holm over 3): vs fused R@5 +0.115 [+0.070, +0.160],
+p_holm 0.0003 (all-relevant +0.22, p_holm 0.0003); vs single-hop bge +0.020 [−0.020, +0.060],
+p_holm 0.46; vs two-hop no-model +0.050 [+0.010, +0.090], p_holm 0.064.
+
+**The comparison-question check still FAILS**, on the same question as before (5a75eb12…, "Which
+Muslim scholar was born first, Kamāl al-Dīn al-Fārisī or M. A. Muqtedar Khan?"). I expected
+joint scoring to fix it, and it didn't. Diagnosis from bge's scores on that question: the hop-2 query built
+from the al-Fārisī passage makes bge rate *other* medieval-Muslim-scholar passages (Al-Raghib
+al-Isfahani 0.99996, …) above the second gold passage (M. A. Muqtedar Khan, best score 0.99958).
+The expanded query contains the passage's own text, so passages *similar to the hop-1 passage*
+score as relevant, and a max over pools lets that bias through. This is a structural weakness of
+max-over-queries scoring, not a keep-rule artifact. I did not tune further for it (one question,
+and further tuning on 100 dev questions would be overfitting).
+
+Side note: `Reranker` returns bge's sigmoid-activated scores (the sentence-transformers default for
+a one-logit model). Ranking is unaffected (sigmoid is monotone, and so is max after it), but
+confident scores bunch near 1.0 (here 0.9989–0.99997), so float32 resolution could create ties.
+Returning raw logits would be safer; left as is so results stay comparable.
