@@ -22,9 +22,9 @@ def _run(cmd: list[str]) -> str:
 
 def git_info() -> dict[str, Any]:
     commit = _run(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"])
-    dirty = bool(
-        _run(["git", "-C", str(REPO_ROOT), "status", "--porcelain", "--untracked-files=no"])
-    )
+    # Benchmark outputs under results/ don't affect what was measured; ignore them.
+    status_cmd = ["git", "-C", str(REPO_ROOT), "status", "--porcelain", "--untracked-files=no"]
+    dirty = bool(_run([*status_cmd, "--", ".", ":!results"]))
     return {"commit": commit, "dirty": dirty}
 
 
