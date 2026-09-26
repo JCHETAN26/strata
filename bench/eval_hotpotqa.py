@@ -106,6 +106,15 @@ def summarize(records: list[dict]) -> dict:
         {
             "questions": n,
             "abstention_rate": 1 - len(answered) / n,
+            # Answer quality among questions the model did answer (abstentions excluded), so a
+            # cautious model is not scored as a wrong one. Read with abstention_rate.
+            "answered": len(answered),
+            "answered_em": float(np.mean([r["scores"]["em"] for r in answered]))
+            if answered
+            else None,
+            "answered_f1": float(np.mean([r["scores"]["f1"] for r in answered]))
+            if answered
+            else None,
             "format_failures": sum(not r["ok"] for r in records),
             "citation_coverage": (
                 float(np.mean([r["num_citations"] > 0 for r in answered])) if answered else 0.0

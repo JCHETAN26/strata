@@ -1,0 +1,670 @@
+{
+ "timestamp": "2026-09-26T19:24:57.998876+00:00",
+ "git": {
+  "commit": "6f6eea691c38f5de5a651dda0abce6cc51701beb",
+  "dirty": true
+ },
+ "hardware": {
+  "machine": "arm64",
+  "os": "Darwin 25.5.0",
+  "logical_cpus": 8,
+  "load_average_1m_5m_15m": [
+   3.59,
+   3.85,
+   4.55
+  ],
+  "cpu": "Apple M2",
+  "memory_gib": 8.0,
+  "os_version": "26.5.2"
+ },
+ "subset": "hotpotqa-subset-n100-seed0-bg20000",
+ "k": 5,
+ "summary": {
+  "questions": 100,
+  "questions_by_type": {
+   "bridge": 81,
+   "comparison": 19
+  },
+  "failed_questions": 35,
+  "failed_questions_by_type": {
+   "bridge": 35
+  },
+  "missing_passages": 36,
+  "missing_by_type": {
+   "bridge": 36,
+   "comparison": 0
+  },
+  "fused_rank_buckets": {
+   "bridge": {
+    "6-10": 19,
+    "51-100": 3,
+    "not found": 5,
+    "11-20": 6,
+    "21-50": 3
+   },
+   "comparison": {}
+  },
+  "title_in_question": {
+   "bridge": {
+    "not named": 36
+   },
+   "comparison": {}
+  },
+  "not_found_in_any_top100": 3,
+  "all_gold_within_fused_top_n": {
+   "bridge": {
+    "top5": {
+     "questions": 46,
+     "of": 81,
+     "share": 0.5679012345679012
+    },
+    "top10": {
+     "questions": 64,
+     "of": 81,
+     "share": 0.7901234567901234
+    },
+    "top20": {
+     "questions": 70,
+     "of": 81,
+     "share": 0.8641975308641975
+    },
+    "top50": {
+     "questions": 73,
+     "of": 81,
+     "share": 0.9012345679012346
+    },
+    "top100": {
+     "questions": 76,
+     "of": 81,
+     "share": 0.9382716049382716
+    }
+   },
+   "comparison": {
+    "top5": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0
+    },
+    "top10": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0
+    },
+    "top20": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0
+    },
+    "top50": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0
+    },
+    "top100": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0
+    }
+   },
+   "all": {
+    "top5": {
+     "questions": 65,
+     "of": 100,
+     "share": 0.65
+    },
+    "top10": {
+     "questions": 83,
+     "of": 100,
+     "share": 0.83
+    },
+    "top20": {
+     "questions": 89,
+     "of": 100,
+     "share": 0.89
+    },
+    "top50": {
+     "questions": 92,
+     "of": 100,
+     "share": 0.92
+    },
+    "top100": {
+     "questions": 95,
+     "of": 100,
+     "share": 0.95
+    }
+   }
+  },
+  "all_gold_within_union_bm25_dense_top_n": {
+   "bridge": {
+    "top5": {
+     "questions": 57,
+     "of": 81,
+     "share": 0.7037037037037037,
+     "mean_pool_size": 7.345679012345679
+    },
+    "top10": {
+     "questions": 64,
+     "of": 81,
+     "share": 0.7901234567901234,
+     "mean_pool_size": 15.135802469135802
+    },
+    "top20": {
+     "questions": 71,
+     "of": 81,
+     "share": 0.8765432098765432,
+     "mean_pool_size": 32.51851851851852
+    },
+    "top50": {
+     "questions": 76,
+     "of": 81,
+     "share": 0.9382716049382716,
+     "mean_pool_size": 86.75308641975309
+    },
+    "top100": {
+     "questions": 78,
+     "of": 81,
+     "share": 0.9629629629629629,
+     "mean_pool_size": 176.49382716049382
+    }
+   },
+   "comparison": {
+    "top5": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0,
+     "mean_pool_size": 7.2105263157894735
+    },
+    "top10": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0,
+     "mean_pool_size": 14.68421052631579
+    },
+    "top20": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0,
+     "mean_pool_size": 31.894736842105264
+    },
+    "top50": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0,
+     "mean_pool_size": 87.05263157894737
+    },
+    "top100": {
+     "questions": 19,
+     "of": 19,
+     "share": 1.0,
+     "mean_pool_size": 178.89473684210526
+    }
+   },
+   "all": {
+    "top5": {
+     "questions": 76,
+     "of": 100,
+     "share": 0.76,
+     "mean_pool_size": 7.32
+    },
+    "top10": {
+     "questions": 83,
+     "of": 100,
+     "share": 0.83,
+     "mean_pool_size": 15.05
+    },
+    "top20": {
+     "questions": 90,
+     "of": 100,
+     "share": 0.9,
+     "mean_pool_size": 32.4
+    },
+    "top50": {
+     "questions": 95,
+     "of": 100,
+     "share": 0.95,
+     "mean_pool_size": 86.81
+    },
+    "top100": {
+     "questions": 97,
+     "of": 100,
+     "share": 0.97,
+     "mean_pool_size": 176.95
+    }
+   }
+  }
+ },
+ "failures": [
+  {
+   "query_id": "5a7329a15542991f9a20c65f",
+   "type": "bridge",
+   "question": "What record officially started in 1519 in the same state that holds the city Augustus Chapman Allen used his inheritance to fund the founding of?",
+   "missing_doc": "2050354",
+   "missing_title": "History of Texas",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 7,
+   "rank_bm25": 8,
+   "rank_dense": 14
+  },
+  {
+   "query_id": "5a793d335542994bb9456fca",
+   "type": "bridge",
+   "question": "Amil Grove appeared in what  British tabloid published by News UK?",
+   "missing_doc": "12546101",
+   "missing_title": "Amii Grove",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 11,
+   "rank_dense": 1
+  },
+  {
+   "query_id": "5a7c6fde55429907fabeef87",
+   "type": "bridge",
+   "question": "WWE Super Tuesday took place at an arena that currently goes by what name?",
+   "missing_doc": "498890",
+   "missing_title": "TD Garden",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 10,
+   "rank_bm25": 54,
+   "rank_dense": 11
+  },
+  {
+   "query_id": "5a7fd1515542992e7d278db1",
+   "type": "bridge",
+   "question": "Grimsby Minster is located in which English Province?",
+   "missing_doc": "1445068",
+   "missing_title": "Diocese of Lincoln",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 57,
+   "rank_bm25": null,
+   "rank_dense": 30
+  },
+  {
+   "query_id": "5a81ca835542990a1d231ebd",
+   "type": "bridge",
+   "question": "Who is still with the group that covered \"Leather-Winged Bat\" in 1969?",
+   "missing_doc": "158205",
+   "missing_title": "Peter, Paul and Mary",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": null,
+   "rank_bm25": 57,
+   "rank_dense": null
+  },
+  {
+   "query_id": "5a81d81e554299676cceb0f6",
+   "type": "bridge",
+   "question": "Which car brand was one step above the brand started on November 3, 1911?",
+   "missing_doc": "6327803",
+   "missing_title": "General Motors Companion Make Program",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 18,
+   "rank_bm25": null,
+   "rank_dense": 3
+  },
+  {
+   "query_id": "5a82a55955429966c78a6a70",
+   "type": "bridge",
+   "question": "Who acquired a luxury hotel and casino in Las Vegas?",
+   "missing_doc": "1273745",
+   "missing_title": "Golden Nugget Las Vegas",
+   "title_in_question": false,
+   "other_gold_in_top_k": false,
+   "rank_fused": 7,
+   "rank_bm25": 6,
+   "rank_dense": 8
+  },
+  {
+   "query_id": "5a82a55955429966c78a6a70",
+   "type": "bridge",
+   "question": "Who acquired a luxury hotel and casino in Las Vegas?",
+   "missing_doc": "1715119",
+   "missing_title": "Golden Nugget, Inc.",
+   "title_in_question": false,
+   "other_gold_in_top_k": false,
+   "rank_fused": 10,
+   "rank_bm25": 11,
+   "rank_dense": 11
+  },
+  {
+   "query_id": "5a86fde6554299211dda2b7f",
+   "type": "bridge",
+   "question": "Pramod Bhasin was the former CEO of a company that provided what kind of services?",
+   "missing_doc": "4311837",
+   "missing_title": "Genpact",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 18,
+   "rank_bm25": 32,
+   "rank_dense": 29
+  },
+  {
+   "query_id": "5a8ac5595542992d82986f77",
+   "type": "bridge",
+   "question": "In 2001, Hampton Pirates men's basketball defeated a second seed team that was coached by who ?",
+   "missing_doc": "22188803",
+   "missing_title": "2000\u201301 Iowa State Cyclones men's basketball team",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 11,
+   "rank_bm25": 15,
+   "rank_dense": 19
+  },
+  {
+   "query_id": "5a8af1e255429950cd6afc28",
+   "type": "bridge",
+   "question": "Who is the English Professional Footballer that is the niece of a former footballer born in the same place as where he plays?",
+   "missing_doc": "52095403",
+   "missing_title": "Trent Alexander-Arnold",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 41,
+   "rank_bm25": null,
+   "rank_dense": 6
+  },
+  {
+   "query_id": "5a8b24f955429949d91db4cd",
+   "type": "bridge",
+   "question": "Where is the airline company that operated United Express Flight 3411 on April 9, 2017 on behalf of United Express headquartered?",
+   "missing_doc": "927782",
+   "missing_title": "Republic Airline",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 9,
+   "rank_bm25": 9,
+   "rank_dense": 8
+  },
+  {
+   "query_id": "5a8c5bff554299240d9c2139",
+   "type": "bridge",
+   "question": "How many members exist in the conference represented by the Michigan State Spartans in the 1993 Liberty Bowl?",
+   "missing_doc": "78358",
+   "missing_title": "Big Ten Conference",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 8,
+   "rank_bm25": 19,
+   "rank_dense": 4
+  },
+  {
+   "query_id": "5ab31864554299233954ff06",
+   "type": "bridge",
+   "question": "What class of instrument does Apatim Majumdar play?",
+   "missing_doc": "577443",
+   "missing_title": "Sarod",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 24,
+   "rank_dense": 2
+  },
+  {
+   "query_id": "5ab431d855429942dd415ed2",
+   "type": "bridge",
+   "question": "What company has a headquarters in Whitley, Convernty, United Kingdom?",
+   "missing_doc": "884080",
+   "missing_title": "Land Rover Defender",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": null,
+   "rank_bm25": null,
+   "rank_dense": null
+  },
+  {
+   "query_id": "5ab487765542990594ba9c4e",
+   "type": "bridge",
+   "question": "The USS Daedalus was named after an exiled Athenian representative of artists from which culture?",
+   "missing_doc": "73327",
+   "missing_title": "Minoan civilization",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": null,
+   "rank_bm25": null,
+   "rank_dense": null
+  },
+  {
+   "query_id": "5ab678f455429954757d32d3",
+   "type": "bridge",
+   "question": "What river runs near the tidal island of Eilean Tioram?",
+   "missing_doc": "1514544",
+   "missing_title": "Loch Shiel",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 15,
+   "rank_bm25": 13,
+   "rank_dense": 66
+  },
+  {
+   "query_id": "5aba916c55429901930fa83b",
+   "type": "bridge",
+   "question": "Which Canadian Province was captured with the support of the Mi'kmaq, Maliseet, Passamaquoddy, Abenaki, and Penobscot?",
+   "missing_doc": "26397936",
+   "missing_title": "Siege of Port Royal (1710)",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 29,
+   "rank_bm25": null,
+   "rank_dense": 14
+  },
+  {
+   "query_id": "5abaf4535542996cc5e49f35",
+   "type": "bridge",
+   "question": "Where was the coach of the 1999 Oklahoma State Cowboys football team hired in 2013?",
+   "missing_doc": "7889685",
+   "missing_title": "Bob Simmons (American football coach)",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 9,
+   "rank_dense": 5
+  },
+  {
+   "query_id": "5abbd7985542992ccd8e7fb8",
+   "type": "bridge",
+   "question": "Thor Equities owns properties in Soho, which became known for what type of rental properties?",
+   "missing_doc": "100821",
+   "missing_title": "SoHo, Manhattan",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 25,
+   "rank_dense": 2
+  },
+  {
+   "query_id": "5abdb5b455429965af743dfa",
+   "type": "bridge",
+   "question": "Who was the another star in the television series Ma Boy who worked with the South Korean actress who began her career as a child actress in 2006 and initially gained public attention for \"Moon Embracing the Sun\" (2012)?",
+   "missing_doc": "41196857",
+   "missing_title": "Ma Boy (TV series)",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 7,
+   "rank_bm25": 8,
+   "rank_dense": 5
+  },
+  {
+   "query_id": "5abe03635542991f661060a5",
+   "type": "bridge",
+   "question": "What is the middle name of the former Stanford Cardinals player who caught 57 passes for 1010 yards and 14 TDs?",
+   "missing_doc": "1316633",
+   "missing_title": "James Lofton",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 9,
+   "rank_bm25": 26,
+   "rank_dense": 2
+  },
+  {
+   "query_id": "5ac16c2b5542994d76dcce19",
+   "type": "bridge",
+   "question": "What does the brewery that is located in the home of Neuhaus produce?",
+   "missing_doc": "2994960",
+   "missing_title": "Lindemans Brewery",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 9,
+   "rank_bm25": 10,
+   "rank_dense": 7
+  },
+  {
+   "query_id": "5ac27d2555429963665199dc",
+   "type": "bridge",
+   "question": "The teaching method that Maggie Gripenberg was the first to introduce to Finland is used to teach what?",
+   "missing_doc": "28247470",
+   "missing_title": "Dalcroze Eurhythmics",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 6,
+   "rank_dense": 9
+  },
+  {
+   "query_id": "5ac325495542995ef918c12e",
+   "type": "bridge",
+   "question": "Which region of Ghana was the city where Akrofuom is located?",
+   "missing_doc": "4150272",
+   "missing_title": "Obuasi Municipal District",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 51,
+   "rank_bm25": 29,
+   "rank_dense": null
+  },
+  {
+   "query_id": "5ac3a2fa5542993915413857",
+   "type": "bridge",
+   "question": "This One's for the Children had lead vocals by the singer and songwriter of what nationality?",
+   "missing_doc": "587794",
+   "missing_title": "Donnie Wahlberg",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 46,
+   "rank_bm25": null,
+   "rank_dense": 17
+  },
+  {
+   "query_id": "5ac3bff15542995ef918c213",
+   "type": "bridge",
+   "question": "Alexander S. Wadsworth served during the war that was faught between which two countries?",
+   "missing_doc": "34059",
+   "missing_title": "War of 1812",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 17,
+   "rank_bm25": null,
+   "rank_dense": 2
+  },
+  {
+   "query_id": "5adc861c5542994d58a2f62c",
+   "type": "bridge",
+   "question": "What is the main base for the parent company of LATAM Express?",
+   "missing_doc": "419797",
+   "missing_title": "LATAM Chile",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 6,
+   "rank_dense": 5
+  },
+  {
+   "query_id": "5adc93a4554299438c868e01",
+   "type": "bridge",
+   "question": "After whom was the area, where  The Phillips Collection is located, named ?",
+   "missing_doc": "363546",
+   "missing_title": "Dupont Circle",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": null,
+   "rank_bm25": null,
+   "rank_dense": null
+  },
+  {
+   "query_id": "5adc995d5542994ed6169ba8",
+   "type": "bridge",
+   "question": "What group of people are described as semi-nomadic and speak the Semitic language ?",
+   "missing_doc": "4024670",
+   "missing_title": "Gararish",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 3,
+   "rank_dense": 14
+  },
+  {
+   "query_id": "5adfd56655429925eb1afaac",
+   "type": "bridge",
+   "question": "What is the birth name of the disc jockey that notably used Mark Wirtz's song \"A Touch of Velvet, A Sting of Brass\" on their Radio Caroline show?",
+   "missing_doc": "988842",
+   "missing_title": "Dave Lee Travis",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 12,
+   "rank_bm25": 9,
+   "rank_dense": 27
+  },
+  {
+   "query_id": "5adff45c55429925eb1afb8c",
+   "type": "bridge",
+   "question": "When was the actor born who starred in Sugarfoot?",
+   "missing_doc": "158802",
+   "missing_title": "Randolph Scott",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 90,
+   "rank_bm25": null,
+   "rank_dense": 49
+  },
+  {
+   "query_id": "5ae01fcf554299025d62a411",
+   "type": "bridge",
+   "question": "What type of students attend the school adjacent to Pilgram Hospital?",
+   "missing_doc": "7537044",
+   "missing_title": "Boston High School",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": null,
+   "rank_bm25": null,
+   "rank_dense": 64
+  },
+  {
+   "query_id": "5ae237ac554299492dc91be1",
+   "type": "bridge",
+   "question": "What was the population in 2010 of the town where The Stelljes House is located ?",
+   "missing_doc": "124939",
+   "missing_title": "Goshen, New Hampshire",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 7,
+   "rank_bm25": 48,
+   "rank_dense": 44
+  },
+  {
+   "query_id": "5ae4bbf05542995ad6573e32",
+   "type": "bridge",
+   "question": "Which criminal case filed in Santa Clara County Superior Court did judge Aaron Persky rendered the verdict in",
+   "missing_doc": "50722402",
+   "missing_title": "People v. Turner",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 5,
+   "rank_dense": 8
+  },
+  {
+   "query_id": "5ae712fa554299572ea546b9",
+   "type": "bridge",
+   "question": "What was the name of the band of Confederate army deserters in the 2016 movie starring Matthew McConaughey, Gugu Mbatha-Raw, and Keri Russell?",
+   "missing_doc": "19656290",
+   "missing_title": "Newton Knight",
+   "title_in_question": false,
+   "other_gold_in_top_k": true,
+   "rank_fused": 6,
+   "rank_bm25": 8,
+   "rank_dense": 34
+  }
+ ]
+}

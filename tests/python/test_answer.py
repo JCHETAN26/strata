@@ -20,6 +20,7 @@ from answer import (
     load_env,
     parse_response,
 )
+from fake_anthropic import CREATE_SIGNATURE, FakeAnthropic, check_call
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -120,44 +121,45 @@ def test_parse_abstention_and_failures() -> None:
     assert bad.ok and not bad.cited_sentences
 
 
-class FakeMessage:
-    def __init__(self, data: dict[str, Any]) -> None:
-        self._data = data
+def fake_client() -> FakeAnthropic:
+    """Signature-checked against the installed SDK (see fake_anthropic.py)."""
+    blocks = [
+        {"type": "text", "text": "Opened 1889", "citations": [cite(0, 1, 2)]},
+        {"type": "text", "text": "\nAnswer: 1889"},
+    ]
+    return FakeAnthropic(lambda kwargs: fake_response(blocks))
 
-    def to_dict(self) -> dict[str, Any]:
-        return self._data
+
+def test_fake_client_rejects_what_the_sdk_rejects() -> None:
+    client = fake_client()
+    # The bug the first live call found: SDK 1.x has no temperature= keyword.
+    with pytest.raises(TypeError, match="temperature"):
+        client.messages.create(model=MODEL, max_tokens=10, messages=[], temperature=0.0)
+    with pytest.raises(TypeError):
+        client.messages.create(model=MODEL, messages=[])  # max_tokens is required
+    with pytest.raises(TypeError):
+        client.messages.count_tokens(model=MODEL, messages=[], max_tokens=10)
+    assert client.messages.calls == []
 
 
-class FakeClient:
-    def __init__(self) -> None:
-        self.calls: list[dict[str, Any]] = []
-        self.messages = self
-
-    def create(self, **kwargs: Any) -> FakeMessage:
-        self.calls.append(kwargs)
-        return FakeMessage(
-            fake_response(
-                [
-                    {"type": "text", "text": "Opened 1889", "citations": [cite(0, 1, 2)]},
-                    {"type": "text", "text": "\nAnswer: 1889"},
-                ]
-            )
-        )
+def test_request_is_accepted_by_the_installed_sdk() -> None:
+    request = build_request("q?", PASSAGES)
+    check_call(CREATE_SIGNATURE, request)  # raises TypeError if the SDK would reject it
 
 
 def test_generator_caches_by_request(tmp_path: Path) -> None:
-    client = FakeClient()
+    client = fake_client()
     generator = AnswerGenerator(client, cache_dir=tmp_path)
     first = generator.answer("When did it open?", PASSAGES)
     second = generator.answer("When did it open?", PASSAGES)
-    assert len(client.calls) == 1  # second answer came from the cache
+    assert len(client.messages.calls) == 1  # second answer came from the cache
     assert not first.from_cache and second.from_cache
     assert first.short_answer == second.short_answer == "1889"
     assert first.cited_sentences == second.cited_sentences
     cached = json.loads(next(tmp_path.glob("*.json")).read_text())
     assert cached["request"]["model"] == MODEL and cached["response"]["id"] == "msg_test"
     generator.answer("A different question?", PASSAGES)
-    assert len(client.calls) == 2
+    assert len(client.messages.calls) == 2
 
 
 def has_api_key() -> bool:

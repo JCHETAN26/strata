@@ -277,7 +277,9 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
         print(
             f"  {name:9s} EM {s['em']:.3f}  F1 {s['f1']:.3f}  | cited SP F1 {s['sp_f1']:.3f} "
             f"(P {s['sp_prec']:.3f}, R {s['sp_recall']:.3f})  | joint F1 {s['joint_f1']:.3f}  "
-            f"| abstain {s['abstention_rate']:.0%}  | ${s['cost_usd']:.3f}"
+            f"| abstain {s['abstention_rate']:.0%}, answered EM {s['answered_em']:.3f} "
+            f"F1 {s['answered_f1']:.3f} (n={s['answered']})  | "
+            f"${s['cost_usd']:.3f} ({s['from_cache']} of {s['questions']} from cache: no new spend)"
         )
 
     slug = timestamp_slug()

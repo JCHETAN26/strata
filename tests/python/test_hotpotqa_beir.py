@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -19,6 +18,7 @@ from answer import (
     parse_response,
     request_chars,
 )
+from fake_anthropic import FakeAnthropic
 from prepare_hotpotqa_beir import keep_background, normalized, split_sentences
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -58,20 +58,13 @@ def test_offline_estimate_and_pricing() -> None:
     assert cost_usd(0, 1_000_000) == pytest.approx(5.0)
 
 
-def test_exact_count_uses_count_tokens_without_sampling_params() -> None:
-    calls: list[dict] = []
-
-    class Counter:
-        def __init__(self) -> None:
-            self.messages = self
-
-        def count_tokens(self, **kwargs: Any) -> Any:
-            calls.append(kwargs)
-            return SimpleNamespace(input_tokens=321)
-
+def test_exact_count_uses_count_tokens_with_sdk_accepted_arguments() -> None:
+    # The fake binds every call against the installed SDK's count_tokens signature, so passing
+    # max_tokens or extra_body-only params there would raise TypeError here, as it would live.
+    client = FakeAnthropic(lambda kwargs: {}, count=lambda kwargs: 321)
     request = build_request("q?", [Passage("d", "T", ["One."])])
-    assert estimate_input_tokens(request, Counter()) == (321, "count_tokens")
-    assert set(calls[0]) == {"model", "system", "messages"}  # count_tokens rejects max_tokens etc.
+    assert estimate_input_tokens(request, client) == (321, "count_tokens")
+    assert set(client.messages.count_calls[0]) == {"model", "system", "messages"}
 
 
 # --- End to end with a scripted generator ----------
@@ -143,6 +136,8 @@ def test_eval_estimates_by_default_and_scores_an_oracle(tmp_path: Path) -> None:
     gold = record["results"]["gold"]["summary"]
     for metric in ("em", "f1", "sp_em", "sp_f1", "joint_em", "joint_f1"):
         assert gold[metric] == pytest.approx(1.0), metric
+    assert gold["answered"] == 100 and gold["answered_em"] == pytest.approx(1.0)
+    assert gold["answered_f1"] == pytest.approx(1.0)
     # Retrieved: every citation the oracle makes is a gold fact, but questions whose gold
     # passages were not retrieved have nothing to cite, and the official metric scores an empty
     # prediction as precision 0. So check citations directly, and that recall is capped.
@@ -183,3 +178,23 @@ def test_truncated_answers_are_flagged_not_scored(tmp_path: Path) -> None:
     assert gold["summary"]["questions"] == 99 and gold["summary"]["em"] == pytest.approx(1.0)
     assert gold["summary_flagged_as_zero"]["em"] == pytest.approx(0.99)
     assert all(c["queries"] == 99 for c in record["significance"]["f1"])  # paired on complete ones
+
+
+@pytest.mark.skipif(not EMBEDDINGS.exists(), reason="build the subset and run the estimate once")
+def test_retrieval_failure_analysis_is_consistent(tmp_path: Path) -> None:
+    import analyze_hotpotqa_retrieval
+
+    assert (
+        analyze_hotpotqa_retrieval.main(["--subset", SUBSET.name, "--out-dir", str(tmp_path)]) == 0
+    )
+    record = json.loads(next(tmp_path.glob("*.json")).read_text())
+    s = record["summary"]
+    ceiling = s["all_gold_within_fused_top_n"]["all"]
+    # Questions failing at top 5 are exactly those without both gold passages in the fused top 5.
+    assert s["failed_questions"] == 100 - ceiling["top5"]["questions"]
+    shares = [ceiling[f"top{n}"]["share"] for n in (5, 10, 20, 50, 100)]
+    assert shares == sorted(shares)  # deeper pools can only contain more
+    for f in record["failures"]:
+        assert f["rank_fused"] is None or f["rank_fused"] > 5
+    buckets = sum(sum(v.values()) for v in s["fused_rank_buckets"].values())
+    assert buckets == s["missing_passages"] == len(record["failures"])

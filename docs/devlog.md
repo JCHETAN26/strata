@@ -589,3 +589,40 @@ counts gives tokens ≈ 481 + 0.392 × characters (about 2.5 characters per toke
 total), new 4.0% in-sample (max 14%); cross-condition (fit on one condition, predict the other)
 10–19%. Adding a per-sentence-block term only reached 3.2% in-sample and 8–17% cross-condition,
 so the two-term model was kept. Exact counts equalled billed usage for all 200 requests.
+
+## 2026-09-26 — Follow-ups: SDK-checked fake client, answered-only metrics, retrieval failures
+
+**Fake Anthropic client** (`tests/python/fake_anthropic.py`): every `messages.create` /
+`count_tokens` call is bound against the installed SDK's real signature
+(`inspect.signature(...).bind`), so arguments the SDK rejects raise the same TypeError offline.
+Checked by reintroducing `temperature=` as a keyword: three offline tests failed, including a
+TypeError from the signature check.
+
+**Answered-only quality** (abstentions excluded; re-scored from cached responses, $0):
+
+| Condition | Abstained | Answered | EM (answered) | F1 (answered) |
+|---|---|---|---|---|
+| retrieved | 28% | 72 | 0.528 | 0.718 |
+| gold | 3% | 97 | 0.567 | 0.761 |
+
+**Retrieval failures** (`bench/analyze_hotpotqa_retrieval.py`): all 35 questions that miss a gold
+passage in the top 5 are *bridge* questions (all 19 comparison questions have both). 36 gold
+passages are missing; none is named in its question (typical second-hop passages), and for 34 of
+them the question's other gold passage is already in the top 5.
+
+Rank of each missing passage in the fused (RRF) top 100:
+
+| Rank | 6–10 | 11–20 | 21–50 | 51–100 | not in top 100 |
+|---|---|---|---|---|---|
+| Missing passages (all bridge) | 19 | 6 | 3 | 3 | 5 |
+
+Ceiling for a reranker (questions with both gold passages inside the candidate pool):
+
+| Pool | N=5 | N=10 | N=20 | N=50 | N=100 |
+|---|---|---|---|---|---|
+| fused top N | 65 | 83 | 89 | 92 | 95 |
+| union of BM25 top N and dense top N (mean size) | 76 (7) | 83 (15) | 90 (32) | 95 (87) | 97 (177) |
+
+RRF can bury a passage that only one retriever finds (e.g. dense rank 6, fused rank 41), so a
+reranking pool should be the union of the retrievers' lists, not the fused list. Three questions
+stay out of reach even with the top-100 union: those need multi-hop retrieval.
