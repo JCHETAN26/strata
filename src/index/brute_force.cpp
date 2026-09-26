@@ -36,6 +36,7 @@ Expected<VectorId> BruteForceIndex::add(std::span<const float> vector) {
     return make_error(ErrorCode::kInvalidArgument, "index is full");
   }
   data_.insert(data_.end(), vector.begin(), vector.end());
+  deleted_.push_back(0);
   return static_cast<VectorId>(size_++);
 }
 
@@ -51,24 +52,39 @@ Expected<void> BruteForceIndex::add_batch(const Matrix<float>& vectors) {
   }
   const auto values = vectors.data();
   data_.insert(data_.end(), values.begin(), values.end());
+  deleted_.resize(deleted_.size() + vectors.rows(), 0);
   size_ += vectors.rows();
   return {};
 }
 
-Expected<std::vector<Neighbor>> BruteForceIndex::search(std::span<const float> query,
-                                                        std::size_t k) const {
-  if (query.size() != dim_) {
-    return dimension_error(dim_, query.size());
+Expected<void> BruteForceIndex::remove(VectorId id) {
+  if (id >= size_) {
+    return make_error(ErrorCode::kNotFound, "no vector with id " + std::to_string(id));
   }
-  k = std::min(k, size_);
-  std::vector<Neighbor> heap;  // max-heap on (distance, id): heap.front() is the worst kept
-  if (k == 0) {
-    return heap;
+  if (deleted_[id] != 0) {
+    return make_error(ErrorCode::kNotFound, "vector " + std::to_string(id) + " already deleted");
   }
-  heap.reserve(k + 1);
+  deleted_[id] = 1;
+  ++num_deleted_;
+  return {};
+}
 
+bool BruteForceIndex::is_deleted(VectorId id) const noexcept {
+  assert(id < size_);
+  return deleted_[id] != 0;
+}
+
+// Two instantiations so an index with no deletes pays nothing for tombstone checks.
+template <bool kSkipDeleted>
+void BruteForceIndex::scan(std::span<const float> query, std::size_t k,
+                           std::vector<Neighbor>& heap) const {
   const float* row = data_.data();
   for (std::size_t i = 0; i < size_; ++i, row += dim_) {
+    if constexpr (kSkipDeleted) {
+      if (deleted_[i] != 0) {
+        continue;
+      }
+    }
     const Neighbor candidate{static_cast<VectorId>(i), distance_(query, {row, dim_})};
     if (heap.size() < k) {
       heap.push_back(candidate);
@@ -78,6 +94,24 @@ Expected<std::vector<Neighbor>> BruteForceIndex::search(std::span<const float> q
       heap.back() = candidate;
       std::push_heap(heap.begin(), heap.end());
     }
+  }
+}
+
+Expected<std::vector<Neighbor>> BruteForceIndex::search(std::span<const float> query,
+                                                        std::size_t k) const {
+  if (query.size() != dim_) {
+    return dimension_error(dim_, query.size());
+  }
+  k = std::min(k, live_size());
+  std::vector<Neighbor> heap;  // max-heap on (distance, id): heap.front() is the worst kept
+  if (k == 0) {
+    return heap;
+  }
+  heap.reserve(k + 1);
+  if (num_deleted_ == 0) {
+    scan<false>(query, k, heap);
+  } else {
+    scan<true>(query, k, heap);
   }
   std::sort_heap(heap.begin(), heap.end());
   return heap;

@@ -37,8 +37,16 @@ RESULTS_DIR = REPO_ROOT / "results" / "search"
 
 
 def summarize(runs: list[dict[str, float]]) -> dict[str, dict[str, float]]:
+    return summarize_fields(runs, SUMMARY_FIELDS)
+
+
+def summarize_fields(
+    runs: list[dict[str, float]], fields: list[str] | None = None
+) -> dict[str, dict[str, float]]:
+    """mean/median/stdev/min/max for each numeric field (all fields of the first run by default)."""
+    fields = fields if fields is not None else list(runs[0])
     summary = {}
-    for field in SUMMARY_FIELDS:
+    for field in fields:
         values = [r[field] for r in runs if field in r]
         if not values:
             continue

@@ -11,6 +11,7 @@ enum class ErrorCode {
   kDimensionMismatch,
   kIoError,
   kCorruptData,
+  kNotFound,
 };
 
 // Error returned across API boundaries. Hot paths do not throw; they return Expected<T>.

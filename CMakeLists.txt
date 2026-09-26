@@ -43,7 +43,12 @@ add_library(strata STATIC
   src/distance/scalar.cpp
   src/eval/recall.cpp
   src/index/brute_force.cpp
+  src/storage/collection.cpp
+  src/storage/crc32c.cpp
   src/storage/dataset.cpp
+  src/storage/file.cpp
+  src/storage/snapshot.cpp
+  src/storage/wal.cpp
   src/util/thread_pool.cpp)
 add_library(strata::strata ALIAS strata)
 

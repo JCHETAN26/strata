@@ -10,3 +10,8 @@ add_executable(strata_search
   search_harness.cpp)
 target_link_libraries(strata_search PRIVATE strata::strata strata_options)
 target_compile_definitions(strata_search PRIVATE STRATA_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
+
+# Storage: insert throughput per sync mode, checkpoint and recovery time.
+add_executable(strata_storage_bench
+  storage_bench.cpp)
+target_link_libraries(strata_storage_bench PRIVATE strata::strata strata_options)

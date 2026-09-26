@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <span>
 #include <vector>
 
@@ -30,7 +31,12 @@ class BruteForceIndex {
   // Appends every row. Fails (adding nothing) on dimension mismatch.
   Expected<void> add_batch(const Matrix<float>& vectors);
 
-  // The min(k, size()) nearest vectors, sorted by (distance, id) ascending.
+  // Marks a vector deleted (tombstone): it is skipped by search but keeps its id, so ids stay
+  // dense and stable. Fails with kNotFound if id >= size() or it is already deleted.
+  Expected<void> remove(VectorId id);
+  [[nodiscard]] bool is_deleted(VectorId id) const noexcept;
+
+  // The min(k, live_size()) nearest non-deleted vectors, sorted by (distance, id) ascending.
   // Fails on dimension mismatch. k == 0 or an empty index gives an empty result.
   [[nodiscard]] Expected<std::vector<Neighbor>> search(std::span<const float> query,
                                                        std::size_t k) const;
@@ -40,7 +46,10 @@ class BruteForceIndex {
   [[nodiscard]] Expected<std::vector<std::vector<Neighbor>>> search_batch(
       const Matrix<float>& queries, std::size_t k, ThreadPool& pool) const;
 
+  // Number of ids assigned, including deleted ones.
   [[nodiscard]] std::size_t size() const noexcept { return size_; }
+  [[nodiscard]] std::size_t num_deleted() const noexcept { return num_deleted_; }
+  [[nodiscard]] std::size_t live_size() const noexcept { return size_ - num_deleted_; }
   [[nodiscard]] std::size_t dim() const noexcept { return dim_; }
   [[nodiscard]] Metric metric() const noexcept { return metric_; }
   [[nodiscard]] std::span<const float> vector(VectorId id) const noexcept;
@@ -51,8 +60,13 @@ class BruteForceIndex {
   std::size_t dim_;
   Metric metric_;
   DistanceFn distance_;
+  template <bool kSkipDeleted>
+  void scan(std::span<const float> query, std::size_t k, std::vector<Neighbor>& heap) const;
+
   std::size_t size_ = 0;
+  std::size_t num_deleted_ = 0;
   std::vector<float> data_;
+  std::vector<std::uint8_t> deleted_;  // one byte per id; 1 = tombstoned
 };
 
 }  // namespace strata
