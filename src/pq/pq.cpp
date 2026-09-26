@@ -151,12 +151,26 @@ void ProductQuantizer::compute_table(std::span<const float> query, std::span<flo
 
 float ProductQuantizer::table_distance(std::span<const float> table,
                                        std::span<const std::uint8_t> code) const noexcept {
-  float sum = metric_ == Metric::kCosine ? 1.0F : 0.0F;
+  // Four independent sums: with one, every lookup waits for the previous add (a latency chain of
+  // m float adds). Measured on SIFT10K ADC scans: see docs/devlog.md, Phase 5.
   const float* t = table.data();
-  for (std::size_t s = 0; s < m_; ++s, t += kCentroids) {
-    sum += t[code[s]];
+  const std::uint8_t* c = code.data();
+  float s0 = 0.0F;
+  float s1 = 0.0F;
+  float s2 = 0.0F;
+  float s3 = 0.0F;
+  std::size_t s = 0;
+  for (; s + 4 <= m_; s += 4, t += 4 * kCentroids) {
+    s0 += t[c[s]];
+    s1 += t[kCentroids + c[s + 1]];
+    s2 += t[(2 * kCentroids) + c[s + 2]];
+    s3 += t[(3 * kCentroids) + c[s + 3]];
   }
-  return sum;
+  for (; s < m_; ++s, t += kCentroids) {
+    s0 += t[c[s]];
+  }
+  const float sum = (s0 + s1) + (s2 + s3);
+  return metric_ == Metric::kCosine ? 1.0F + sum : sum;
 }
 
 Expected<PqIndex> PqIndex::create(ProductQuantizer quantizer, bool keep_originals) {
