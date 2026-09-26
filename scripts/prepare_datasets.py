@@ -122,7 +122,9 @@ def download(url: str, dest: Path) -> str:
     """Download url to dest and return the SHA-256 hex digest."""
     print(f"downloading {url}", file=sys.stderr)
     sha = hashlib.sha256()
-    with urllib.request.urlopen(url) as response, dest.open("wb") as out:
+    # ann-benchmarks.com returns 403 to urllib's default User-Agent.
+    request = urllib.request.Request(url, headers={"User-Agent": "strata-dataset-fetch/0.1"})
+    with urllib.request.urlopen(request) as response, dest.open("wb") as out:
         while chunk := response.read(1 << 20):
             sha.update(chunk)
             out.write(chunk)
