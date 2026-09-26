@@ -2,8 +2,8 @@
 
     uv run python bench/validate_bm25_beir.py --dataset scifact
 
-Setup matched to Anserini's regression (src/main/resources/reproduce/from-document-collection/
-configs/beir-v1.0.0-scifact.flat.yaml): BeirFlatCollection contents = title + "\\n" + text,
+Setup matched to Anserini 2.3.0's beir-v1.0.0-scifact.flat regression (pinned reference and links:
+results/bm25/ANSERINI_REFERENCE.md): BeirFlatCollection contents = title + "\\n" + text,
 DefaultEnglishAnalyzer (StandardTokenizer, possessive, lowercase, Lucene English stopwords,
 Porter), BM25 k1=0.9 b=0.4 with Lucene's length encoding, -hits 1000, -removeQuery, scores
 written with %f, evaluated with trec_eval -c (ndcg_cut.10, recall.100, recall.1000).
@@ -25,16 +25,10 @@ import strata
 from benchmeta import REPO_ROOT, metadata, timestamp_slug, write_new
 from ir_eval import mean, ndcg_at_k, read_qrels, recall_at_k, round_scores, write_trec_run
 
-# Published Anserini BM25 flat results (beir-v1.0.0-<name>.flat.yaml) and index stats.
-PUBLISHED = {
-    "scifact": {
-        "nDCG@10": 0.6789,
-        "R@100": 0.9253,
-        "R@1000": 0.9767,
-        "documents": 5183,
-        "total_terms": 838128,
-    },
-}
+# Published Anserini BM25 flat results, pinned to a release: results/bm25/anserini_reference.json
+# (human-readable: results/bm25/ANSERINI_REFERENCE.md).
+REFERENCE_PATH = REPO_ROOT / "results" / "bm25" / "anserini_reference.json"
+REFERENCE = json.loads(REFERENCE_PATH.read_text())
 MARGIN = 0.002  # absolute, per metric
 TERMS_MARGIN = 0.001  # relative
 
@@ -46,8 +40,9 @@ def load_jsonl(path: Path) -> list[dict]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--dataset", default="scifact", choices=sorted(PUBLISHED))
+    parser.add_argument("--dataset", default="scifact", choices=sorted(REFERENCE))
     parser.add_argument("--threads", type=int, default=None)
+    parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "results" / "bm25")
     args = parser.parse_args(argv)
 
     data = REPO_ROOT / "data" / "beir" / args.dataset
@@ -86,13 +81,15 @@ def main(argv: list[str] | None = None) -> int:
         "R@100": mean(recall_at_k(run, qrels, 100)),
         "R@1000": mean(recall_at_k(run, qrels, 1000)),
     }
-    published = PUBLISHED[args.dataset]
+    reference = REFERENCE[args.dataset]
+    published = {**reference["published"], **reference["index_stats"]}
     checks = {name: abs(value - published[name]) <= MARGIN for name, value in metrics.items()}
     terms_ok = (
         abs(index.total_terms - published["total_terms"]) <= TERMS_MARGIN * published["total_terms"]
     )
     docs_ok = len(index) == published["documents"]
 
+    print(f"reference: Anserini {reference['anserini_version']}, {reference['configuration']}")
     print(f"{args.dataset}: {len(index)} docs, {index.total_terms} terms "
           f"(Anserini {published['total_terms']}), vocabulary {index.vocabulary_size}")  # fmt: skip
     for name, value in metrics.items():
@@ -105,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     slug = timestamp_slug()
-    out = REPO_ROOT / "results" / "bm25"
+    out = args.out_dir
     write_trec_run(out / f"{args.dataset}-{slug}.run", run, "strata-bm25")
     write_new(
         out / f"{args.dataset}-{slug}.json",
@@ -116,6 +113,7 @@ def main(argv: list[str] | None = None) -> int:
                 "setup": "BEIR flat, anserini_english analyzer, k1=0.9 b=0.4, lucene lengths",
                 "metrics": metrics,
                 "published": published,
+                "reference": reference,
                 "margin": MARGIN,
                 "passed": all(checks.values()) and terms_ok and docs_ok,
                 "documents": len(index),

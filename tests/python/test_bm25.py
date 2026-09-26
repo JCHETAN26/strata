@@ -183,7 +183,8 @@ def test_bm25_matches_bm25s_lucene_variant() -> None:
 
 
 @needs_scifact
-def test_scifact_reproduces_anserini() -> None:
+def test_scifact_reproduces_anserini(tmp_path: Path) -> None:
     import validate_bm25_beir
 
-    assert validate_bm25_beir.main(["--dataset", "scifact"]) == 0
+    # Write the run and metrics to a temp dir: results/ holds only deliberate benchmark runs.
+    assert validate_bm25_beir.main(["--dataset", "scifact", "--out-dir", str(tmp_path)]) == 0

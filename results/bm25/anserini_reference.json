@@ -1,0 +1,20 @@
+{
+  "scifact": {
+    "system": "Anserini",
+    "anserini_version": "2.3.0",
+    "anserini_release_tag": "anserini-2.3.0",
+    "anserini_release_commit": "578143efbb73d842748e6a3c379f40f459d03895",
+    "lucene_version": "10.5.0",
+    "configuration": "beir-v1.0.0-scifact.flat",
+    "configuration_notes": "flat: title and text concatenated into one 'contents' field (BeirFlatCollection, title + \"\\n\" + text); not multifield",
+    "analyzer": "DefaultEnglishAnalyzer: StandardTokenizer, EnglishPossessiveFilter, LowerCaseFilter, StopFilter(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET), PorterStemFilter",
+    "search": "-bm25 (k1=0.9, b=0.4) -removeQuery -hits 1000",
+    "evaluation": "trec_eval -c -m ndcg_cut.10 / recall.100 / recall.1000 on beir-v1.0.0-scifact.test (300 queries)",
+    "published": {"nDCG@10": 0.6789, "R@100": 0.9253, "R@1000": 0.9767},
+    "index_stats": {"documents": 5183, "total_terms": 838128},
+    "published_results_url": "https://github.com/castorini/anserini/blob/anserini-2.3.0/docs/reproduce/from-document-collection/beir-v1.0.0-scifact.flat.md",
+    "config_url": "https://github.com/castorini/anserini/blob/anserini-2.3.0/src/main/resources/reproduce/from-document-collection/configs/beir-v1.0.0-scifact.flat.yaml",
+    "also_checked": "Same values on master at 6caeb33a27385d6acc726d81874e34d3a567f46f (2026-08-16), the last commit touching the config",
+    "retrieved": "2026-09-25"
+  }
+}

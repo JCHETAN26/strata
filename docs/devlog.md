@@ -319,6 +319,11 @@ build (the `ThreadPool` is ready for it), and profiling the graph search.
 Pass criterion (set before the run): each metric within 0.002 absolute, total terms within 0.1%.
 Indexing 5,183 docs takes ~0.5 s; 300 queries at k=1000 run at ~34–44k QPS on all cores (M2).
 
+**Reference pinned:** Anserini 2.3.0 (tag `anserini-2.3.0`, Lucene 10.5.0), configuration
+`beir-v1.0.0-scifact.flat` (not multifield), with links to the published numbers at that tag, in
+`results/bm25/ANSERINI_REFERENCE.md` and `anserini_reference.json` (the validation script reads
+the JSON, so the reference lives in one place).
+
 **How the setup was pinned down (sources, not memory)**
 - Anserini's regression config (`beir-v1.0.0-scifact.flat.yaml`): BeirFlatCollection
   (title + "\n" + text), `-bm25 -removeQuery -hits 1000`, trec_eval `-c`, published values,
