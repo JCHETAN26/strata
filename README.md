@@ -114,6 +114,9 @@ uv run python scripts/prepare_hotpotqa.py --n 100 --seed 0
 uv run python bench/eval_hotpotqa.py --subset subset-n100-seed0
 ```
 
+Retrieval methods compared (fused, union, cross-encoder reranking, two-hop, joint two-hop
+reranking), with their quality, latency, and when to use each: `docs/rag-results.md`.
+
 ## Datasets
 
 Python tooling uses [uv](https://docs.astral.sh/uv/) with Python 3.11.

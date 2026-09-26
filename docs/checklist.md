@@ -91,6 +91,7 @@ After the core works (I can build these, on the Mac):
 - [x] Cited answer generation with Claude Haiku (sentence-level native citations; live run needs ANTHROPIC_API_KEY)
 - [x] BEIR and HotpotQA evaluation scripts (BEIR runner with significance; HotpotQA answer + groundedness eval in the distractor and BEIR settings, subset built and cost estimated, generation awaiting API key)
 - [x] Cross-encoder reranking on the HotpotQA BEIR subset (bge-reranker-base: both-gold@5 0.65 -> 0.83; not significant vs the no-model union baseline). SciFact and full-corpus reranking go on the IdeaPad GPU.
+- [x] Two-hop retrieval and joint two-hop bge reranking on the HotpotQA BEIR subset, end to end (answer F1 0.517 -> 0.669); summary in docs/rag-results.md. RAG experiments on the Mac are closed.
 - [ ] Design doc drafts: graph parameters, compression, filtering strategies
 - [ ] Group commit for the WAL (optional; durable inserts are capped at ~330/s by one fsync each)
 

@@ -786,3 +786,65 @@ Side note: `Reranker` returns bge's sigmoid-activated scores (the sentence-trans
 a one-logit model). Ranking is unaffected (sigmoid is monotone, and so is max after it), but
 confident scores bunch near 1.0 (here 0.9989–0.99997), so float32 resolution could create ties.
 Returning raw logits would be safer; left as is so results stay comparable.
+
+## 2026-09-26: End-to-end with two-hop and joint-reranked passages (six conditions)
+
+`uv run python bench/eval_hotpotqa_beir.py --run --max-cost-usd 1.00 --rerank-result <rerank>
+<multihop> <joint>`, code `37ba873`, clean tree. Result:
+`results/rag/hotpotqa-subset-n100-seed0-bg20000-20260926-141835-620789.json`. Estimate beforehand:
+expected $0.462, worst case $0.801 (count_tokens), cap $1.00. New spend **$0.412** (twohop
+$0.199 for 91 uncached, joint_bge $0.213 for 96 uncached; the other four conditions came entirely
+from the cache). All 600 responses ended with `end_turn`; none flagged.
+
+| Condition | Passages | EM | F1 | Answered EM | Answered F1 | Abstained | Cite P | Cite R | SP F1 | Joint F1 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| retrieved (fused top 5) | 5 | 0.380 | 0.517 | 0.528 | 0.718 | 28% | 0.852 | 0.644 | 0.703 | 0.411 |
+| union top 5, no model | 7.3 | 0.420 | 0.572 | 0.553 | 0.752 | 24% | 0.848 | 0.675 | 0.727 | 0.465 |
+| reranked (bge, single hop) | 5 | 0.460 | 0.614 | 0.561 | 0.749 | 18% | 0.887 | 0.692 | 0.750 | 0.495 |
+| two-hop, no model | 5 | 0.450 | 0.605 | 0.570 | 0.766 | 21% | 0.845 | 0.674 | 0.722 | 0.498 |
+| **joint bge (two-hop)** | 5 | **0.480** | **0.669** | 0.545 | 0.761 | **12%** | 0.877 | **0.739** | **0.778** | **0.564** |
+| gold passages | 2 | 0.550 | 0.739 | 0.567 | 0.761 | 3% | 0.941 | 0.803 | 0.844 | 0.634 |
+
+Planned comparisons: one Holm family of 6 per metric, pre-declared in `PLANNED` before the run.
+Bold means p_holm < 0.05.
+
+| Metric | bge − retr. | union − retr. | bge − union | two-hop − retr. | joint − retr. | joint − bge |
+|---|---|---|---|---|---|---|
+| EM | +0.080, 0.20 | +0.040, 0.85 | +0.040, 0.85 | +0.070, 0.47 | **+0.100, 0.008** | +0.020, 0.85 |
+| F1 | **+0.097, 0.012** | +0.055, 0.11 | +0.042, 0.20 | +0.088, 0.096 | **+0.152 [+0.094, +0.216], 0.0006** | +0.055 [−0.000, +0.114], 0.11 |
+| SP F1 | **+0.046, 0.019** | +0.024, 0.65 | +0.023, 0.65 | +0.019, 0.65 | **+0.074, 0.005** | +0.028, 0.57 |
+| Joint F1 | **+0.084, 0.016** | +0.054, 0.054 | +0.030, 0.30 | +0.087, 0.054 | **+0.153, 0.0006** | +0.069 [+0.014, +0.127], 0.054 |
+
+(Entries are mean difference and p_holm. The larger family makes earlier pairs' p_holm larger
+than in the 3-pair run; for example, union − retrieved joint F1 goes from 0.039 to 0.054.)
+
+By question type (81 bridge / 19 comparison), answer F1: retrieved 0.481 / 0.674, bge 0.600 /
+0.674, two-hop 0.575 / 0.735, joint 0.663 / 0.695, gold 0.754 / 0.674. End to end, comparison
+questions do **not** regress under joint reranking. The one question whose second gold passage it
+drops is answered wrong by *every* condition, including gold (F1 0). Under joint it abstains and
+cites only one supporting fact (SP F1 1.0 → 0.67). The retrieval-level check still fails, and
+that stands as recorded.
+
+**Reading:** joint two-hop reranking is the best condition on every headline metric. It closes
+about 68% of the retrieved-to-gold F1 gap (0.517 → 0.669 of 0.739) and nearly halves abstention
+(28% → 12%) for the same input tokens as fused top 5. Against single-hop bge its gains are
+consistent but not significant after correction on 100 questions (F1 +0.055, p_holm 0.11; joint F1
++0.069, p_holm 0.054). As before, answered-only F1 is flat (0.72–0.77). Better retrieval
+works by letting the model answer more questions, not by improving the answers it would already give.
+
+### Future work (recorded, not done)
+
+1. **Score against the original question as well as the expanded query.** The joint reranker's
+   comparison failure comes from the expanded query rewarding passages similar to the hop-1
+   passage. Candidates could be scored against both the question and the hop-2 query and
+   combined (e.g. the mean, or the question score with a hop-2 bonus), so a passage must also be
+   relevant to the question itself. Costs one extra bge pass over the hop-2 candidates
+   (~+10 pairs, ~+1 s per query on the M2 CPU).
+2. **Use raw reranker logits instead of sigmoid scores.** `Reranker` returns sentence-
+   transformers' default sigmoid for one-logit models; confident scores bunch at 0.9989–0.99997,
+   where float32 resolution (~6e-8) can create ties that fall back to pool order. Passing
+   `activation_fn=torch.nn.Identity()` would keep the same ranking with more headroom. It would
+   also make score combinations such as idea 1 better behaved: logits add, probabilities near 1 do
+   not.
+
+RAG experiments on the Mac are closed. The write-up is in `docs/rag-results.md`.
