@@ -1,0 +1,30 @@
+# Build output
+build/
+out/
+vcpkg_installed/
+compile_commands.json
+
+# Datasets and large generated files
+data/
+results/**/*.bin
+results/**/*.fvecs
+results/**/*.ivecs
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Editors / OS
+.DS_Store
+.vscode/
+.idea/
+.cache/
