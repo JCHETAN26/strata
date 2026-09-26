@@ -78,6 +78,19 @@ than the k-th true neighbor. Recall by id is strict id matching; it can be lower
 several vectors tie at the k-th distance. hnswlib/FAISS latencies include Python call
 overhead (their QPS does not). `*` = uncommitted changes when measured.
 
+## Hybrid retrieval (BEIR test split)
+
+| Dataset | Dense model @ revision | Method | nDCG@10 | R@100 | QPS | Machine | Commit |
+|---|---|---|---|---|---|---|---|
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | bm25 | 0.6789 | 0.9253 | 86269 | Apple M2 | `f3b40230` |
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | dense | 0.7127 | 0.9417 | 25858 | Apple M2 | `f3b40230` |
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | rrf (k=60) | 0.7273 | 0.9683 | 17653 | Apple M2 | `f3b40230` |
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | weighted (dense 0.65, tuned on train) | 0.7316 | 0.9667 | 17512 | Apple M2 | `f3b40230` |
+
+Fusion candidates: top 100 from each retriever. Weighted-fusion weight chosen on the
+train split only. BM25 and dense baselines are checked against published results
+(results/bm25/ANSERINI_REFERENCE.md, results/hybrid/dense_reference.json).
+
 ## Storage (Collection: WAL + snapshot)
 
 | Dataset | Machine | Vectors | Inserts/s no sync | Inserts/s fsync | fsync p99 µs | Checkpoint ms | Recover from WAL ms | Recover from snapshot ms | Commit |
