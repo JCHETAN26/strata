@@ -227,6 +227,12 @@ class AnswerGenerator:
         self.model = model
         self.cache_dir = cache_dir
 
+    def is_cached(self, question: str, passages: list[Passage]) -> bool:
+        if self.cache_dir is None:
+            return False
+        digest = request_hash(build_request(question, passages, model=self.model))
+        return (self.cache_dir / f"{digest}.json").exists()
+
     @property
     def client(self) -> Any:
         if self._client is None:
@@ -250,6 +256,42 @@ class AnswerGenerator:
             tmp.write_text(json.dumps({"request": request, "response": response}))
             tmp.replace(cached)
         return parse_response(response, question, passages, digest=digest, from_cache=False)
+
+
+# --- Cost estimation ----------
+
+# Offline token estimate: English prose runs about 4 characters per token; 3.5 is used to lean
+# high, and citation-enabled documents add chunk markup and a system-prompt addition (the API
+# docs say "a slight increase in input tokens"), budgeted at 25%.
+CHARS_PER_TOKEN = 3.5
+CITATION_OVERHEAD = 1.25
+EXPECTED_OUTPUT_TOKENS = 150  # a 1-3 sentence cited explanation plus the Answer line
+
+
+def request_chars(request: dict[str, Any]) -> int:
+    chars = len(request["system"])
+    for block in request["messages"][0]["content"]:
+        if block["type"] == "document":
+            chars += len(block.get("title", ""))
+            chars += sum(len(b["text"]) for b in block["source"]["content"])
+        else:
+            chars += len(block["text"])
+    return chars
+
+
+def estimate_input_tokens(request: dict[str, Any], client: Any | None = None) -> tuple[int, str]:
+    """Input tokens for one request: exact via the free count_tokens endpoint when a client is
+    given, else the offline estimate. Returns (tokens, "count_tokens" | "estimate")."""
+    if client is not None:
+        counted = client.messages.count_tokens(
+            model=request["model"], system=request["system"], messages=request["messages"]
+        )
+        return counted.input_tokens, "count_tokens"
+    return round(request_chars(request) / CHARS_PER_TOKEN * CITATION_OVERHEAD), "estimate"
+
+
+def cost_usd(input_tokens: int, output_tokens: int) -> float:
+    return (input_tokens * PRICE_PER_MTOK["input"] + output_tokens * PRICE_PER_MTOK["output"]) / 1e6
 
 
 def load_env(repo_root: Path) -> None:

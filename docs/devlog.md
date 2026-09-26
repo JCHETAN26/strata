@@ -500,3 +500,46 @@ and `.../avx2_cosine` on the x86_64 build, with no hex names left in either.
 `pytest` autoloaded the `anyio` plugin (pulled in by the Anthropic SDK) and put an inherited
 `PYTHONPATH` entry on `sys.path`; under `make test-python` neither happens, and the suite still
 passes (94 passed, 2 skipped).
+
+## 2026-09-26 — HotpotQA in the BEIR setting (subset), with cost estimates
+
+**Status of cited-answer generation:** built and tested (26 Sep), never run against the API:
+there is still no `ANTHROPIC_API_KEY` on the Mac. Everything up to the API call runs.
+
+**Done**
+- `scripts/prepare_hotpotqa_beir.py`: streams the official BEIR `hotpotqa.zip` (654 MB,
+  SHA-256 pinned; 5,233,329 passages) without extracting it and writes a subset: 100 test
+  queries (seed 0) with their 2 gold passages, their 8 HotpotQA distractor passages (TF-IDF hard
+  negatives, matched by title), and a hash-seeded uniform background sample (19,915 passages);
+  20,906 passages total. Answers and supporting facts are joined from the pinned HotpotQA dev set.
+- `bench/eval_hotpotqa_beir.py`: HybridIndex retrieval over the subset, then cited answers in
+  two conditions: *retrieved* (top 5) and *gold* (the 2 qrels passages). It **estimates cost by
+  default**; `--run` requires a cap and refuses if the worst case exceeds it.
+
+**Checks on the join (all passed, over the 200 gold / 791 distractor passages used):**
+- BEIR's HotpotQA test split is exactly HotpotQA's dev set (7,405 / 7,405 ids).
+- Every query has 2 qrels passages, and their titles equal the supporting-fact titles.
+- Every gold/distractor passage's BEIR text equals HotpotQA's joined sentences after
+  whitespace/NFKC normalization (39 of 600 differ only in non-breaking spaces), so HotpotQA's
+  official sentence splits are used and cited sentence indices map exactly to supporting facts.
+
+**Retrieval on the subset** (RRF of BM25 + bge-small; *not comparable to full-corpus BEIR*):
+nDCG@10 0.842, R@5 0.815, R@100 0.975, both gold passages in the top 5 for 65% of queries.
+
+**Cost estimate before any run** (claude-haiku-4-5, $1 / $5 per MTok; offline token estimate
+at 3.5 chars/token + 25% for citation overhead, replaced by the free count_tokens endpoint when
+a key is present):
+
+| Condition | Requests | Input tokens | Expected | Worst case (max_tokens) |
+|---|---|---|---|---|
+| retrieved | 100 | 111,258 | $0.19 | $0.62 |
+| gold | 100 | 52,079 | $0.13 | $0.56 |
+| total | 200 | | $0.31 | $1.19 |
+
+The default cap ($1.00) is below the worst case on purpose: a run needs an explicit cap.
+
+**Problems**
+- The first end-to-end test expected the oracle's cited-sentence precision to be 1.0 in the
+  retrieved condition; it was 0.99 because one question had no gold passage retrieved, and the
+  official metric scores an empty prediction as precision 0. The test was wrong; it now checks
+  that every citation is a gold fact.

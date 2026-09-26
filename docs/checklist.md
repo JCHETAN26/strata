@@ -89,7 +89,7 @@ After the core works (I can build these, on the Mac):
 - [x] BM25 inverted index in C++, with bindings — reproduces Anserini's SciFact BM25 exactly
 - [x] Hybrid retrieval with reciprocal rank fusion (+ train-tuned weighted fusion); SciFact nDCG@10 0.7273 RRF / 0.7316 weighted vs 0.6789 BM25, 0.7127 dense
 - [x] Cited answer generation with Claude Haiku (sentence-level native citations; live run needs ANTHROPIC_API_KEY)
-- [x] BEIR and HotpotQA evaluation scripts (BEIR runner with significance; HotpotQA answer + groundedness eval, retrieval measured, generation awaiting API key)
+- [x] BEIR and HotpotQA evaluation scripts (BEIR runner with significance; HotpotQA answer + groundedness eval in the distractor and BEIR settings, subset built and cost estimated, generation awaiting API key)
 - [ ] Cross-encoder reranking (runs on the CPU for small subsets; the full evaluation goes on the
       IdeaPad)
 - [ ] Design doc drafts: graph parameters, compression, filtering strategies
@@ -115,7 +115,7 @@ After the core works (I can build these, on the Mac):
 ### Phase 8 — Compute-heavy parts
 - [ ] Embeddings for the BEIR corpora (SciFact, FiQA, NFCorpus) on the RTX 3050
 - [ ] Full BEIR nDCG@10 runs: keyword-only, vector-only, hybrid, hybrid + rerank
-- [ ] HotpotQA answer-groundedness evaluation
+- [ ] HotpotQA answer-groundedness evaluation on the full BEIR corpus (5.2M passages): `scripts/prepare_hotpotqa_beir.py` + `bench/eval_hotpotqa_beir.py` with a full-corpus mode
 
 ### Phase 9 — Final results (all reported numbers)
 - [ ] SIFT1M and GloVe-100 full runs, several runs each, with variance

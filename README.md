@@ -104,6 +104,12 @@ request hash, so re-running an evaluation is free and reproducible.
 
 ```sh
 cp .env.example .env            # then set ANTHROPIC_API_KEY (the file is gitignored)
+# BEIR setting (retrieval over BEIR passages). Subset on the Mac; full 5.2M corpus on the IdeaPad.
+uv run python scripts/prepare_hotpotqa_beir.py --n 100 --seed 0 --background 20000
+uv run python bench/eval_hotpotqa_beir.py                          # cost estimate only
+uv run python bench/eval_hotpotqa_beir.py --run --max-cost-usd 1.25
+
+# HotpotQA distractor setting (each question's own 10 paragraphs)
 uv run python scripts/prepare_hotpotqa.py --n 100 --seed 0
 uv run python bench/eval_hotpotqa.py --subset subset-n100-seed0
 ```
