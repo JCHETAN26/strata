@@ -58,18 +58,26 @@ from answer import (
 )
 from hotpot_metrics import score_example
 
-# Condition names for methods taken from a bench/eval_rerank.py result.
+# Condition names for methods taken from bench/eval_rerank.py, bench/eval_multihop.py or
+# bench/eval_multihop_joint.py results (their saved "top5" lists).
 CONDITION_NAMES = {
     "rerank_bge-reranker-base": "reranked_bge",
     "rerank_minilm-l6": "reranked_minilm",
     "union_top5_no_model": "union_top5",  # ~7 passages: BM25 top 5 + dense top 5, deduplicated
+    "multihop_no_model": "twohop",
+    "multihop_bge": "twohop_bge",
+    "joint_bge": "joint_bge",
 }
-# Pre-declared comparisons (one Holm family): each alternative against the current pipeline
-# ("retrieved", fused top 5), and the reranker against its zero-cost competitor.
+# Pre-declared comparisons (one Holm family over the pairs whose conditions are present): each
+# alternative against the current pipeline ("retrieved", fused top 5), the reranker against its
+# zero-cost competitor, and the joint two-hop reranker against single-hop bge.
 PLANNED = [
     ("reranked_bge", "retrieved"),
     ("union_top5", "retrieved"),
     ("reranked_bge", "union_top5"),
+    ("twohop", "retrieved"),
+    ("joint_bge", "retrieved"),
+    ("joint_bge", "reranked_bge"),
 ]
 SIG_METRICS = ("em", "f1", "sp_f1", "joint_f1")
 
@@ -91,14 +99,21 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
     parser.add_argument(
         "--rerank-result",
         type=Path,
-        help="a bench/eval_rerank.py result on this subset: adds a 'reranked' condition using its "
-        "saved top-5 passages",
+        nargs="+",
+        help="bench/eval_rerank.py / eval_multihop*.py results on this subset: add conditions "
+        "using their saved top-5 passages",
     )
     parser.add_argument(
         "--rerank-methods",
         nargs="+",
-        default=["rerank_bge-reranker-base", "union_top5_no_model"],
-        help="methods from the rerank result to add as conditions",
+        default=[
+            "rerank_bge-reranker-base",
+            "union_top5_no_model",
+            "multihop_no_model",
+            "joint_bge",
+        ],
+        help="methods to add as conditions (each taken from the first result that has it; "
+        "methods no result has are skipped)",
     )
     parser.add_argument(
         "--conditions",
@@ -158,21 +173,25 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
         "retrieved": {q["_id"]: [passages[d] for d in top_k[q["_id"]]] for q in queries},
         "gold": {q["_id"]: [passages[d] for d in sorted(qrels[q["_id"]])] for q in queries},
     }
-    if args.rerank_result is not None:
-        rerank_record = json.loads(args.rerank_result.read_text())
-        if rerank_record["dataset"] != args.subset:
-            raise SystemExit(
-                f"{args.rerank_result} is for {rerank_record['dataset']}, not {args.subset}"
-            )
-        rerank_source = {
-            "result": args.rerank_result.name,
-            "commit": rerank_record["git"]["commit"],
-        }
+    if args.rerank_result:
+        records = [(path, json.loads(path.read_text())) for path in args.rerank_result]
+        for path, record in records:
+            if record["dataset"] != args.subset:
+                raise SystemExit(f"{path} is for {record['dataset']}, not {args.subset}")
+        rerank_source = {}
         for method in args.rerank_methods:
+            found = next(((p, r) for p, r in records if method in r["top5"]), None)
+            if found is None:
+                continue
+            path, record = found
             name = CONDITION_NAMES.get(method, method)
-            chosen = rerank_record["top5"][method]
+            chosen = record["top5"][method]
             conditions[name] = {q["_id"]: [passages[d] for d in chosen[q["_id"]]] for q in queries}
-            rerank_source[name] = method
+            rerank_source[name] = {
+                "method": method,
+                "result": path.name,
+                "commit": record["git"]["commit"],
+            }
     else:
         rerank_source = None
     if args.conditions:

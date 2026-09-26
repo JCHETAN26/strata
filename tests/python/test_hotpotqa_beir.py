@@ -244,3 +244,40 @@ def test_rerank_conditions_and_planned_comparisons(tmp_path: Path) -> None:
     ]
     for pairs in record["planned_comparisons"].values():
         assert len(pairs) == 3 and all(c["queries"] == 100 for c in pairs)
+
+
+MULTIHOP_RESULTS = sorted((REPO_ROOT / "results" / "multihop").glob(f"{SUBSET.name}-*.json"))
+
+
+@pytest.mark.skipif(
+    not EMBEDDINGS.exists() or RERANK_RESULT is None or len(MULTIHOP_RESULTS) < 2,
+    reason="needs the subset, a rerank result and both multi-hop results",
+)
+def test_multihop_conditions_from_several_results(tmp_path: Path) -> None:
+    import eval_hotpotqa_beir
+
+    queries = [json.loads(line) for line in (SUBSET / "queries.jsonl").open()]
+    answers = {
+        json.loads(line)["_id"]: json.loads(line) for line in (SUBSET / "answers.jsonl").open()
+    }
+    oracle = OracleGenerator({q["text"]: answers[q["_id"]] for q in queries})
+    files = [RERANK_RESULT, *MULTIHOP_RESULTS]
+    args = ["--subset", SUBSET.name, "--out-dir", str(tmp_path), "--run", "--max-cost-usd", "100"]
+    assert eval_hotpotqa_beir.main([*args, "--rerank-result", *map(str, files)], oracle) == 0
+    record = json.loads(next(tmp_path.glob("*.json")).read_text())
+    assert set(record["results"]) == {
+        "retrieved",
+        "gold",
+        "reranked_bge",
+        "union_top5",
+        "twohop",
+        "joint_bge",
+    }
+    joint = next(p for p in MULTIHOP_RESULTS if "-joint-" in p.name)
+    assert record["rerank_source"]["joint_bge"]["result"] == joint.name
+    first = queries[0]["_id"]
+    top5 = json.loads(joint.read_text())["top5"]["joint_bge"][first]
+    assert record["results"]["joint_bge"]["records"][0]["passages"] == top5
+    assert record["planned_pairs"] == [list(p) for p in eval_hotpotqa_beir.PLANNED]
+    for pairs in record["planned_comparisons"].values():
+        assert len(pairs) == 6
