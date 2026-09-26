@@ -36,6 +36,7 @@ def summarize(runs: list[dict[str, float]]) -> dict[str, dict[str, float]]:
         values = [r[field] for r in runs]
         summary[field] = {
             "mean": statistics.fmean(values),
+            "median": statistics.median(values),
             "stdev": statistics.stdev(values) if len(values) > 1 else 0.0,
             "min": min(values),
             "max": max(values),

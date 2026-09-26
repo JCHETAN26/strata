@@ -20,6 +20,10 @@
 #include <string_view>
 #include <vector>
 
+#if defined(__APPLE__)
+#include <pthread/qos.h>
+#endif
+
 #include "strata/brute_force.hpp"
 #include "strata/dataset.hpp"
 #include "strata/recall.hpp"
@@ -136,6 +140,11 @@ struct RunResult {
 
 int main(int argc, char** argv) {
   const Options opt = parse_args(argc, argv);
+#if defined(__APPLE__)
+  // Ask for the highest QoS so macOS keeps the thread on performance cores. Without this, Apple
+  // Silicon may schedule a long-running CLI process on efficiency cores mid-run.
+  pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+#endif
 
   const auto metric = strata::parse_metric(opt.metric);
   if (!metric) {

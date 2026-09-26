@@ -33,6 +33,8 @@ def hardware_info() -> dict[str, Any]:
         "machine": platform.machine(),
         "os": f"{platform.system()} {platform.release()}",
         "logical_cpus": os.cpu_count(),
+        # Background load skews results, especially on the fanless dev laptop.
+        "load_average_1m_5m_15m": [round(x, 2) for x in os.getloadavg()],
     }
     if platform.system() == "Darwin":
         info["cpu"] = _run(["sysctl", "-n", "machdep.cpu.brand_string"])
