@@ -701,3 +701,50 @@ right passages are present, not from better answers when the model does answer.
 **Display bug:** the run's printout labelled every condition "no new spend", including the two
 that were generated fresh; the label was unconditional. The saved record's cache counts were
 right. Fixed after the run.
+
+## 2026-09-26: Two-hop retrieval for bridge questions
+
+`rag/multihop.py`, `bench/eval_multihop.py`. Hop 1 is the fused ranking. The top m hop-1 passages
+are each expanded into a hop-2 query (question + passage title / title + first sentence / full
+text), which goes to BM25 and dense retrieval. The final top 5 is the first `keep` hop-1
+passages, then the hop-2 candidates, ordered round-robin (no model) or by bge-reranker-base
+reading the hop-2 query. All parameters are tuned on the dev subset only. Stage 1 (no model,
+108 configurations) chose m=1, full text, depth 5, keep 3 (dev R@5 0.885). Stage 2 (bge;
+m/expansion fixed from stage 1 because bge costs ~90 ms per pair here) chose depth 10, keep 2
+(dev R@5 0.940). The code was committed (`434a0d5`) and run on a clean tree. There is no API
+spend. Result: `results/multihop/hotpotqa-subset-n100-seed0-bg20000-20260926-133541-408924.json`.
+
+Test subset (100 queries: 81 bridge, 19 comparison):
+
+| Method | R@5 | R@5 bridge | R@5 comparison | All-relevant@5 | Passages | ms/query (p50 / p95) | Pool ceiling |
+|---|---|---|---|---|---|---|---|
+| fused top 5 | 0.820 | 0.778 | 1.000 | 0.65 | 5 | — | — |
+| union top 5, no model | 0.870 | 0.840 | 1.000 | 0.76 | 7.3 | — | — |
+| bge rerank (single hop, N=20) | **0.915** | 0.895 | 1.000 | **0.83** | 5 | 3029 (2863 / 4887)* | 0.90 |
+| two-hop, no model | 0.885 | 0.858 | 1.000 | 0.78 | 5 | **35 (28 / 60)** | 0.90 |
+| two-hop, bge | 0.905 | 0.889 | 0.974 | 0.82 | 5 | 2222 (2080 / 3704) | **0.98** |
+
+\*Reranker scoring time only, from the rerank run. For two-hop, latency is end to end per query
+(the original question's embedding is precomputed and excluded). No-model two-hop is dominated
+by embedding the hop-2 query (32 ms); bge two-hop by scoring (2138 ms, ~15 pairs).
+
+Planned comparisons (Holm over 4 per metric): two-hop bge − fused R@5 +0.085 [+0.030, +0.145],
+p_holm 0.040; all-relevant +0.170, p_holm 0.025. Two-hop no-model − fused R@5 +0.065 [+0.020,
++0.115], p_holm 0.045; all-relevant +0.130, p_holm 0.045. Two-hop bge − single-hop bge −0.010,
+p_holm 1.0. Two-hop no-model − union +0.015, p_holm 1.0.
+
+**Comparison-question check: two-hop bge FAILS (pre-declared: mean R@5 difference from fused
+≥ 0).** One comparison question (5a75eb12…, "Which Muslim scholar was born first…") lost its
+second gold passage: it was fused rank 3, and keep=2 let two hop-2 candidates push it out. Every
+comparison question's gold passages are already in the fused top 5, so any keep < 5 can only hurt
+them. The no-model variant (keep=3) passes with no change on any comparison question.
+
+**Reading:** two-hop retrieval works for bridge questions and gets the pool ceiling to 0.98, but
+on this subset it does not beat single-hop bge reranking at top 5. The practical result is the
+no-model variant. It is significantly better than fused, as good as the no-model union
+(+0.015, n.s.) with 5 passages instead of 7.3, costs ~35 ms per query instead of ~3 s, and does
+not hurt comparison questions. Tuning 108 configurations on 100 dev queries risks overfitting.
+The dev-to-test drops (0.885 → 0.885 and 0.940 → 0.905) are consistent with that for the bge
+variant. Obvious next steps, not done: rerank the union of the single-hop and hop-2 pools
+together (the 0.98 ceiling is there to be had), or skip hop 2 for questions classified as
+comparisons.
