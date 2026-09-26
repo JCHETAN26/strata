@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-09-26T05:22:26.142062+00:00",
+  "git": {
+    "commit": "801caed69a2f62377d25b75b6660a68468cc70ce",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      7.82,
+      5.23,
+      4.42
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "dataset": "scifact",
+  "setup": "BEIR flat, anserini_english analyzer, k1=0.9 b=0.4, lucene lengths",
+  "metrics": {
+    "nDCG@10": 0.6789094274508305,
+    "R@100": 0.9253333333333335,
+    "R@1000": 0.9766666666666667
+  },
+  "published": {
+    "nDCG@10": 0.6789,
+    "R@100": 0.9253,
+    "R@1000": 0.9767,
+    "documents": 5183,
+    "total_terms": 838128
+  },
+  "margin": 0.002,
+  "passed": true,
+  "documents": 5183,
+  "total_terms": 838127,
+  "vocabulary_size": 28866,
+  "index_seconds": 0.5637515420094132,
+  "search_seconds": 0.007458500098437071,
+  "queries": 300,
+  "qps": 40222.56432802958,
+  "threads": 8
+}
