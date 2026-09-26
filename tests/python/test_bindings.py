@@ -342,7 +342,9 @@ def test_concurrent_adds_and_searches() -> None:
 
 
 def find_reference_tool() -> Path | None:
-    for preset in ("release", "debug", "asan"):
+    # Both the cross-platform presets and the Linux GCC 13 presets (build/linux-*).
+    presets = ("release", "debug", "asan", "linux-release", "linux-debug", "linux-asan")
+    for preset in presets:
         path = REPO_ROOT / "build" / preset / "tests" / "strata_reference"
         if path.exists():
             return path
