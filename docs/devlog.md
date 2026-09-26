@@ -666,3 +666,38 @@ threads) is 13x higher for bge (3.0 s vs 0.23 s per query); this belongs on the 
 **Deferred:** SciFact reranking (planned second dataset). Tuning on 300 train queries with pools
 up to N=50 of ~300-token passages would take bge-reranker-base an estimated 2+ hours of sustained
 CPU on the fanless Mac; it runs on the IdeaPad's GPU instead (checklist).
+
+## 2026-09-26 — End-to-end: reranked and union passages to the generator
+
+Run: `results/rag/hotpotqa-subset-n100-seed0-bg20000-20260926-132037-509138.json` (clean tree,
+code at `b742c7b`; passages from the rerank run
+`hotpotqa-subset-n100-seed0-bg20000-20260926-131257-741129.json`). New spend $0.497
+(reranked_bge $0.221, union_top5 $0.277; retrieved and gold from cache). Estimate beforehand:
+expected $0.550, worst case $0.910, cap $1.00. All 400 responses ended with `end_turn`.
+
+| Condition | Passages | EM | F1 | Answered EM | Answered F1 | Abstained | Cite P | Cite R | SP F1 | Joint F1 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| retrieved (fused top 5) | 5 | 0.380 | 0.517 | 0.528 | 0.718 | 28% | 0.852 | 0.644 | 0.703 | 0.411 |
+| union top 5, no model | 7.3 | 0.420 | 0.572 | 0.553 | 0.752 | 24% | 0.848 | 0.675 | 0.727 | 0.465 |
+| reranked (bge, N=20) | 5 | 0.460 | 0.614 | 0.561 | 0.749 | 18% | 0.887 | 0.692 | 0.750 | 0.495 |
+| gold passages | 2 | 0.550 | 0.739 | 0.567 | 0.761 | 3% | 0.941 | 0.803 | 0.844 | 0.634 |
+
+Planned comparisons (one Holm family of 3 per metric; 95% paired bootstrap CI):
+
+| Metric | bge − retrieved | union − retrieved | bge − union |
+|---|---|---|---|
+| EM | +0.080 [+0.02, +0.15], p_holm 0.12 | +0.040, p_holm 0.56 | +0.040, p_holm 0.56 |
+| F1 | **+0.097 [+0.037, +0.161], p_holm 0.007** | +0.055 [+0.006, +0.106], p_holm 0.074 | +0.042 [−0.021, +0.107], p_holm 0.20 |
+| SP F1 | **+0.046 [+0.016, +0.081], p_holm 0.011** | +0.024, p_holm 0.44 | +0.023, p_holm 0.44 |
+| Joint F1 | **+0.084 [+0.030, +0.142], p_holm 0.009** | **+0.054 [+0.011, +0.102], p_holm 0.039** | +0.030, p_holm 0.30 |
+
+**Reading:** reranking with bge significantly improves answer F1, citation quality, and joint F1
+over the current pipeline. The zero-cost union baseline improves joint F1 significantly but not
+answer F1 after correction, and costs 33% more input tokens (7.3 passages). bge and the union
+are not distinguishable on 100 questions. Answered-only F1 is nearly the same everywhere
+(0.718–0.761): the gains come from answering more questions (abstention 28% → 18%) because the
+right passages are present, not from better answers when the model does answer.
+
+**Display bug:** the run's printout labelled every condition "no new spend", including the two
+that were generated fresh; the label was unconditional. The saved record's cache counts were
+right. Fixed after the run.

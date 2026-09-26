@@ -336,7 +336,8 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
             f"(P {s['sp_prec']:.3f}, R {s['sp_recall']:.3f})  | joint F1 {s['joint_f1']:.3f}  "
             f"| abstain {s['abstention_rate']:.0%}, answered EM {s['answered_em']:.3f} "
             f"F1 {s['answered_f1']:.3f} (n={s['answered']})  | "
-            f"${s['cost_usd']:.3f} ({s['from_cache']} of {s['questions']} from cache: no new spend)"
+            f"${s['cost_usd']:.3f} ({s['from_cache']} of {s['questions']} from cache"
+            f"{': no new spend' if s['from_cache'] == s['questions'] else ''})"
         )
 
     for m, pairs in planned_comparisons.items():
