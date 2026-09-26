@@ -73,6 +73,18 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--data-dir", type=Path, default=REPO_ROOT / "data" / "beir")
     parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "results" / "rag")
+    parser.add_argument(
+        "--rerank-result",
+        type=Path,
+        help="a bench/eval_rerank.py result on this subset: adds a 'reranked' condition using its "
+        "saved top-5 passages",
+    )
+    parser.add_argument("--rerank-method", default="rerank_bge-reranker-base")
+    parser.add_argument(
+        "--conditions",
+        nargs="+",
+        help="subset of conditions to estimate/run (default: all); cached ones cost nothing",
+    )
     args = parser.parse_args(argv)
 
     import strata
@@ -126,6 +138,25 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
         "retrieved": {q["_id"]: [passages[d] for d in top_k[q["_id"]]] for q in queries},
         "gold": {q["_id"]: [passages[d] for d in sorted(qrels[q["_id"]])] for q in queries},
     }
+    if args.rerank_result is not None:
+        rerank_record = json.loads(args.rerank_result.read_text())
+        if rerank_record["dataset"] != args.subset:
+            raise SystemExit(
+                f"{args.rerank_result} is for {rerank_record['dataset']}, not {args.subset}"
+            )
+        chosen = rerank_record["top5"][args.rerank_method]
+        conditions["reranked"] = {
+            q["_id"]: [passages[d] for d in chosen[q["_id"]]] for q in queries
+        }
+        rerank_source = {
+            "result": args.rerank_result.name,
+            "method": args.rerank_method,
+            "commit": rerank_record["git"]["commit"],
+        }
+    else:
+        rerank_source = None
+    if args.conditions:
+        conditions = {c: conditions[c] for c in args.conditions}
     question = {q["_id"]: q["text"] for q in queries}
 
     # Cost estimate, before any API call.
@@ -291,6 +322,7 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
         "dataset": meta,
         "generator": {"model": MODEL, "prompt_version": PROMPT_VERSION, "temperature": 0.0},
         "retrieval": retrieval,
+        "rerank_source": rerank_source,
         "embedding": emb_meta,
         "cost_estimate": estimate,
         "results": results,

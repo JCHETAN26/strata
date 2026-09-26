@@ -626,3 +626,43 @@ Ceiling for a reranker (questions with both gold passages inside the candidate p
 RRF can bury a passage that only one retriever finds (e.g. dense rank 6, fused rank 41), so a
 reranking pool should be the union of the retrievers' lists, not the fused list. Three questions
 stay out of reach even with the top-100 union: those need multi-hop retrieval.
+
+## 2026-09-26 — Cross-encoder reranking (HotpotQA BEIR subset)
+
+Run: `results/rerank/hotpotqa-subset-n100-seed0-bg20000-20260926-131257-741129.json`, code at
+`42ac70c`. The record is flagged dirty only because `bench/eval_hotpotqa_beir.py` was being edited
+during the run; `eval_rerank.py` does not import it, and every module it does use is unchanged
+since `42ac70c`. The quality numbers are identical to an earlier dry run (deterministic).
+
+**Pool depth, chosen on the dev-split subset** (100 BEIR dev queries, built like the test subset),
+R@5 by union-pool depth N:
+
+| Model | N=10 | N=20 | N=50 | Chosen |
+|---|---|---|---|---|
+| bge-reranker-base | 0.930 | **0.950** | 0.945 | 20 |
+| ms-marco-MiniLM-L6-v2 | **0.835** | 0.825 | 0.825 | 10 |
+
+**Test subset (100 queries)**
+
+| Method | Passages | R@5 | Both gold in set | nDCG@10 | Latency / query (CPU) |
+|---|---|---|---|---|---|
+| fused top 5 (current) | 5 | 0.820 | 0.65 | 0.837 | — |
+| union top 5, no model | 7.3 | 0.870 | 0.76 | — | — |
+| MiniLM-L6, N=10 (pool 15) | 5 | 0.840 | 0.69 | 0.847 | 231 ms (p95 464) |
+| bge-reranker-base, N=20 (pool 32) | 5 | **0.915** | **0.83** | **0.907** | 3,029 ms (p95 4,887) |
+| ceiling (bge pool) | 32 | | 0.90 | | |
+
+Paired differences in both-gold (Holm over 6 pairs): bge vs fused +0.18 [+0.10, +0.26],
+p_holm 0.0006; bge vs union-no-model +0.07 [0.00, +0.14], p_holm 0.19 (not significant);
+union-no-model vs fused +0.11 [+0.05, +0.18], p_holm 0.015; MiniLM vs fused +0.04, p_holm 0.48;
+bge vs MiniLM +0.14 [+0.06, +0.22], p_holm 0.0045.
+
+**Reading:** bge-reranker-base recovers 18 of the 25 questions its pool makes reachable (0.65 →
+0.83 of a 0.90 ceiling) with 5 passages, and is the only reranker that beats the fused baseline.
+Against the no-model union baseline (7.3 passages, zero model cost) its gain is not significant on
+100 queries. MiniLM-L6 is not distinguishable from doing nothing. Latency on the M2 CPU (4 torch
+threads) is 13x higher for bge (3.0 s vs 0.23 s per query); this belongs on the GPU.
+
+**Deferred:** SciFact reranking (planned second dataset). Tuning on 300 train queries with pools
+up to N=50 of ~300-token passages would take bge-reranker-base an estimated 2+ hours of sustained
+CPU on the fanless Mac; it runs on the IdeaPad's GPU instead (checklist).
