@@ -42,6 +42,15 @@
       }
     },
     {
+      "name": "tsan",
+      "displayName": "Debug + ThreadSanitizer",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "STRATA_TSAN": "ON"
+      }
+    },
+    {
       "name": "rosetta-avx2",
       "displayName": "macOS only: x86_64 + AVX2 under Rosetta 2 (correctness only, not for timing)",
       "inherits": "base",
@@ -70,6 +79,10 @@
     {
       "name": "asan",
       "configurePreset": "asan"
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan"
     },
     {
       "name": "rosetta-avx2",
@@ -101,6 +114,14 @@
       "environment": {
         "ASAN_OPTIONS": "abort_on_error=1",
         "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      }
+    },
+    {
+      "name": "tsan",
+      "inherits": "base",
+      "configurePreset": "tsan",
+      "environment": {
+        "TSAN_OPTIONS": "halt_on_error=1:second_deadlock_stack=1"
       }
     },
     {

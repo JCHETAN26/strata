@@ -28,6 +28,8 @@ ctest --preset debug
 | `debug`   | Debug      | Day-to-day development                                       |
 | `release` | Release    | Benchmarks                                                   |
 | `asan`    | Debug      | AddressSanitizer + UndefinedBehaviorSanitizer; run before committing memory-handling changes |
+| `tsan`    | Debug      | ThreadSanitizer; run before committing concurrency changes   |
+| `rosetta-avx2` | Debug | macOS only: x86_64 + AVX2 build run under Rosetta 2, to test AVX2 kernels on a Mac (correctness only, never timing) |
 
 Build output goes to `build/<preset>/`.
 
@@ -58,6 +60,8 @@ uv run python bench/run_search_bench.py --dataset siftsmall --index hnsw --M 16 
 uv run python bench/run_reference_bench.py --dataset siftsmall --library hnswlib
 uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss --index hnsw
 uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss --index flat
+uv run python bench/run_search_bench.py --dataset siftsmall --kernel scalar   # without SIMD
+uv run python bench/run_search_bench.py --dataset siftsmall --threads 4        # throughput mode
 uv run python bench/run_micro_bench.py --repetitions 5
 uv run python bench/make_tables.py        # writes results/tables.md
 uv run python bench/plot_recall_qps.py    # writes results/plots/recall_qps_<dataset>.png

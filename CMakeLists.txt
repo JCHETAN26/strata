@@ -10,6 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(STRATA_BUILD_TESTS "Build unit tests" ON)
 option(STRATA_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(STRATA_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
+option(STRATA_TSAN "Build with ThreadSanitizer (exclusive with STRATA_SANITIZE)" OFF)
 
 # SIMD kernels are selected at compile time. NEON is baseline on arm64; AVX2 + FMA must be enabled
 # explicitly on x86_64 (on by default there; turn off for machines without AVX2).
@@ -28,6 +29,10 @@ if(STRATA_SANITIZE)
     -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer)
   target_link_options(strata_options INTERFACE -fsanitize=address,undefined)
 endif()
+if(STRATA_TSAN)
+  target_compile_options(strata_options INTERFACE -fsanitize=thread -fno-omit-frame-pointer)
+  target_link_options(strata_options INTERFACE -fsanitize=thread)
+endif()
 
 find_package(tl-expected CONFIG REQUIRED)
 
@@ -38,7 +43,8 @@ add_library(strata STATIC
   src/distance/scalar.cpp
   src/eval/recall.cpp
   src/index/brute_force.cpp
-  src/storage/dataset.cpp)
+  src/storage/dataset.cpp
+  src/util/thread_pool.cpp)
 add_library(strata::strata ALIAS strata)
 
 # The HNSW implementation is written by hand (see CLAUDE.md). Until src/index/hnsw.cpp exists,
@@ -54,8 +60,9 @@ endif()
 target_include_directories(strata PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_features(strata PUBLIC cxx_std_20)
+find_package(Threads REQUIRED)
 target_link_libraries(strata
-  PUBLIC tl::expected
+  PUBLIC tl::expected Threads::Threads
   PRIVATE strata_options)
 if(STRATA_AVX2)
   # PUBLIC: headers test __AVX2__ to declare the avx2:: kernels, so every consumer needs the flags.

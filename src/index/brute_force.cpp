@@ -83,6 +83,18 @@ Expected<std::vector<Neighbor>> BruteForceIndex::search(std::span<const float> q
   return heap;
 }
 
+Expected<std::vector<std::vector<Neighbor>>> BruteForceIndex::search_batch(
+    const Matrix<float>& queries, std::size_t k, ThreadPool& pool) const {
+  if (!queries.empty() && queries.cols() != dim_) {
+    return dimension_error(dim_, queries.cols());
+  }
+  std::vector<std::vector<Neighbor>> results(queries.rows());
+  // Dimensions are validated above, so search() cannot fail here.
+  pool.parallel_for(queries.rows(),
+                    [&](std::size_t i) { results[i] = std::move(*search(queries.row(i), k)); });
+  return results;
+}
+
 std::span<const float> BruteForceIndex::vector(VectorId id) const noexcept {
   assert(id < size_);
   return {data_.data() + static_cast<std::size_t>(id) * dim_, dim_};

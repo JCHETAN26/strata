@@ -2,9 +2,10 @@
 // point runs every query `--runs` times and prints one JSON object with build time, QPS, latency
 // percentiles, and recall@k per run.
 //
-// Queries run one at a time on a single thread and are timed individually, so latency
-// percentiles are meaningful. The Python driver (bench/run_search_bench.py) adds commit,
-// hardware, and dataset metadata and saves the result under results/.
+// Each query is timed individually. With --threads N the queries are spread over a thread pool
+// (throughput mode): QPS is total queries / wall time, and latency percentiles describe queries
+// running concurrently with N - 1 others. The Python driver (bench/run_search_bench.py) adds
+// commit, hardware, and dataset metadata and saves the result under results/.
 //
 //   strata_search --data data/siftsmall --metric l2 --index brute_force
 //   strata_search --data data/siftsmall --metric l2 --index hnsw --M 16 --ef-construction 200 \
@@ -31,6 +32,7 @@
 #include "strata/brute_force.hpp"
 #include "strata/dataset.hpp"
 #include "strata/recall.hpp"
+#include "strata/thread_pool.hpp"
 #ifdef STRATA_HAS_HNSW
 #include "strata/hnsw.hpp"
 #endif
@@ -52,6 +54,7 @@ struct Options {
   std::size_t max_queries = 0;  // 0 = all
   std::size_t warmup = 1;       // untimed passes over the queries before each timed run
   std::string kernel = "best";  // "best" (SIMD for this build) or "scalar"
+  std::size_t threads = 1;
   // HNSW
   std::size_t m = 16;
   std::size_t ef_construction = 200;
@@ -63,6 +66,7 @@ struct Options {
             << "usage: strata_search --data DIR [--metric l2|ip|cosine|angular]\n"
             << "                     [--index brute_force|hnsw] [--k 10] [--runs 5]\n"
             << "                     [--max-queries N] [--warmup 1] [--kernel best|scalar]\n"
+            << "                     [--threads 1]\n"
             << "       hnsw only:    [--M 16] [--ef-construction 200]\n"
             << "                     [--ef-search 10,20,40,80,160,320]\n";
   std::exit(2);
@@ -116,6 +120,8 @@ Options parse_args(int argc, char** argv) {
       opt.max_queries = parse_size(flag, value);
     } else if (flag == "--warmup") {
       opt.warmup = parse_size(flag, value);
+    } else if (flag == "--threads") {
+      opt.threads = parse_size(flag, value);
     } else if (flag == "--kernel") {
       if (value != "best" && value != "scalar") {
         usage("--kernel must be best or scalar");
@@ -134,8 +140,8 @@ Options parse_args(int argc, char** argv) {
   if (opt.data.empty()) {
     usage("--data is required");
   }
-  if (opt.k == 0 || opt.runs == 0) {
-    usage("--k and --runs must be positive");
+  if (opt.k == 0 || opt.runs == 0 || opt.threads == 0) {
+    usage("--k, --runs, and --threads must be positive");
   }
   return opt;
 }
@@ -191,29 +197,33 @@ struct SweepPoint {
 // Times one sweep point: `opt.runs` runs, each after `opt.warmup` untimed passes.
 strata::Expected<Point> run_point(const SweepPoint& point, const strata::Matrix<float>& queries,
                                   const strata::Matrix<std::int32_t>& groundtruth,
-                                  std::span<const float> kth_distances, const Options& opt) {
+                                  std::span<const float> kth_distances, const Options& opt,
+                                  strata::ThreadPool& pool) {
   const std::size_t num_queries = queries.rows();
   Point result{.search_params_json = point.search_params_json, .runs = {}};
   for (std::size_t run = 0; run < opt.runs; ++run) {
     for (std::size_t pass = 0; pass < opt.warmup; ++pass) {
-      for (std::size_t q = 0; q < num_queries; ++q) {
-        (void)point.search(queries.row(q), opt.k);
-      }
+      pool.parallel_for(num_queries,
+                        [&](std::size_t q) { (void)point.search(queries.row(q), opt.k); });
     }
 
-    std::vector<std::vector<strata::Neighbor>> results(num_queries);
+    std::vector<strata::Expected<std::vector<strata::Neighbor>>> answers(num_queries);
     std::vector<double> latencies_us(num_queries);
     const auto search_start = Clock::now();
-    for (std::size_t q = 0; q < num_queries; ++q) {
+    pool.parallel_for(num_queries, [&](std::size_t q) {
       const auto t0 = Clock::now();
-      auto r = point.search(queries.row(q), opt.k);
+      answers[q] = point.search(queries.row(q), opt.k);
       latencies_us[q] = std::chrono::duration<double, std::micro>(Clock::now() - t0).count();
-      if (!r) {
-        return tl::unexpected(r.error());
-      }
-      results[q] = std::move(*r);
-    }
+    });
     const double search_seconds = seconds_since(search_start);
+
+    std::vector<std::vector<strata::Neighbor>> results(num_queries);
+    for (std::size_t q = 0; q < num_queries; ++q) {
+      if (!answers[q]) {
+        return tl::unexpected(answers[q].error());
+      }
+      results[q] = std::move(*answers[q]);
+    }
 
     auto recall = strata::recall_at_k_with_ties(results, kth_distances, opt.k);
     if (!recall) {
@@ -273,7 +283,7 @@ void write_json(std::ostream& os, const RunInfo& info, const std::vector<Point>&
       << "  \"metric\": " << json_string(info.metric) << ",\n"
       << "  \"kernel\": " << json_string(info.kernel) << ",\n"
       << "  \"k\": " << info.opt.k << ",\n"
-      << "  \"threads\": 1,\n"
+      << "  \"threads\": " << info.opt.threads << ",\n"
       << "  \"warmup_passes\": " << info.opt.warmup << ",\n"
       << "  \"num_base\": " << info.num_base << ",\n"
       << "  \"num_queries\": " << info.num_queries << ",\n"
@@ -387,9 +397,10 @@ int main(int argc, char** argv) {
   const double build_seconds = seconds_since(build_start);
   std::cerr << opt.index << ": built in " << build_seconds << " s\n";
 
+  strata::ThreadPool pool(opt.threads);
   std::vector<Point> points;
   for (const auto& point : sweep) {
-    auto result = run_point(point, queries, groundtruth, *kth_distances, opt);
+    auto result = run_point(point, queries, groundtruth, *kth_distances, opt, pool);
     if (!result) {
       std::cerr << "error: " << result.error().message << "\n";
       return 1;

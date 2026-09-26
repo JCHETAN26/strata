@@ -29,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--max-queries", type=int, default=0, help="0 = all queries")
     parser.add_argument("--kernel", default="best", choices=["best", "scalar"])
+    parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--M", type=int, default=16)
     parser.add_argument("--ef-construction", type=int, default=200)
     parser.add_argument("--ef-search", default="10,20,40,80,160,320")
@@ -53,6 +54,7 @@ def main(argv: list[str] | None = None) -> int:
         "--runs", str(args.runs),
         "--max-queries", str(args.max_queries),
         "--kernel", args.kernel,
+        "--threads", str(args.threads),
     ]  # fmt: skip
     if args.index == "hnsw":
         cmd += [

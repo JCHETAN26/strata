@@ -7,6 +7,7 @@
 #include "strata/distance.hpp"
 #include "strata/error.hpp"
 #include "strata/matrix.hpp"
+#include "strata/thread_pool.hpp"
 #include "strata/types.hpp"
 
 namespace strata {
@@ -33,6 +34,11 @@ class BruteForceIndex {
   // Fails on dimension mismatch. k == 0 or an empty index gives an empty result.
   [[nodiscard]] Expected<std::vector<Neighbor>> search(std::span<const float> query,
                                                        std::size_t k) const;
+
+  // search() for every row of `queries`, spread across `pool`. results[i] answers queries.row(i).
+  // Fails on dimension mismatch before doing any work.
+  [[nodiscard]] Expected<std::vector<std::vector<Neighbor>>> search_batch(
+      const Matrix<float>& queries, std::size_t k, ThreadPool& pool) const;
 
   [[nodiscard]] std::size_t size() const noexcept { return size_; }
   [[nodiscard]] std::size_t dim() const noexcept { return dim_; }
