@@ -198,3 +198,49 @@ def test_retrieval_failure_analysis_is_consistent(tmp_path: Path) -> None:
         assert f["rank_fused"] is None or f["rank_fused"] > 5
     buckets = sum(sum(v.values()) for v in s["fused_rank_buckets"].values())
     assert buckets == s["missing_passages"] == len(record["failures"])
+
+
+RERANK_RESULT = next(
+    iter(sorted((REPO_ROOT / "results" / "rerank").glob(f"{SUBSET.name}-*.json"))), None
+)
+
+
+@pytest.mark.skipif(
+    not EMBEDDINGS.exists() or RERANK_RESULT is None, reason="needs the subset and a rerank result"
+)
+def test_rerank_conditions_and_planned_comparisons(tmp_path: Path) -> None:
+    import eval_hotpotqa_beir
+
+    queries = [json.loads(line) for line in (SUBSET / "queries.jsonl").open()]
+    answers = {
+        json.loads(line)["_id"]: json.loads(line) for line in (SUBSET / "answers.jsonl").open()
+    }
+    oracle = OracleGenerator({q["text"]: answers[q["_id"]] for q in queries})
+    args = [
+        "--subset",
+        SUBSET.name,
+        "--out-dir",
+        str(tmp_path),
+        "--run",
+        "--max-cost-usd",
+        "100",
+        "--rerank-result",
+        str(RERANK_RESULT),
+    ]
+    assert eval_hotpotqa_beir.main(args, oracle) == 0
+    record = json.loads(next(tmp_path.glob("*.json")).read_text())
+    assert set(record["results"]) == {"retrieved", "gold", "reranked_bge", "union_top5"}
+    rerank = json.loads(RERANK_RESULT.read_text())
+    first = queries[0]["_id"]
+    reranked = record["results"]["reranked_bge"]["records"][0]
+    assert reranked["passages"] == rerank["top5"]["rerank_bge-reranker-base"][first]
+    union = record["results"]["union_top5"]["records"][0]
+    assert union["passages"] == rerank["top5"]["union_top5_no_model"][first]
+    # The planned family: 3 pairs per metric, Holm over those 3 only.
+    assert record["planned_pairs"] == [
+        ["reranked_bge", "retrieved"],
+        ["union_top5", "retrieved"],
+        ["reranked_bge", "union_top5"],
+    ]
+    for pairs in record["planned_comparisons"].values():
+        assert len(pairs) == 3 and all(c["queries"] == 100 for c in pairs)

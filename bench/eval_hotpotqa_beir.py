@@ -58,6 +58,21 @@ from answer import (
 )
 from hotpot_metrics import score_example
 
+# Condition names for methods taken from a bench/eval_rerank.py result.
+CONDITION_NAMES = {
+    "rerank_bge-reranker-base": "reranked_bge",
+    "rerank_minilm-l6": "reranked_minilm",
+    "union_top5_no_model": "union_top5",  # ~7 passages: BM25 top 5 + dense top 5, deduplicated
+}
+# Pre-declared comparisons (one Holm family): each alternative against the current pipeline
+# ("retrieved", fused top 5), and the reranker against its zero-cost competitor.
+PLANNED = [
+    ("reranked_bge", "retrieved"),
+    ("union_top5", "retrieved"),
+    ("reranked_bge", "union_top5"),
+]
+SIG_METRICS = ("em", "f1", "sp_f1", "joint_f1")
+
 
 def load_jsonl(path: Path) -> list[dict]:
     with path.open() as f:
@@ -79,7 +94,12 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
         help="a bench/eval_rerank.py result on this subset: adds a 'reranked' condition using its "
         "saved top-5 passages",
     )
-    parser.add_argument("--rerank-method", default="rerank_bge-reranker-base")
+    parser.add_argument(
+        "--rerank-methods",
+        nargs="+",
+        default=["rerank_bge-reranker-base", "union_top5_no_model"],
+        help="methods from the rerank result to add as conditions",
+    )
     parser.add_argument(
         "--conditions",
         nargs="+",
@@ -144,15 +164,15 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
             raise SystemExit(
                 f"{args.rerank_result} is for {rerank_record['dataset']}, not {args.subset}"
             )
-        chosen = rerank_record["top5"][args.rerank_method]
-        conditions["reranked"] = {
-            q["_id"]: [passages[d] for d in chosen[q["_id"]]] for q in queries
-        }
         rerank_source = {
             "result": args.rerank_result.name,
-            "method": args.rerank_method,
             "commit": rerank_record["git"]["commit"],
         }
+        for method in args.rerank_methods:
+            name = CONDITION_NAMES.get(method, method)
+            chosen = rerank_record["top5"][method]
+            conditions[name] = {q["_id"]: [passages[d] for d in chosen[q["_id"]]] for q in queries}
+            rerank_source[name] = method
     else:
         rerank_source = None
     if args.conditions:
@@ -296,22 +316,36 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
             }
             for c in conditions
         }
-        for m in ("f1", "sp_f1", "joint_f1")
+        for m in SIG_METRICS
     }
     significance = {m: [x.to_dict() for x in compare_all(pq)] for m, pq in per_question.items()}
+    planned = [(a, b) for a, b in PLANNED if a in conditions and b in conditions]
+    planned_comparisons = (
+        {m: [x.to_dict() for x in compare_all(pq, pairs=planned)] for m, pq in per_question.items()}
+        if planned
+        else {}
+    )
     for name, r in results.items():
         print(
-            f"  {name:9s} stop reasons {r['stop_reasons']}; flagged (not scored): "
+            f"  {name:12s} stop reasons {r['stop_reasons']}; flagged (not scored): "
             f"{[f['id'] for f in r['flagged']] or 'none'}"
         )
         s = r["summary"]
         print(
-            f"  {name:9s} EM {s['em']:.3f}  F1 {s['f1']:.3f}  | cited SP F1 {s['sp_f1']:.3f} "
+            f"  {name:12s} EM {s['em']:.3f}  F1 {s['f1']:.3f}  | cited SP F1 {s['sp_f1']:.3f} "
             f"(P {s['sp_prec']:.3f}, R {s['sp_recall']:.3f})  | joint F1 {s['joint_f1']:.3f}  "
             f"| abstain {s['abstention_rate']:.0%}, answered EM {s['answered_em']:.3f} "
             f"F1 {s['answered_f1']:.3f} (n={s['answered']})  | "
             f"${s['cost_usd']:.3f} ({s['from_cache']} of {s['questions']} from cache: no new spend)"
         )
+
+    for m, pairs in planned_comparisons.items():
+        for c in pairs:
+            print(
+                f"  planned {m:8s} {c['a']} - {c['b']}: {c['mean_diff']:+.3f} "
+                f"[{c['ci_low']:+.3f}, {c['ci_high']:+.3f}] p={c['p_value']:.4f} "
+                f"p_holm={c['p_holm']:.4f} W/L/T {c['wins']}/{c['losses']}/{c['ties']}"
+            )
 
     slug = timestamp_slug()
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -327,6 +361,8 @@ def main(argv: list[str] | None = None, generator: AnswerGenerator | None = None
         "cost_estimate": estimate,
         "results": results,
         "significance": significance,
+        "planned_comparisons": planned_comparisons,
+        "planned_pairs": planned,
         "seconds": seconds,
     }
     write_new(args.out_dir / f"{args.subset}-{slug}.json", json.dumps(record, indent=1) + "\n")

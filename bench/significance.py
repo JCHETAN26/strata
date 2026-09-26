@@ -93,12 +93,14 @@ def compare_all(
     n_resamples: int = 10_000,
     confidence: float = 0.95,
     seed: int = 0,
+    pairs: list[tuple[str, str]] | None = None,
 ) -> list[PairComparison]:
-    """Every pair of methods, on the queries all methods share (sorted ids for determinism)."""
-    methods = list(per_query)
+    """Every pair of methods (or only `pairs`, a pre-declared family), on the queries all compared
+    methods share (sorted ids for determinism). Holm adjustment is over the pairs compared."""
+    methods = list(per_query) if pairs is None else sorted({m for pair in pairs for m in pair})
     queries = sorted(set.intersection(*(set(per_query[m]) for m in methods)))
     raw = []
-    for a, b in combinations(methods, 2):
+    for a, b in pairs if pairs is not None else combinations(methods, 2):
         xa = [per_query[a][q] for q in queries]
         xb = [per_query[b][q] for q in queries]
         d = np.asarray(xa) - np.asarray(xb)

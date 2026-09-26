@@ -59,3 +59,16 @@ def test_compare_all_pairs_and_counts() -> None:
     assert (xy.queries, xy.wins, xy.losses, xy.ties) == (3, 1, 1, 1)
     assert xy.mean_diff == pytest.approx(0.0)
     assert all(r.p_holm >= r.p_value for r in results)
+
+
+def test_compare_all_with_a_planned_family() -> None:
+    per_query = {
+        "base": {"q1": 0.0, "q2": 0.5, "q3": 1.0},
+        "a": {"q1": 1.0, "q2": 0.5, "q3": 1.0},
+        "b": {"q1": 0.5, "q2": 0.5, "q3": 1.0},
+        "unused": {"q1": 0.0},  # not in the family: does not shrink the shared query set
+    }
+    results = compare_all(per_query, pairs=[("a", "base"), ("a", "b")], n_resamples=200)
+    assert [(r.a, r.b) for r in results] == [("a", "base"), ("a", "b")]
+    assert all(r.queries == 3 for r in results)
+    assert results[0].mean_diff == pytest.approx(1 / 3)
