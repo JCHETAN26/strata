@@ -22,6 +22,7 @@ from benchmeta import REPO_ROOT, metadata, timestamp_slug
 SUMMARY_FIELDS = [
     "qps",
     "recall",
+    "recall_by_id",
     "build_seconds",
     "latency_mean_us",
     "latency_p50_us",

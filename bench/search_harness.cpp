@@ -128,7 +128,8 @@ struct RunResult {
   double build_seconds;
   double search_seconds;
   double qps;
-  double recall;
+  double recall;        // tie-aware (ann-benchmarks definition); the headline number
+  double recall_by_id;  // strict id matching against groundtruth
   double latency_mean_us;
   double latency_p50_us;
   double latency_p95_us;
@@ -170,6 +171,18 @@ int main(int argc, char** argv) {
     std::ranges::copy(dataset->groundtruth.row(q), groundtruth.row(q).begin());
   }
 
+  const strata::Matrix<float> queries(
+      num_queries, dataset->query.cols(),
+      {dataset->query.data().begin(),
+       dataset->query.data().begin() +
+           static_cast<std::ptrdiff_t>(num_queries * dataset->query.cols())});
+  auto kth_distances =
+      strata::kth_neighbor_distances(dataset->base, queries, groundtruth, *metric, opt.k);
+  if (!kth_distances) {
+    std::cerr << "error: " << kth_distances.error().message << "\n";
+    return 1;
+  }
+
   std::vector<RunResult> runs;
   for (std::size_t run = 0; run < opt.runs; ++run) {
     const auto build_start = Clock::now();
@@ -201,9 +214,10 @@ int main(int argc, char** argv) {
     }
     const double search_seconds = seconds_since(search_start);
 
-    auto recall = strata::recall_at_k(results, groundtruth, opt.k);
-    if (!recall) {
-      std::cerr << "error: " << recall.error().message << "\n";
+    auto recall = strata::recall_at_k_with_ties(results, *kth_distances, opt.k);
+    auto recall_by_id = strata::recall_at_k(results, groundtruth, opt.k);
+    if (!recall || !recall_by_id) {
+      std::cerr << "error: recall computation failed\n";
       return 1;
     }
     std::ranges::sort(latencies_us);
@@ -213,7 +227,7 @@ int main(int argc, char** argv) {
     }
     runs.push_back(
         {build_seconds, search_seconds, static_cast<double>(num_queries) / search_seconds, *recall,
-         total_us / static_cast<double>(num_queries), percentile(latencies_us, 50),
+         *recall_by_id, total_us / static_cast<double>(num_queries), percentile(latencies_us, 50),
          percentile(latencies_us, 95), percentile(latencies_us, 99), latencies_us.back()});
     std::cerr << "run " << run + 1 << "/" << opt.runs << ": qps=" << runs.back().qps << " recall@"
               << opt.k << "=" << runs.back().recall << "\n";
@@ -244,7 +258,8 @@ int main(int argc, char** argv) {
     const auto& r = runs[i];
     out << "    {\"build_seconds\": " << r.build_seconds
         << ", \"search_seconds\": " << r.search_seconds << ", \"qps\": " << r.qps
-        << ", \"recall\": " << r.recall << ", \"latency_mean_us\": " << r.latency_mean_us
+        << ", \"recall\": " << r.recall << ", \"recall_by_id\": " << r.recall_by_id
+        << ", \"latency_mean_us\": " << r.latency_mean_us
         << ", \"latency_p50_us\": " << r.latency_p50_us
         << ", \"latency_p95_us\": " << r.latency_p95_us
         << ", \"latency_p99_us\": " << r.latency_p99_us

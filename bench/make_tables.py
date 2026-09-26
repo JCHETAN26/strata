@@ -48,9 +48,9 @@ def search_table() -> list[str]:
     lines = [
         "## Search (single thread)",
         "",
-        "| Dataset | Index | Params | Machine | Runs | Recall@k | QPS | p50 µs | p99 µs "
-        "| Build s | Commit |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        "| Dataset | Index | Params | Machine | Runs | Recall@k | Recall@k by id | QPS "
+        "| p50 µs | p99 µs | Build s | Commit |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in sorted(records, key=lambda r: (r["dataset"]["name"], r["result"]["index"])):
         s = r["summary"]
@@ -59,10 +59,18 @@ def search_table() -> list[str]:
         lines.append(
             f"| {r['dataset']['name']} | {r['result']['index']} | {params} | {machine(r)} "
             f"| {len(r['result']['runs'])} | {s['recall']['mean']:.4f} (k={r['result']['k']}) "
+            f"| {s['recall_by_id']['mean']:.4f} "
             f"| {fmt(s['qps'], 1)} | {fmt(s['latency_p50_us'], 1)} | {fmt(s['latency_p99_us'], 1)} "
             f"| {fmt(s['build_seconds'], 3)} | `{commit}` |"
         )
-    return [*lines, "", "`*` = uncommitted changes in the working tree when measured.", ""]
+    notes = [
+        "",
+        "Recall@k is tie-aware (ann-benchmarks definition): a result counts if it is no farther",
+        "than the k-th true neighbor. Recall by id is strict id matching; it can be lower when",
+        "several vectors tie at the k-th distance. `*` = uncommitted changes when measured.",
+        "",
+    ]
+    return lines + notes
 
 
 def micro_table() -> list[str]:
