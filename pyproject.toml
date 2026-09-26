@@ -6,6 +6,9 @@ requires-python = ">=3.11,<3.13"
 dependencies = [
     "numpy>=1.26",
     "h5py>=3.10",
+    "hnswlib>=0.8.0",
+    "faiss-cpu>=1.15.1",
+    "matplotlib>=3.11.2",
 ]
 
 [dependency-groups]

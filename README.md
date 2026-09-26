@@ -53,7 +53,15 @@ Every number comes from a script that saves raw JSON (with commit, hardware, and
 
 ```sh
 cmake --build --preset release
-uv run python bench/run_search_bench.py --dataset siftsmall --index brute_force --runs 5
+uv run python bench/run_search_bench.py --dataset siftsmall --index brute_force
+uv run python bench/run_search_bench.py --dataset siftsmall --index hnsw --M 16 --ef-construction 200
+uv run python bench/run_reference_bench.py --dataset siftsmall --library hnswlib
+uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss --index hnsw
+uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss --index flat
 uv run python bench/run_micro_bench.py --repetitions 5
 uv run python bench/make_tables.py        # writes results/tables.md
+uv run python bench/plot_recall_qps.py    # writes results/plots/recall_qps_<dataset>.png
 ```
+
+HNSW is compiled in only when `src/index/hnsw.cpp` exists; until then `--index hnsw` is
+unavailable and `tests/hnsw_test.cpp` (the HNSW spec) is not built.

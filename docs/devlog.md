@@ -69,3 +69,33 @@
   distance (40644, exact: SIFT features are integers) and the ground truth picked the other one.
   Added tie-aware recall (ann-benchmarks definition) as the headline and kept id recall alongside.
 - **ann-benchmarks.com returns 403** to Python's default User-Agent; the download sets one.
+
+## 2026-09-25 — Phase 2 scaffolding (HNSW core is hand-written; see CLAUDE.md)
+
+**Done**
+- `include/strata/hnsw.hpp`: public API plus introspection (`entry_point`, `max_level`, `level`,
+  `neighbors`) so tests can check graph invariants. Private section left for the hand-written
+  implementation.
+- `tests/hnsw_test.cpp`: spec: edge cases (empty, single, k=0, k>size, ef<k, dimension
+  mismatch, 100 identical vectors), result contract (sorted, distinct, exact distances), graph
+  invariants (degree bounds, no self-loops or duplicate edges, neighbors live on the layer, entry
+  point on top layer, level distribution vs mL = 1/ln M, layer-0 reachability), and recall vs
+  brute force (all metrics, ef monotonicity, incremental inserts, SIFT10K >= 0.98).
+- CMake compiles HNSW, its tests, and `--index hnsw` in the harness only when
+  `src/index/hnsw.cpp` exists.
+- Harness restructured: build once, sweep `ef_search`. Shared record format (`bench/records.py`)
+  for Strata, hnswlib, and FAISS; `bench/run_reference_bench.py`; `bench/plot_recall_qps.py`.
+
+**Decisions**
+- **Spec thresholds checked against hnswlib** on the same data shapes: recall >= 0.996 where the
+  tests require 0.95, 0.998 on SIFT10K where they require 0.98. hnswlib also passes the duplicates
+  case. So a failure means a bug, not a harsh test.
+- **Reference QPS from one batched call** (no per-query Python overhead). Their latency
+  percentiles are per-call and include Python overhead; stated in the table notes.
+
+**Observed**
+- On the M2, FAISS HNSW is ~3.5x faster than hnswlib at the same M/ef (200k vs 57k QPS at
+  ef=10). Checked it's single-threaded (wall = CPU time with `omp_set_num_threads(1)`). Likely
+  cause: the FAISS wheel is built with NEON, while hnswlib's SIMD paths are SSE/AVX only, so on ARM
+  it runs scalar distances. Expect hnswlib to look much stronger on the Ryzen.
+- FAISS flat (BLAS) brute force: ~10.5k QPS vs Strata scalar brute force ~1.6k on SIFT10K.

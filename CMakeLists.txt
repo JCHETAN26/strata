@@ -29,6 +29,17 @@ add_library(strata STATIC
   src/index/brute_force.cpp
   src/storage/dataset.cpp)
 add_library(strata::strata ALIAS strata)
+
+# The HNSW implementation is written by hand (see CLAUDE.md). Until src/index/hnsw.cpp exists,
+# the library, tests, and harness build without it.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/index/hnsw.cpp")
+  set(STRATA_HAS_HNSW ON)
+  target_sources(strata PRIVATE src/index/hnsw.cpp)
+  target_compile_definitions(strata PUBLIC STRATA_HAS_HNSW=1)
+else()
+  set(STRATA_HAS_HNSW OFF)
+  message(STATUS "src/index/hnsw.cpp not found: building without HNSW")
+endif()
 target_include_directories(strata PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_features(strata PUBLIC cxx_std_20)

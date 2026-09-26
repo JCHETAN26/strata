@@ -3,7 +3,7 @@
     uv run python bench/make_tables.py
 
 Reads results/search/**/*.json and results/micro/*.json and writes results/tables.md.
-For each (dataset, index, params, machine) only the newest result is shown.
+For each configuration (see records.config_key) only the newest result is shown.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import json
 from typing import Any
 
 from benchmeta import REPO_ROOT
+from records import latest_records, load_records
 
 RESULTS = REPO_ROOT / "results"
 
@@ -24,50 +25,36 @@ def machine(record: dict[str, Any]) -> str:
     return record["hardware"].get("cpu") or record["hardware"]["machine"]
 
 
-def latest(records: list[dict[str, Any]], key: Any) -> list[dict[str, Any]]:
-    by_key: dict[Any, dict[str, Any]] = {}
-    for record in sorted(records, key=lambda r: r["timestamp"]):
-        by_key[key(record)] = record
-    return list(by_key.values())
-
-
 def search_table() -> list[str]:
-    records = [json.loads(p.read_text()) for p in sorted(RESULTS.glob("search/**/*.json"))]
+    records = latest_records(load_records())
     if not records:
         return []
-    records = latest(
-        records,
-        lambda r: (
-            r["dataset"]["name"],
-            r["result"]["index"],
-            json.dumps(r["result"]["params"], sort_keys=True),
-            r["result"]["k"],
-            machine(r),
-        ),
-    )
     lines = [
-        "## Search (single thread)",
+        "## Search",
         "",
-        "| Dataset | Index | Params | Machine | Runs | Recall@k | Recall@k by id | QPS "
-        "| p50 µs | p99 µs | Build s | Commit |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| Dataset | Library | Index | Build params | Search params | Machine | Threads | Runs "
+        "| Recall@k | Recall@k by id | QPS | p50 µs | p99 µs | Build s | Commit |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
-    for r in sorted(records, key=lambda r: (r["dataset"]["name"], r["result"]["index"])):
-        s = r["summary"]
-        params = ", ".join(f"{k}={v}" for k, v in r["result"]["params"].items()) or "—"
+    for r in sorted(records, key=lambda r: (r["dataset"]["name"], r["library"], r["index"])):
+        build = ", ".join(f"{k}={v}" for k, v in r["build_params"].items()) or "—"
         commit = r["git"]["commit"][:8] + ("*" if r["git"]["dirty"] else "")
-        lines.append(
-            f"| {r['dataset']['name']} | {r['result']['index']} | {params} | {machine(r)} "
-            f"| {len(r['result']['runs'])} | {s['recall']['mean']:.4f} (k={r['result']['k']}) "
-            f"| {s['recall_by_id']['mean']:.4f} "
-            f"| {fmt(s['qps'], 1)} | {fmt(s['latency_p50_us'], 1)} | {fmt(s['latency_p99_us'], 1)} "
-            f"| {fmt(s['build_seconds'], 3)} | `{commit}` |"
-        )
+        for point in r["points"]:
+            s = point["summary"]
+            search = ", ".join(f"{k}={v}" for k, v in point["search_params"].items()) or "—"
+            lines.append(
+                f"| {r['dataset']['name']} | {r['library']} | {r['index']} | {build} | {search} "
+                f"| {machine(r)} | {r['threads']} | {len(point['runs'])} "
+                f"| {s['recall']['mean']:.4f} (k={r['k']}) | {s['recall_by_id']['mean']:.4f} "
+                f"| {fmt(s['qps'], 1)} | {fmt(s['latency_p50_us'], 1)} "
+                f"| {fmt(s['latency_p99_us'], 1)} | {r['build_seconds']:.2f} | `{commit}` |"
+            )
     notes = [
         "",
         "Recall@k is tie-aware (ann-benchmarks definition): a result counts if it is no farther",
         "than the k-th true neighbor. Recall by id is strict id matching; it can be lower when",
-        "several vectors tie at the k-th distance. `*` = uncommitted changes when measured.",
+        "several vectors tie at the k-th distance. hnswlib/FAISS latencies include Python call",
+        "overhead (their QPS does not). `*` = uncommitted changes when measured.",
         "",
     ]
     return lines + notes

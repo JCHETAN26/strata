@@ -99,8 +99,8 @@ Convert them to raw binary with a Python script so the C++ code needs no HDF5 de
 - [ ] Neighbor-selection heuristic from the paper (not just "closest M")
 - [ ] Search: greedy descent through upper layers, `efSearch`-bounded search at layer 0
 - [ ] Parameters: `M`, `efConstruction`, `efSearch`
-- [ ] Tests: recall vs. brute force; edge cases (empty index, one vector, duplicates)
-- [ ] Python comparison scripts for hnswlib and FAISS on the same data
+- [x] Tests: recall vs. brute force; edge cases (empty index, one vector, duplicates) — spec in `tests/hnsw_test.cpp`
+- [x] Python comparison scripts for hnswlib and FAISS on the same data
 
 **Measure:** recall vs. QPS curve against hnswlib and FAISS on SIFT10K and SIFT1M.
 First version will likely be slower than hnswlib. That's expected.

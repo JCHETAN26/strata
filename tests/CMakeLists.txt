@@ -7,6 +7,9 @@ add_executable(strata_tests
   distance_test.cpp
   recall_test.cpp
   smoke_test.cpp)
+if(STRATA_HAS_HNSW)
+  target_sources(strata_tests PRIVATE hnsw_test.cpp)
+endif()
 target_link_libraries(strata_tests PRIVATE strata::strata strata_options GTest::gtest_main)
 # Tests that need downloaded datasets look here and skip if the files are absent.
 target_compile_definitions(strata_tests PRIVATE
