@@ -1,6 +1,12 @@
 find_package(benchmark CONFIG REQUIRED)
 
+# Microbenchmarks (Google Benchmark).
 add_executable(strata_bench
-  smoke_bench.cpp)
-target_link_libraries(strata_bench PRIVATE
-  strata::strata strata_options benchmark::benchmark_main)
+  distance_bench.cpp)
+target_link_libraries(strata_bench PRIVATE strata::strata strata_options benchmark::benchmark_main)
+
+# End-to-end search harness, driven by bench/run_search_bench.py.
+add_executable(strata_search
+  search_harness.cpp)
+target_link_libraries(strata_search PRIVATE strata::strata strata_options)
+target_compile_definitions(strata_search PRIVATE STRATA_BUILD_TYPE="${CMAKE_BUILD_TYPE}")

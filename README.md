@@ -3,7 +3,7 @@
 Distributed vector search engine written from scratch in C++20 (HNSW, SIMD, product quantization,
 filtered search, sharding), with a retrieval-augmented generation layer on top.
 
-> Status: Phase 0 (project setup). See [`buildplan.md`](buildplan.md) for the roadmap.
+> Status: Phase 1 (baseline: distances, brute-force search, recall, benchmark harness). See [`buildplan.md`](buildplan.md) for the roadmap.
 
 ## Build
 
@@ -29,7 +29,7 @@ ctest --preset debug
 | `release` | Release    | Benchmarks                                                   |
 | `asan`    | Debug      | AddressSanitizer + UndefinedBehaviorSanitizer; run before committing memory-handling changes |
 
-Build output goes to `build/<preset>/`. Run benchmarks with `./build/release/bench/strata_bench`.
+Build output goes to `build/<preset>/`.
 
 ## Datasets
 
@@ -45,3 +45,15 @@ uv run pytest
 Datasets are written to `data/<name>/` (gitignored) as `base.fbin`, `query.fbin`,
 `groundtruth.ibin`, and `meta.json`. The binary format is a little-endian `uint32` header
 `(num_vectors, dimension)` followed by row-major `float32` or `int32` values.
+
+## Benchmarks
+
+Every number comes from a script that saves raw JSON (with commit, hardware, and parameters) under
+`results/`, and tables are generated from those files.
+
+```sh
+cmake --build --preset release
+uv run python bench/run_search_bench.py --dataset siftsmall --index brute_force --runs 5
+uv run python bench/run_micro_bench.py --repetitions 5
+uv run python bench/make_tables.py        # writes results/tables.md
+```

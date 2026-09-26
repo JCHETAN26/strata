@@ -21,12 +21,20 @@ if(STRATA_SANITIZE)
   target_link_options(strata_options INTERFACE -fsanitize=address,undefined)
 endif()
 
-# Core library. Header-only until the first source file lands in src/.
-add_library(strata INTERFACE)
+find_package(tl-expected CONFIG REQUIRED)
+
+add_library(strata STATIC
+  src/distance/scalar.cpp
+  src/eval/recall.cpp
+  src/index/brute_force.cpp
+  src/storage/dataset.cpp)
 add_library(strata::strata ALIAS strata)
-target_include_directories(strata INTERFACE
+target_include_directories(strata PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-target_compile_features(strata INTERFACE cxx_std_20)
+target_compile_features(strata PUBLIC cxx_std_20)
+target_link_libraries(strata
+  PUBLIC tl::expected
+  PRIVATE strata_options)
 
 if(STRATA_BUILD_TESTS)
   enable_testing()
