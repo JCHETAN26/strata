@@ -33,11 +33,13 @@
 #include <vector>
 
 #include "strata/bitset.hpp"
+#include "strata/bm25.hpp"
 #include "strata/brute_force.hpp"
 #include "strata/build_info.hpp"
 #include "strata/distance.hpp"
 #include "strata/filter.hpp"
 #include "strata/pq.hpp"
+#include "strata/text.hpp"
 #include "strata/thread_pool.hpp"
 #ifdef STRATA_HAS_HNSW
 #include "strata/hnsw.hpp"
@@ -157,14 +159,20 @@ auto shared(Mutex& mutex, const Fn& fn) {
 using SearchResult = std::pair<nb::ndarray<nb::numpy, std::int64_t>, nb::ndarray<nb::numpy, float>>;
 
 // Padded (ids, distances) buffers for `rows` queries of k results each.
+// For vector indexes the values are distances (padding +inf). For BM25 they are scores: C++
+// returns negated scores in Neighbor::distance, so `negate` flips them back (padding -inf).
 struct ResultBuffers {
-  ResultBuffers(std::size_t rows, std::size_t k)
-      : k(k), ids(rows * k, -1), distances(rows * k, std::numeric_limits<float>::infinity()) {}
+  ResultBuffers(std::size_t rows, std::size_t k, bool negate = false)
+      : k(k),
+        negate(negate),
+        ids(rows * k, -1),
+        distances(rows * k, negate ? -std::numeric_limits<float>::infinity()
+                                   : std::numeric_limits<float>::infinity()) {}
 
   void put(std::size_t row, const std::vector<strata::Neighbor>& neighbors) {
     for (std::size_t i = 0; i < neighbors.size() && i < k; ++i) {
       ids[row * k + i] = neighbors[i].id;
-      distances[row * k + i] = neighbors[i].distance;
+      distances[row * k + i] = negate ? -neighbors[i].distance : neighbors[i].distance;
     }
   }
 
@@ -175,6 +183,7 @@ struct ResultBuffers {
   }
 
   std::size_t k;
+  bool negate;
   std::vector<std::int64_t> ids;
   std::vector<float> distances;
 };
@@ -183,11 +192,11 @@ struct ResultBuffers {
 // Called with the GIL released.
 template <typename SearchOne>
 ResultBuffers search_rows(std::size_t rows, std::size_t k, std::optional<std::size_t> threads,
-                          const SearchOne& search_one) {
+                          const SearchOne& search_one, bool negate = false) {
   if (threads && *threads == 0) {
     throw nb::value_error("threads must be positive (or None for all cores)");
   }
-  ResultBuffers out(rows, k);
+  ResultBuffers out(rows, k, negate);
   std::vector<std::optional<strata::Error>> errors(rows);
   auto run = [&](std::size_t row) {
     auto result = search_one(row);
@@ -251,6 +260,57 @@ struct PyPqIndex {
   strata::PqIndex index;
   mutable std::shared_mutex mutex;
 };
+
+struct PyBm25 {
+  strata::Bm25Index index;
+  mutable std::shared_mutex mutex;
+};
+
+strata::AnalyzerConfig make_analyzer_config(const std::string& tokenizer, bool possessive,
+                                            bool lowercase,
+                                            const std::optional<std::string>& stopwords,
+                                            const std::optional<std::string>& stemmer,
+                                            std::size_t max_token_length) {
+  strata::AnalyzerConfig config;
+  if (tokenizer == "unicode") {
+    config.tokenizer = strata::Tokenizer::kUnicodeWords;
+  } else if (tokenizer == "plain") {
+    config.tokenizer = strata::Tokenizer::kPlain;
+  } else {
+    throw nb::value_error("tokenizer must be 'unicode' or 'plain'");
+  }
+  config.english_possessive = possessive;
+  config.lowercase = lowercase;
+  if (!stopwords) {
+    config.stopwords = strata::Stopwords::kNone;
+  } else if (*stopwords == "lucene_english") {
+    config.stopwords = strata::Stopwords::kLuceneEnglish;
+  } else {
+    throw nb::value_error("stopwords must be None or 'lucene_english'");
+  }
+  if (!stemmer) {
+    config.stemmer = strata::Stemmer::kNone;
+  } else if (*stemmer == "porter") {
+    config.stemmer = strata::Stemmer::kPorter;
+  } else {
+    throw nb::value_error("stemmer must be None or 'porter'");
+  }
+  if (max_token_length == 0) {
+    throw nb::value_error("max_token_length must be positive");
+  }
+  config.max_token_length = max_token_length;
+  return config;
+}
+
+std::string describe(const strata::AnalyzerConfig& c) {
+  return std::string("Analyzer(tokenizer='") +
+         (c.tokenizer == strata::Tokenizer::kPlain ? "plain" : "unicode") +
+         "', english_possessive=" + (c.english_possessive ? "True" : "False") +
+         ", lowercase=" + (c.lowercase ? "True" : "False") + ", stopwords=" +
+         (c.stopwords == strata::Stopwords::kLuceneEnglish ? "'lucene_english'" : "None") +
+         ", stemmer=" + (c.stemmer == strata::Stemmer::kPorter ? "'porter'" : "None") +
+         ", max_token_length=" + std::to_string(c.max_token_length) + ")";
+}
 
 #ifdef STRATA_HAS_HNSW
 struct PyHnsw {
@@ -826,6 +886,229 @@ exclusive lock, so inserts are serialized.)doc")
                    })
       .def_prop_ro("codebook_bytes",
                    [](const PyPqIndex& self) { return self.index.codebook_bytes(); });
+
+  // --- Text analysis and BM25 ----------
+
+  nb::class_<strata::Analyzer>(
+      m, "Analyzer", R"doc(Text analysis: tokenize, possessive filter, lowercase, stopwords, stem.
+
+tokenizer: "unicode" (UAX #29 word boundaries, as Lucene's StandardTokenizer) or "plain"
+(maximal runs of Unicode letters/digits). stopwords: None or "lucene_english" (Lucene's 33-word
+list). stemmer: None or "porter" (Lucene's Porter stemmer). Analyzer.anserini_english() is
+Anserini's default BEIR configuration; Analyzer.plain() is the plain tokenizer + lowercase.
+Immutable; safe to share between threads.)doc")
+      .def(
+          "__init__",
+          [](strata::Analyzer* self, const std::string& tokenizer, bool english_possessive,
+             bool lowercase, const std::optional<std::string>& stopwords,
+             const std::optional<std::string>& stemmer, std::size_t max_token_length) {
+            new (self) strata::Analyzer(make_analyzer_config(
+                tokenizer, english_possessive, lowercase, stopwords, stemmer, max_token_length));
+          },
+          "tokenizer"_a = "unicode", "english_possessive"_a = false, "lowercase"_a = true,
+          "stopwords"_a = nb::none(), "stemmer"_a = nb::none(), "max_token_length"_a = 255)
+      .def_static("anserini_english",
+                  [] { return strata::Analyzer(strata::AnalyzerConfig::anserini_english()); })
+      .def_static("plain", [] { return strata::Analyzer(strata::AnalyzerConfig::plain()); })
+      .def(
+          "analyze",
+          [](const strata::Analyzer& self, const std::string& text) {
+            nb::gil_scoped_release release;
+            return self.analyze(text);
+          },
+          "text"_a, "Tokens of `text` (UTF-8), after every configured filter.")
+      .def("__repr__", [](const strata::Analyzer& self) { return describe(self.config()); });
+
+  m.def(
+      "porter_stem", [](const std::string& word) { return strata::porter_stem(word); }, "word"_a,
+      "Porter stem of one lowercase word (Lucene PorterStemmer semantics).");
+
+  nb::class_<PyBm25>(m, "Bm25Index",
+                     R"doc(BM25 over an inverted index, scored exactly as Lucene/Anserini.
+
+idf = ln(1 + (N - df + 0.5) / (df + 0.5)); defaults k1=0.9, b=0.4 (Anserini BEIR). length_encoding
+"lucene" uses Lucene's lossy 1-byte document lengths (needed to reproduce Anserini); "exact" uses
+exact token counts (as bm25s does). The default analyzer is Analyzer.anserini_english().
+
+Document ids are dense, in insertion order: the same id space as the vector indexes, so adding
+document i to each index in the same order lines ids up for hybrid retrieval. remove() tombstones
+an id without reusing it. Deleted documents still count in N, df, and avgdl (as in Lucene).
+
+Search returns (ids, scores): higher is better; missing results are id -1, score -inf.
+Thread safety: searches may run concurrently (GIL released, shared lock); add() and remove()
+take an exclusive lock, so inserts are serialized.)doc")
+      .def(
+          "__init__",
+          [](PyBm25* self, float k1, float b, const std::string& length_encoding,
+             const std::optional<strata::Analyzer>& analyzer) {
+            strata::Bm25Params params{.k1 = k1, .b = b};
+            if (length_encoding == "lucene") {
+              params.length_encoding = strata::LengthEncoding::kLucene;
+            } else if (length_encoding == "exact") {
+              params.length_encoding = strata::LengthEncoding::kExact;
+            } else {
+              throw nb::value_error("length_encoding must be 'lucene' or 'exact'");
+            }
+            if (analyzer) {
+              params.analyzer = analyzer->config();
+            }
+            new (self) PyBm25{unwrap(strata::Bm25Index::create(params)), {}};
+          },
+          "k1"_a = 0.9F, "b"_a = 0.4F, "length_encoding"_a = "lucene", "analyzer"_a = nb::none())
+      .def(
+          "add",
+          [](PyBm25& self, const std::vector<std::string>& texts) {
+            std::size_t first = 0;
+            {
+              nb::gil_scoped_release release;
+              const std::unique_lock lock(self.mutex);
+              first = self.index.size();
+              for (const auto& text : texts) {
+                unwrap(self.index.add(text));
+              }
+            }
+            return id_range(first, texts.size());
+          },
+          "texts"_a, "Analyze and index documents; returns their ids. Exclusive lock.")
+      .def(
+          "add",
+          [](PyBm25& self, const std::string& text) {
+            nb::gil_scoped_release release;
+            const std::unique_lock lock(self.mutex);
+            return static_cast<std::int64_t>(unwrap(self.index.add(text)));
+          },
+          "text"_a)
+      .def(
+          "add_tokens",
+          [](PyBm25& self, const std::vector<std::vector<std::string>>& docs) {
+            std::size_t first = 0;
+            {
+              nb::gil_scoped_release release;
+              const std::unique_lock lock(self.mutex);
+              first = self.index.size();
+              for (const auto& tokens : docs) {
+                unwrap(self.index.add_tokens(tokens));
+              }
+            }
+            return id_range(first, docs.size());
+          },
+          "docs"_a, "Index pre-analyzed documents (lists of tokens), bypassing the analyzer.")
+      .def(
+          "remove",
+          [](PyBm25& self, std::int64_t id) {
+            if (id < 0 || id > std::numeric_limits<strata::VectorId>::max()) {
+              throw nb::key_error(("no document with id " + std::to_string(id)).c_str());
+            }
+            nb::gil_scoped_release release;
+            const std::unique_lock lock(self.mutex);
+            unwrap(self.index.remove(static_cast<strata::VectorId>(id)));
+          },
+          "id"_a)
+      .def(
+          "search",
+          [](const PyBm25& self, const std::string& query, std::size_t k) {
+            std::optional<ResultBuffers> out;
+            {
+              nb::gil_scoped_release release;
+              const std::shared_lock lock(self.mutex);
+              out.emplace(search_rows(
+                  1, k, 1, [&](std::size_t) { return self.index.search(query, k); }, true));
+            }
+            return std::move(*out).to_python(1, true);
+          },
+          "query"_a, "k"_a, "Top k documents for one query string: (ids, scores), shape (k,).")
+      .def(
+          "search",
+          [](const PyBm25& self, const std::vector<std::string>& queries, std::size_t k,
+             std::optional<std::size_t> threads) {
+            std::optional<ResultBuffers> out;
+            {
+              nb::gil_scoped_release release;
+              const std::shared_lock lock(self.mutex);
+              out.emplace(search_rows(
+                  queries.size(), k, threads,
+                  [&](std::size_t row) { return self.index.search(queries[row], k); }, true));
+            }
+            return std::move(*out).to_python(queries.size(), false);
+          },
+          "queries"_a, "k"_a, "threads"_a = nb::none(),
+          (std::string("Batch search over query strings: (ids, scores), shape (num_queries, k). ") +
+           kThreadsDoc)
+              .c_str())
+      .def(
+          "search_tokens",
+          [](const PyBm25& self, const std::vector<std::string>& tokens, std::size_t k) {
+            std::optional<ResultBuffers> out;
+            {
+              nb::gil_scoped_release release;
+              const std::shared_lock lock(self.mutex);
+              out.emplace(search_rows(
+                  1, k, 1, [&](std::size_t) { return self.index.search_tokens(tokens, k); }, true));
+            }
+            return std::move(*out).to_python(1, true);
+          },
+          "tokens"_a, "k"_a, "Search with pre-analyzed query tokens (bypasses the analyzer).")
+      .def(
+          "search_tokens",
+          [](const PyBm25& self, const std::vector<std::vector<std::string>>& queries,
+             std::size_t k, std::optional<std::size_t> threads) {
+            std::optional<ResultBuffers> out;
+            {
+              nb::gil_scoped_release release;
+              const std::shared_lock lock(self.mutex);
+              out.emplace(search_rows(
+                  queries.size(), k, threads,
+                  [&](std::size_t row) { return self.index.search_tokens(queries[row], k); },
+                  true));
+            }
+            return std::move(*out).to_python(queries.size(), false);
+          },
+          "queries"_a, "k"_a, "threads"_a = nb::none())
+      .def("__len__",
+           [](const PyBm25& self) { return shared(self.mutex, [&] { return self.index.size(); }); })
+      .def_prop_ro("live_size",
+                   [](const PyBm25& self) {
+                     return shared(self.mutex, [&] { return self.index.live_size(); });
+                   })
+      .def_prop_ro("vocabulary_size",
+                   [](const PyBm25& self) {
+                     return shared(self.mutex, [&] { return self.index.vocabulary_size(); });
+                   })
+      .def_prop_ro("total_terms",
+                   [](const PyBm25& self) {
+                     return shared(self.mutex, [&] { return self.index.total_terms(); });
+                   })
+      .def_prop_ro("doc_count",
+                   [](const PyBm25& self) {
+                     return shared(self.mutex, [&] { return self.index.doc_count(); });
+                   })
+      .def("is_deleted",
+           [](const PyBm25& self, std::int64_t id) {
+             return shared(self.mutex, [&] {
+               return id >= 0 && self.index.is_deleted(static_cast<strata::VectorId>(id));
+             });
+           })
+      .def("doc_length",
+           [](const PyBm25& self, std::int64_t id) {
+             return shared(self.mutex, [&] {
+               if (id < 0 || static_cast<std::size_t>(id) >= self.index.size()) {
+                 throw nb::index_error("id out of range");
+               }
+               return self.index.doc_length(static_cast<strata::VectorId>(id));
+             });
+           })
+      .def("doc_freq",
+           [](const PyBm25& self, const std::string& term) {
+             return shared(self.mutex, [&] { return self.index.doc_freq(term); });
+           })
+      .def_prop_ro("analyzer", [](const PyBm25& self) { return self.index.analyzer(); })
+      .def_prop_ro("k1", [](const PyBm25& self) { return self.index.params().k1; })
+      .def_prop_ro("b", [](const PyBm25& self) { return self.index.params().b; })
+      .def_prop_ro("length_encoding", [](const PyBm25& self) {
+        return std::string(self.index.params().length_encoding == strata::LengthEncoding::kLucene
+                               ? "lucene"
+                               : "exact");
+      });
 
   // --- HNSW ----------
   // Bound only when src/index/hnsw.cpp exists; otherwise strata.HnswIndex (in __init__.py) raises

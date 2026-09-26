@@ -291,3 +291,67 @@ build (the `ThreadPool` is ready for it), and profiling the graph search.
   `AttributeTable.append` on another Python thread. Caught in review before running.
 - With build isolation, the persistent build dir caches the path of pip's temporary Python, so
   `cmake --build build/python/...` fails after the install. Rebuild with `pip install -e .`.
+
+## 2026-09-25 — BM25 (C++, with bindings)
+
+**Done**
+- Text analysis (`include/strata/text.hpp`): UAX #29 word tokenizer (Lucene StandardTokenizer
+  behaviour, utf8proc for Unicode classes, emoji tokens), plain tokenizer, English possessive
+  filter, lowercase, Lucene's 33 English stopwords, Porter stemmer ported from Lucene.
+  `AnalyzerConfig::anserini_english()` = Anserini's DefaultEnglishAnalyzer; `plain()` kept.
+- `Bm25Index`: inverted index, Lucene BM25 (`idf = ln(1 + (N - df + 0.5)/(df + 0.5))`, k1=0.9,
+  b=0.4), Lucene's float arithmetic and 1-byte length encoding (or exact lengths), query-term
+  counts as boosts (Anserini), tombstone deletes, dense ids shared with the vector indexes.
+- Bindings: `strata.Analyzer`, `strata.porter_stem`, `strata.Bm25Index` (GIL released,
+  shared/exclusive lock like the vector indexes).
+- `scripts/prepare_beir.py`, `bench/ir_eval.py` (trec_eval semantics), and
+  `bench/validate_bm25_beir.py`.
+
+**Result: SciFact reproduces Anserini's published BM25 flat numbers exactly**
+
+| Metric | Strata | Anserini (published) |
+|---|---|---|
+| nDCG@10 | 0.6789 | 0.6789 |
+| R@100 | 0.9253 | 0.9253 |
+| R@1000 | 0.9767 | 0.9767 |
+| Total terms in index | 838,127 | 838,128 |
+
+Pass criterion (set before the run): each metric within 0.002 absolute, total terms within 0.1%.
+Indexing 5,183 docs takes ~0.5 s; 300 queries at k=1000 run at ~34–44k QPS on all cores (M2).
+
+**How the setup was pinned down (sources, not memory)**
+- Anserini's regression config (`beir-v1.0.0-scifact.flat.yaml`): BeirFlatCollection
+  (title + "\n" + text), `-bm25 -removeQuery -hits 1000`, trec_eval `-c`, published values,
+  and index stats (5,183 docs, 838,128 terms).
+- `DefaultEnglishAnalyzer`: StandardTokenizer → EnglishPossessiveFilter → LowerCaseFilter →
+  StopFilter(ENGLISH_STOP_WORDS_SET) → PorterStemFilter.
+- Lucene `BM25Similarity` (idf, avgdl = sumTotalTermFreq / docCount, 256-entry norm cache,
+  `w - w / (1 + tf * normInverse)`), `SmallFloat` (length encoding), `PorterStemmer`.
+- Anserini `BagOfWordsQueryGenerator`: repeated query terms become a boost equal to the count.
+- `RunOutputWriter`: scores written with `%f` (6 decimals; creates ties). trec_eval breaks
+  ties by docno *descending*; confirmed with pytrec_eval on a toy run.
+
+**Validation beyond SciFact**
+- Scores match bm25s (`method="lucene"`, exact lengths) on 2,000 SciFact docs × 100 queries,
+  rtol 1e-5, given the same tokens.
+- Porter stems match Martin Porter's official output for all 23,531 test words, and NLTK's
+  `MARTIN_EXTENSIONS` mode on the SciFact vocabulary.
+- `bench/ir_eval.py` matches pytrec_eval per query on random runs with many ties.
+
+**Problems**
+- First SciFact index had 45 fewer terms than Anserini (838,083). Counting Emoji-property
+  characters in the corpus found ® (27), © (11), ™ (4), ↔ (2) = 44: Lucene emits emoji as tokens,
+  which the first tokenizer skipped. Added emoji tokens from Unicode's emoji-data.txt
+  (`scripts/gen_emoji_table.py`, Unicode 18.0). One term (0.0001%) is still unaccounted for;
+  finding it needs a Lucene run, and it doesn't move any metric.
+- Two of my own test expectations were wrong (Porter keeps "runner"; two docs tied exactly).
+  The code was right both times.
+
+**Decisions**
+- Deleted documents keep counting in N, df, avgdl (Lucene's behaviour before merges); an exact
+  update would need a forward index. Documented on the class.
+- BM25 returns `Neighbor` with the negated score in `distance`, so every index sorts the same
+  way; Python gets positive scores and `-inf` padding (FAISS's convention for similarities).
+- Unicode Word_Break classes come from general categories plus UAX #29's explicit punctuation
+  lists, not the full Word_Break property table. The one-term gap on SciFact says this is close;
+  other corpora (non-Latin scripts) may show larger differences.

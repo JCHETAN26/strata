@@ -2,6 +2,7 @@ find_package(GTest CONFIG REQUIRED)
 include(GoogleTest)
 
 add_executable(strata_tests
+  bm25_test.cpp
   brute_force_test.cpp
   crash_recovery_test.cpp
   dataset_test.cpp
@@ -12,6 +13,7 @@ add_executable(strata_tests
   smoke_test.cpp
   pq_test.cpp
   storage_test.cpp
+  text_test.cpp
   thread_pool_test.cpp)
 if(STRATA_HAS_HNSW)
   target_sources(strata_tests PRIVATE hnsw_test.cpp)

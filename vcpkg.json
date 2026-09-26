@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "builtin-baseline": "617ef1c0c422737d117eda00a471ea1be5bad088",
   "dependencies": [
-    "tl-expected"
+    "tl-expected",
+    "utf8proc"
   ],
   "features": {
     "tests": {

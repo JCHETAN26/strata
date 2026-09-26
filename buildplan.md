@@ -168,7 +168,7 @@ First version will likely be slower than hnswlib. That's expected.
 ## Phase 8 — Python bindings & RAG layer (1–2 weeks, IdeaPad)
 
 - [x] Python bindings (nanobind or pybind11) — nanobind; HNSW bound once the core exists
-- [ ] BM25 inverted index in C++
+- [x] BM25 inverted index in C++ (Lucene/Anserini-exact; SciFact nDCG@10 0.6789 = published)
 - [ ] Hybrid retrieval with reciprocal rank fusion
 - [ ] Cross-encoder reranking
 - [ ] Cited answer generation with Claude Haiku

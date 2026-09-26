@@ -22,7 +22,9 @@ from __future__ import annotations
 from typing import Any
 
 from strata._core import (
+    Analyzer,
     AttributeTable,
+    Bm25Index,
     BruteForceIndex,
     CompiledFilter,
     Filter,
@@ -34,6 +36,7 @@ from strata._core import (
     has_hnsw,
     inner_product,
     l2_squared,
+    porter_stem,
 )
 
 if has_hnsw:
@@ -55,7 +58,9 @@ else:
 
 
 __all__ = [
+    "Analyzer",
     "AttributeTable",
+    "Bm25Index",
     "BruteForceIndex",
     "CompiledFilter",
     "Filter",
@@ -68,4 +73,5 @@ __all__ = [
     "has_hnsw",
     "inner_product",
     "l2_squared",
+    "porter_stem",
 ]

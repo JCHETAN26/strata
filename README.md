@@ -70,8 +70,18 @@ recent_arxiv = (strata.Filter.range("year", 2020, 2024)
 ids, dists = index.search_filtered(queries, k=10, filter=recent_arxiv)
 ```
 
+```python
+# Keyword search: BM25 scored exactly as Lucene/Anserini (k1=0.9, b=0.4 by default).
+bm25 = strata.Bm25Index()                     # Analyzer.anserini_english() by default
+bm25.add(["Aspirin lowers the risk of stroke", "Statins and cholesterol"])
+ids, scores = bm25.search("does aspirin reduce strokes", k=10)
+strata.Analyzer.anserini_english().analyze("John's running")   # ['john', 'run']
+
+# BM25 and vector indexes share one id space: add document i to both in the same order.
+```
+
 - Results are `(ids, distances)`; missing results (fewer than k matches) are id `-1`,
-  distance `inf`.
+  distance `inf`. BM25 returns `(ids, scores)` (higher is better; missing: `-1`, `-inf`).
 - Other dtypes/layouts (float64, slices) are converted with one copy.
 - Searches release the GIL and share the index's lock, so Python threads search in parallel.
   `add()`/`remove()` take the lock exclusively: inserts are serialized.
@@ -113,6 +123,8 @@ uv run python bench/run_search_bench.py --dataset siftsmall --threads 4        #
 uv run python bench/run_search_bench.py --dataset siftsmall --index pq --pq-m 16   # rerank sweep
 uv run python bench/run_storage_bench.py --dataset siftsmall   # WAL, checkpoint, recovery
 uv run python bench/run_filter_bench.py --dataset siftsmall    # filtered search by selectivity
+uv run python scripts/prepare_beir.py scifact
+uv run python bench/validate_bm25_beir.py --dataset scifact    # reproduces Anserini's BM25
 uv run python bench/run_micro_bench.py --repetitions 5
 uv run python bench/make_tables.py        # writes results/tables.md
 uv run python bench/plot_recall_qps.py    # writes results/plots/recall_qps_<dataset>.png

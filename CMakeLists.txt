@@ -48,6 +48,7 @@ if(STRATA_TSAN)
 endif()
 
 find_package(tl-expected CONFIG REQUIRED)
+find_package(utf8proc CONFIG REQUIRED)
 
 add_library(strata STATIC
   src/distance/avx2.cpp
@@ -65,6 +66,9 @@ add_library(strata STATIC
   src/storage/file.cpp
   src/storage/snapshot.cpp
   src/storage/wal.cpp
+  src/text/analyzer.cpp
+  src/text/bm25.cpp
+  src/text/porter.cpp
   src/util/thread_pool.cpp)
 add_library(strata::strata ALIAS strata)
 
@@ -88,7 +92,7 @@ target_compile_features(strata PUBLIC cxx_std_20)
 find_package(Threads REQUIRED)
 target_link_libraries(strata
   PUBLIC tl::expected Threads::Threads
-  PRIVATE strata_options)
+  PRIVATE strata_options utf8proc::utf8proc)
 # PUBLIC so tests, tools, benchmarks, and the Python module compile with the same FP semantics.
 target_compile_options(strata PUBLIC ${STRATA_FP_FLAGS})
 if(STRATA_BUILD_PYTHON)
