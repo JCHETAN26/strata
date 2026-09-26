@@ -13,7 +13,12 @@ first-hop partner in the top 5. So:
    question lacks. A candidate reached from several p keeps its best score.
 4. Final list: H1[:keep], then hop-2 candidates not already chosen, then the rest of H1.
 
-All parameters are tuned on a dev split (bench/eval_multihop.py); this module only computes.
+Joint variant (joint_rank): instead of a keep rule, the single-hop pool (scored against the
+question) and the hop-2 pools (scored against their hop-2 queries) are merged, and every
+candidate competes on its best cross-encoder score.
+
+All parameters are tuned on a dev split (bench/eval_multihop.py, bench/eval_multihop_joint.py);
+this module only computes.
 """
 
 from __future__ import annotations
@@ -84,3 +89,19 @@ def combine(hop1: list[str], hop2: list[str], keep: int, k: int) -> list[str]:
         if len(out) == k:
             break
     return out
+
+
+def joint_rank(pools: list[tuple[list[str], dict[str, float]]], k: int) -> list[str]:
+    """Rank the union of several scored pools (each: candidate ids, cross-encoder scores against
+    that pool's query) by each candidate's best score over the pools that contain it. Ties keep
+    first-appearance order, with pools in the given order (single-hop first). Top k."""
+    best: dict[str, float] = {}
+    order: list[str] = []
+    for pool, scores in pools:
+        for doc in pool:
+            if doc not in best:
+                order.append(doc)
+                best[doc] = scores[doc]
+            else:
+                best[doc] = max(best[doc], scores[doc])
+    return sorted(order, key=lambda d: -best[d])[:k]

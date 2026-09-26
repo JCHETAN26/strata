@@ -120,3 +120,65 @@ def test_eval_multihop_end_to_end(tmp_path: Path) -> None:
         assert [(c["a"], c["b"]) for c in pairs] == [tuple(p) for p in eval_multihop.PLANNED]
     assert len(record["comparison_check"]) == 4
     assert all(c["questions"] == 19 for c in record["comparison_check"])
+
+
+def test_joint_rank_best_score_over_pools() -> None:
+    from multihop import joint_rank
+
+    single = (["a", "b", "c"], {"a": 3.0, "b": 1.0, "c": 0.0})
+    hop2 = (["c", "d"], {"c": 5.0, "d": 1.0})
+    # c's best score is 5 (from hop 2); b and d tie at 1.0, b first (single-hop pool first).
+    assert joint_rank([single, hop2], 5) == ["c", "a", "b", "d"]
+    assert joint_rank([single, hop2], 2) == ["c", "a"]
+    assert joint_rank([single], 5) == ["a", "b", "c"]
+    assert joint_rank([], 5) == []
+
+
+MULTIHOP_RESULT = next(
+    iter(sorted((REPO_ROOT / "results" / "multihop").glob(f"{TEST}-2*.json"))), None
+)
+
+
+@pytest.mark.skipif(
+    not all((EMBEDDINGS / n / "meta.json").exists() for n in (TEST, DEV))
+    or RERANK_RESULT is None
+    or MULTIHOP_RESULT is None,
+    reason="needs both subsets' embeddings, a rerank result and a multi-hop result",
+)
+def test_eval_multihop_joint_end_to_end(tmp_path: Path) -> None:
+    import eval_multihop_joint
+
+    reranker = Reranker("bge-reranker-base", model=OverlapCrossEncoder())
+    args = [
+        "--rerank-result",
+        str(RERANK_RESULT),
+        "--multihop-result",
+        str(MULTIHOP_RESULT),
+        "--out-dir",
+        str(tmp_path),
+    ]
+    assert eval_multihop_joint.main(args, reranker=reranker, encode=HashEncoder()) == 0
+    record = json.loads(next(tmp_path.glob("*-joint-*.json")).read_text())
+    assert len(record["tuning"]) == 8
+    best = max(r["R@5"] for r in record["tuning"])
+    assert any(
+        r["R@5"] == best and all(r[k] == v for k, v in record["config"].items())
+        for r in record["tuning"]
+    )
+    s = record["summary"]
+    assert set(s) == {
+        "fused_top5",
+        "union_top5_no_model",
+        "rerank_bge-reranker-base",
+        "multihop_no_model",
+        "multihop_bge",
+        "joint_bge",
+    }
+    assert s["joint_bge"]["mean_passages"] == 5.0
+    assert record["ceiling_all_relevant_in_pool"] >= s["joint_bge"]["all_relevant@5"]
+    for pairs in record["significance"].values():
+        assert [(c["a"], c["b"]) for c in pairs] == [tuple(p) for p in eval_multihop_joint.PLANNED]
+    assert [c["baseline"] for c in record["comparison_check"]] == [
+        "fused_top5",
+        "rerank_bge-reranker-base",
+    ]
