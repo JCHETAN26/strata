@@ -54,3 +54,18 @@
 - **Harness methodology:** one untimed warmup pass per run (first run was ~25% slower without
   it), queries timed one at a time, single thread. Driver refuses non-Release builds.
 - **Layout:** added `src/eval/` for recall (not in the original layout in `CLAUDE.md`).
+
+**Measured (Apple M2, single thread, scalar L2; `results/tables.md`)**
+- SIFT10K brute force: ~1,600 QPS, p50 ≈ 620 µs, recall@10 = 1.0.
+- SIFT1M brute force (200 queries): ~14 QPS, p50 ≈ 65 ms. p99 is noisy on the laptop (±60 ms).
+- Scalar L2 at d=128: ~63 ns/op, about 2 GFLOP/s: the baseline SIMD has to beat in Phase 3.
+
+**Problems**
+- **Benchmark noise on the M2.** Runs occasionally dropped 30–40% mid-run. Two causes: background
+  load (load average 4–6 during the first attempt) and macOS moving the process to efficiency
+  cores. The harness now sets `QOS_CLASS_USER_INTERACTIVE`, and the driver records load average
+  and median. The laptop is still not a quiet machine; final numbers come from the IdeaPad.
+- **SIFT1M brute force scored recall 0.9995 by id.** Query 170 has two vectors tied at the 10th
+  distance (40644, exact: SIFT features are integers) and the ground truth picked the other one.
+  Added tie-aware recall (ann-benchmarks definition) as the headline and kept id recall alongside.
+- **ann-benchmarks.com returns 403** to Python's default User-Agent; the download sets one.

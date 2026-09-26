@@ -65,16 +65,16 @@ Convert them to raw binary with a Python script so the C++ code needs no HDF5 de
 
 ## Phase 0 — Setup (1–2 sessions, Mac)
 
-- [ ] Install Xcode Command Line Tools: `xcode-select --install`
-- [ ] Install Homebrew, then `brew install cmake ninja`
-- [ ] Set Git identity on the Mac to your own details
-- [ ] Create `~/projects/strata`, `git init`, private GitHub repo
-- [ ] Write `CLAUDE.md` (project summary, phases, conventions, the HNSW ground rule)
-- [ ] CMake project with vcpkg manifest, GoogleTest, Google Benchmark
-- [ ] Sanitizer build presets (ASan + UBSan)
-- [ ] clang-format / clang-tidy configs
-- [ ] Python script: download ann-benchmarks HDF5 → raw binary (vectors, queries, ground truth)
-- [ ] Download SIFT10K
+- [x] Install Xcode Command Line Tools: `xcode-select --install`
+- [x] Install Homebrew, then `brew install cmake ninja`
+- [x] Set Git identity on the Mac to your own details
+- [x] Create `~/Strata`, `git init`, private GitHub repo
+- [x] Write `CLAUDE.md` (project summary, phases, conventions, the HNSW ground rule)
+- [x] CMake project with vcpkg manifest, GoogleTest, Google Benchmark
+- [x] Sanitizer build presets (ASan + UBSan)
+- [x] clang-format / clang-tidy configs
+- [x] Python script: download ann-benchmarks HDF5 → raw binary (vectors, queries, ground truth)
+- [x] Download SIFT10K
 
 **Done when:** an empty test and benchmark compile and run; SIFT10K files exist.
 
@@ -82,11 +82,11 @@ Convert them to raw binary with a Python script so the C++ code needs no HDF5 de
 
 ## Phase 1 — Baseline (≈1 week, Mac)
 
-- [ ] Scalar distance functions: L2, inner product, cosine
-- [ ] Brute-force exact search (the ground truth)
-- [ ] Recall@k calculator
-- [ ] Benchmark harness: QPS and latency percentiles, raw results saved to files
-- [ ] Unit tests for distances and recall
+- [x] Scalar distance functions: L2, inner product, cosine
+- [x] Brute-force exact search (the ground truth)
+- [x] Recall@k calculator
+- [x] Benchmark harness: QPS and latency percentiles, raw results saved to files
+- [x] Unit tests for distances and recall
 
 **Measure:** brute-force QPS on SIFT10K (and SIFT1M).
 
