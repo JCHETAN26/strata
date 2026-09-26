@@ -1,0 +1,171 @@
+{
+  "timestamp": "2026-09-26T00:36:37+00:00",
+  "git": {
+    "commit": "d11955ac3bc0fcc2b78a61c6d17edaef2f3cc944",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      4.42,
+      3.91,
+      4.56
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "dataset": {
+    "name": "siftsmall",
+    "source_url": "ftp://ftp.irisa.fr/local/texmex/corpus/siftsmall.tar.gz",
+    "source_sha256": "b8f1e59b20319ac44279d5251706909dd3a5b8ca5ce2a11ddb1e73902252770e",
+    "metric": "l2",
+    "base_shape": [
+      10000,
+      128
+    ],
+    "query_shape": [
+      100,
+      128
+    ],
+    "groundtruth_shape": [
+      100,
+      100
+    ]
+  },
+  "library": "faiss",
+  "index": "flat",
+  "build_params": {},
+  "build_seconds": 0.0008638747967779636,
+  "k": 10,
+  "threads": 1,
+  "num_queries": 100,
+  "command": [
+    "bench/run_reference_bench.py",
+    "--dataset",
+    "siftsmall",
+    "--library",
+    "faiss",
+    "--index",
+    "flat"
+  ],
+  "points": [
+    {
+      "search_params": {},
+      "runs": [
+        {
+          "search_seconds": 0.009632374625653028,
+          "qps": 10381.656017995716,
+          "recall": 1.0,
+          "recall_by_id": 1.0,
+          "latency_mean_us": 103.23751717805862,
+          "latency_p50_us": 101.04198008775711,
+          "latency_p95_us": 119.16691437363625,
+          "latency_p99_us": 151.24958008527756,
+          "latency_max_us": 160.4161225259304
+        },
+        {
+          "search_seconds": 0.009449457749724388,
+          "qps": 10582.617823008595,
+          "recall": 1.0,
+          "recall_by_id": 1.0,
+          "latency_mean_us": 101.13787837326527,
+          "latency_p50_us": 96.83379903435707,
+          "latency_p95_us": 119.66610327363014,
+          "latency_p99_us": 130.58306649327278,
+          "latency_max_us": 139.79105278849602
+        },
+        {
+          "search_seconds": 0.009884416591376066,
+          "qps": 10116.934983016376,
+          "recall": 1.0,
+          "recall_by_id": 1.0,
+          "latency_mean_us": 113.66253718733788,
+          "latency_p50_us": 102.08273306488991,
+          "latency_p95_us": 220.25033831596375,
+          "latency_p99_us": 275.79208835959435,
+          "latency_max_us": 288.4170971810818
+        },
+        {
+          "search_seconds": 0.010373749770224094,
+          "qps": 9639.7158419062,
+          "recall": 1.0,
+          "recall_by_id": 1.0,
+          "latency_mean_us": 98.10279589146376,
+          "latency_p50_us": 96.91575542092323,
+          "latency_p95_us": 108.20897296071053,
+          "latency_p99_us": 114.58387598395348,
+          "latency_max_us": 123.08312579989433
+        },
+        {
+          "search_seconds": 0.009595333132892847,
+          "qps": 10421.733004474803,
+          "recall": 1.0,
+          "recall_by_id": 1.0,
+          "latency_mean_us": 102.26667858660221,
+          "latency_p50_us": 98.08409959077835,
+          "latency_p95_us": 115.4998317360878,
+          "latency_p99_us": 119.99998241662979,
+          "latency_max_us": 126.0838471353054
+        }
+      ],
+      "summary": {
+        "qps": {
+          "mean": 10228.531534080339,
+          "median": 10381.656017995716,
+          "stdev": 369.22510928422804,
+          "min": 9639.7158419062,
+          "max": 10582.617823008595
+        },
+        "recall": {
+          "mean": 1.0,
+          "median": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "recall_by_id": {
+          "mean": 1.0,
+          "median": 1.0,
+          "stdev": 0.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "latency_mean_us": {
+          "mean": 103.68148144334555,
+          "median": 102.26667858660221,
+          "stdev": 5.9036407034532425,
+          "min": 98.10279589146376,
+          "max": 113.66253718733788
+        },
+        "latency_p50_us": {
+          "mean": 98.99167343974113,
+          "median": 98.08409959077835,
+          "stdev": 2.426311749276511,
+          "min": 96.83379903435707,
+          "max": 102.08273306488991
+        },
+        "latency_p95_us": {
+          "mean": 136.5584321320057,
+          "median": 119.16691437363625,
+          "stdev": 47.008795216543014,
+          "min": 108.20897296071053,
+          "max": 220.25033831596375
+        },
+        "latency_p99_us": {
+          "mean": 158.4417186677456,
+          "median": 130.58306649327278,
+          "stdev": 67.08244568450428,
+          "min": 114.58387598395348,
+          "max": 275.79208835959435
+        }
+      }
+    }
+  ],
+  "raw": {
+    "library_version": "1.15.1",
+    "qps_method": "batched call"
+  }
+}

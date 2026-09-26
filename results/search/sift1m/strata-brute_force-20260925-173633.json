@@ -1,0 +1,157 @@
+{
+  "timestamp": "2026-09-26T00:36:33+00:00",
+  "git": {
+    "commit": "d11955ac3bc0fcc2b78a61c6d17edaef2f3cc944",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      4.55,
+      3.92,
+      4.57
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "dataset": {
+    "name": "sift1m",
+    "source_url": "http://ann-benchmarks.com/sift-128-euclidean.hdf5",
+    "source_sha256": "dd6f0a6ed6b7ebb8934680f861a33ed01ff33991eaee4fd60914d854a0ca5984",
+    "metric": "l2",
+    "base_shape": [
+      1000000,
+      128
+    ],
+    "query_shape": [
+      10000,
+      128
+    ],
+    "groundtruth_shape": [
+      10000,
+      100
+    ]
+  },
+  "library": "strata",
+  "index": "brute_force",
+  "build_params": {},
+  "build_seconds": 0.190296208,
+  "k": 10,
+  "threads": 1,
+  "num_queries": 200,
+  "command": [
+    "/Users/chetan/Strata/build/release/bench/strata_search",
+    "--data",
+    "/Users/chetan/Strata/data/sift1m",
+    "--metric",
+    "l2",
+    "--index",
+    "brute_force",
+    "--k",
+    "10",
+    "--runs",
+    "3",
+    "--max-queries",
+    "200"
+  ],
+  "points": [
+    {
+      "search_params": {},
+      "runs": [
+        {
+          "search_seconds": 13.4604166,
+          "qps": 14.8583811,
+          "recall": 1,
+          "recall_by_id": 0.9995,
+          "latency_mean_us": 67301.8465,
+          "latency_p50_us": 62781.583,
+          "latency_p95_us": 81938.458,
+          "latency_p99_us": 170736.958,
+          "latency_max_us": 183466.167
+        },
+        {
+          "search_seconds": 14.1438334,
+          "qps": 14.1404381,
+          "recall": 1,
+          "recall_by_id": 0.9995,
+          "latency_mean_us": 70718.7059,
+          "latency_p50_us": 64823.959,
+          "latency_p95_us": 94937.5,
+          "latency_p99_us": 182907.792,
+          "latency_max_us": 263391.208
+        },
+        {
+          "search_seconds": 12.7007792,
+          "qps": 15.7470654,
+          "recall": 1,
+          "recall_by_id": 0.9995,
+          "latency_mean_us": 63503.5649,
+          "latency_p50_us": 61763.292,
+          "latency_p95_us": 70498.084,
+          "latency_p99_us": 95607.209,
+          "latency_max_us": 108705.792
+        }
+      ],
+      "summary": {
+        "qps": {
+          "mean": 14.915294866666668,
+          "median": 14.8583811,
+          "stdev": 0.8048243304619108,
+          "min": 14.1404381,
+          "max": 15.7470654
+        },
+        "recall": {
+          "mean": 1.0,
+          "median": 1,
+          "stdev": 0.0,
+          "min": 1,
+          "max": 1
+        },
+        "recall_by_id": {
+          "mean": 0.9994999999999999,
+          "median": 0.9995,
+          "stdev": 0.0,
+          "min": 0.9995,
+          "max": 0.9995
+        },
+        "latency_mean_us": {
+          "mean": 67174.70576666667,
+          "median": 67301.8465,
+          "stdev": 3609.250405142966,
+          "min": 63503.5649,
+          "max": 70718.7059
+        },
+        "latency_p50_us": {
+          "mean": 63122.94466666667,
+          "median": 62781.583,
+          "stdev": 1558.6264664198206,
+          "min": 61763.292,
+          "max": 64823.959
+        },
+        "latency_p95_us": {
+          "mean": 82458.01400000001,
+          "median": 81938.458,
+          "stdev": 12227.98910013891,
+          "min": 70498.084,
+          "max": 94937.5
+        },
+        "latency_p99_us": {
+          "mean": 149750.65300000002,
+          "median": 170736.958,
+          "stdev": 47282.83722662739,
+          "min": 95607.209,
+          "max": 182907.792
+        }
+      }
+    }
+  ],
+  "raw": {
+    "build_type": "Release",
+    "asserts": false,
+    "compiler": "Apple LLVM 21.0.0 (clang-2100.1.1.101)",
+    "warmup_passes": 1
+  }
+}
