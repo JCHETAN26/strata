@@ -194,6 +194,19 @@ def test_embedding_input_formatting() -> None:
 # --- SciFact end to end ----------
 
 
+def test_weight_rule_prefers_dev_then_train_then_fixed(tmp_path: Path) -> None:
+    from eval_hybrid_beir import choose_tuning_split
+
+    qrels = tmp_path / "qrels"
+    qrels.mkdir()
+    (qrels / "test.tsv").write_text("query-id\tcorpus-id\tscore\n")
+    assert choose_tuning_split(qrels) is None  # -> fixed weight
+    (qrels / "train.tsv").write_text("")
+    assert choose_tuning_split(qrels) == "train"
+    (qrels / "dev.tsv").write_text("")
+    assert choose_tuning_split(qrels) == "dev"
+
+
 @pytest.mark.skipif(not (EMBEDDINGS / "meta.json").exists(), reason="run scripts/embed_beir.py")
 def test_scifact_hybrid_baselines_match_published(tmp_path: Path) -> None:
     import eval_hybrid_beir
@@ -201,7 +214,14 @@ def test_scifact_hybrid_baselines_match_published(tmp_path: Path) -> None:
     assert eval_hybrid_beir.main(["--dataset", "scifact", "--out-dir", str(tmp_path)]) == 0
     (result,) = tmp_path.glob("*.json")
     record = json.loads(result.read_text())
-    assert record["protocol"]["weight_tuned_on"] == "train"
+    # SciFact has train but no dev split: the rule picks train.
+    assert record["protocol"]["weight_source"] == "train"
     assert record["embedding"]["revision"] == "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
-    test = record["test"]
-    assert test["rrf"]["nDCG@10"] > max(test["bm25"]["nDCG@10"], test["dense"]["nDCG@10"])
+    assert record["baselines_match_published"]
+    # Six pairs per metric, each with a CI around its mean difference, from saved per-query data.
+    pairs = record["significance"]["nDCG@10"]
+    assert len(pairs) == 6
+    for c in pairs:
+        assert c["ci_low"] <= c["mean_diff"] <= c["ci_high"]
+        assert 0 < c["p_value"] <= c["p_holm"] <= 1
+        assert c["queries"] == 300 == len(record["per_query"][c["a"]]["nDCG@10"])

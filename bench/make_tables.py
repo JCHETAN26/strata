@@ -143,18 +143,38 @@ def hybrid_table() -> list[str]:
         for method, m in r["test"].items():
             label = method
             if method == "weighted":
-                label = f"weighted (dense {r['protocol']['weight']}, tuned on train)"
+                source = r["protocol"].get("weight_source", r["protocol"].get("weight_tuned_on"))
+                how = "fixed" if source == "fixed" else f"tuned on {source}"
+                label = f"weighted (dense {r['protocol']['weight']}, {how})"
             elif method == "rrf":
                 label = f"rrf (k={r['protocol']['rrf_k']:g})"
             lines.append(
                 f"| {dataset} | {model} | {label} | {m['nDCG@10']:.4f} | {m['R@100']:.4f} "
                 f"| {m['qps']:.0f} | {mach} | `{commit}` |"
             )
+    for (dataset, _, mach), r in sorted(latest.items()):
+        if "significance" not in r:
+            continue
+        lines += [
+            "",
+            f"Paired differences in nDCG@10, {dataset} ({mach}): mean over queries, 95% paired "
+            "bootstrap CI, two-sided randomization test, Holm-adjusted over the 6 pairs.",
+            "",
+            "| A - B | Mean diff | 95% CI | p | p (Holm) | Wins/Losses/Ties |",
+            "|---|---|---|---|---|---|",
+        ]
+        for c in r["significance"]["nDCG@10"]:
+            lines.append(
+                f"| {c['a']} - {c['b']} | {c['mean_diff']:+.4f} "
+                f"| [{c['ci_low']:+.4f}, {c['ci_high']:+.4f}] | {c['p_value']:.4f} "
+                f"| {c['p_holm']:.4f} | {c['wins']}/{c['losses']}/{c['ties']} |"
+            )
     return [
         *lines,
         "",
         "Fusion candidates: top 100 from each retriever. Weighted-fusion weight chosen on the",
-        "train split only. BM25 and dense baselines are checked against published results",
+        "dev split if present, else train, else fixed 0.5. BM25 and dense baselines are checked",
+        "against published results",
         "(results/bm25/ANSERINI_REFERENCE.md, results/hybrid/dense_reference.json).",
         "",
     ]

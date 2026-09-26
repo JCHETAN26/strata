@@ -384,7 +384,9 @@ the JSON, so the reference lives in one place).
 | RRF (k = 60, not tuned) | 0.7273 | 0.9683 | |
 | Weighted (dense 0.65, tuned on train) | 0.7316 | 0.9667 | |
 
-Both fusions beat either retriever alone; RRF gets the best recall, weighted the best nDCG@10.
+On means, both fusions beat either retriever alone (RRF best recall, weighted best nDCG@10).
+**Correction after significance testing (next entry):** the gains over BM25 are significant,
+the gains over dense retrieval are not once the six comparisons are Holm-corrected.
 
 **Protocol decisions (fixed before looking at test numbers)**
 - **RRF k = 60** from the paper, not tuned.
@@ -406,3 +408,35 @@ Both fusions beat either retriever alone; RRF gets the best recall, weighted the
 - Embedding SciFact (5,183 docs + 1,109 queries) with bge-small took 243 s on the M2 CPU.
 - The dense pipeline reproduces MTEB's published SciFact numbers to 4 decimals, which checks
   the prefix, normalization, pooling (CLS), and revision together.
+
+## 2026-09-25 — BEIR runner: weight rule and significance tests
+
+**Pre-declared weight rule** (in `bench/eval_hybrid_beir.py`, `WEIGHT_RULE`): tune the
+weighted-fusion weight on the dataset's dev split if it exists, else train, else a fixed 0.5.
+The split used is recorded per dataset as `protocol.weight_source`. SciFact has no dev split,
+so it uses train (weight 0.65, unchanged).
+
+**Significance** (`bench/significance.py`): for every pair of methods, the mean per-query
+difference with a 95% paired bootstrap CI (10,000 resamples) and a two-sided paired
+randomization (sign-flip) test, Holm-adjusted across the 6 pairs. Per-query nDCG@10 and R@100
+are saved with each result so the tests can be rerun. The test is calibrated: under no true
+difference it rejects at p < 0.05 in under 10% of 200 simulated comparisons (unit test).
+
+**SciFact (300 test queries), nDCG@10 differences**
+
+| A − B | Mean diff | 95% CI | p | p (Holm) |
+|---|---|---|---|---|
+| RRF − BM25 | +0.048 | [+0.026, +0.070] | 0.0001 | 0.0006 |
+| weighted − BM25 | +0.053 | [+0.027, +0.079] | 0.0004 | 0.002 |
+| dense − BM25 | +0.034 | [+0.002, +0.066] | 0.042 | 0.13 |
+| weighted − dense | +0.019 | [+0.002, +0.036] | 0.029 | 0.12 |
+| RRF − dense | +0.015 | [−0.008, +0.037] | 0.21 | 0.41 |
+| weighted − RRF | +0.004 | [−0.011, +0.019] | 0.58 | 0.58 |
+
+(Exact values in `results/tables.md`, generated from the saved result.)
+
+**What this changes:** the earlier claim that both fusions "beat either retriever alone" held
+on means only. Both fusions are reliably better than BM25; against dense retrieval, the
+weighted fusion's uncorrected CI excludes zero but it does not survive Holm correction, and
+RRF's does not exclude zero. RRF and weighted fusion are indistinguishable. 300 queries is a
+small test set; more datasets (NFCorpus, FiQA on the IdeaPad) will say more than one.
