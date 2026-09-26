@@ -95,6 +95,19 @@ docs, scores = hybrid.search_doc_ids(["aspirin"], queries[:1], k=2, method="rrf"
   tests compare against the C++ build bit for bit when these match, and within a relative
   tolerance of 1e-5 when they don't (`tests/python/test_bindings.py`).
 
+## RAG: cited answers
+
+`rag/answer.py` answers questions from retrieved passages with Claude (`claude-haiku-4-5`,
+temperature 0). Each passage is sent as a document of sentences with citations enabled, so every
+claim comes back with the exact sentences that support it. Responses are cached on disk by
+request hash, so re-running an evaluation is free and reproducible.
+
+```sh
+cp .env.example .env            # then set ANTHROPIC_API_KEY (the file is gitignored)
+uv run python scripts/prepare_hotpotqa.py --n 100 --seed 0
+uv run python bench/eval_hotpotqa.py --subset subset-n100-seed0
+```
+
 ## Datasets
 
 Python tooling uses [uv](https://docs.astral.sh/uv/) with Python 3.11.

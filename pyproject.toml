@@ -27,9 +27,14 @@ bench = [
 embed = [
     "sentence-transformers>=3",
 ]
+rag = [
+    "anthropic>=1.8.0",
+    "pyarrow>=25.0.1",
+    "python-dotenv>=1.2.3",
+]
 
 [tool.uv]
-default-groups = ["dev", "bench"]
+default-groups = ["dev", "bench", "rag"]
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
@@ -52,7 +57,7 @@ VCPKG_MANIFEST_FEATURES = ""
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
-pythonpath = ["scripts", "bench"]
+pythonpath = ["scripts", "bench", "rag"]
 
 [tool.ruff]
 line-length = 100

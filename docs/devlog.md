@@ -440,3 +440,42 @@ on means only. Both fusions are reliably better than BM25; against dense retriev
 weighted fusion's uncorrected CI excludes zero but it does not survive Holm correction, and
 RRF's does not exclude zero. RRF and weighted fusion are indistinguishable. 300 queries is a
 small test set; more datasets (NFCorpus, FiQA on the IdeaPad) will say more than one.
+
+## 2026-09-25 — Cited answer generation and HotpotQA evaluation
+
+**Done**
+- `rag/answer.py`: `claude-haiku-4-5` (named in CLAUDE.md), temperature 0, prompt version
+  `cited-answer-v1`. Passages go in as *custom content* documents whose blocks are sentences,
+  with citations enabled; citations come back as `content_block_location` (sentence ranges), which
+  map to (title, sentence index). The reply ends with `Answer: <short answer>` or
+  `Answer: unknown` (citations and structured outputs can't be combined, so the short answer is a
+  marked line). Raw responses are cached by SHA-256 of the full request.
+- `rag/hotpot_metrics.py`: the official `hotpot_evaluate_v1.py` metrics, ported and checked
+  against the official script's own outputs (including its quirks).
+- `scripts/prepare_hotpotqa.py`: distractor dev set from Hugging Face `hotpotqa/hotpot_qa`,
+  pinned revision `1908d6afbbea…`, checksum recorded; seeded subset (n=100, seed 0: 81 bridge,
+  19 comparison).
+- `bench/eval_hotpotqa.py`: two conditions on the same questions: *distractor* (each
+  question's 10 paragraphs, the standard setting) and *retrieved* (HybridIndex RRF top-5 from a
+  pooled corpus of the subset's 991 paragraphs). Answer EM/F1, supporting-fact P/R/F1/EM of the
+  cited sentences, joint metrics, answer-in-citations rate, citation coverage, abstention,
+  cost, and paired significance tests between conditions.
+
+**Groundedness is measured, not judged.** The model's citations are sentence indices, and
+HotpotQA's gold supporting facts are sentence indices, so the official supporting-fact metrics
+score whether answers cite the right evidence. No LLM judge is involved.
+
+**Status: generation has not run yet.** There is no `ANTHROPIC_API_KEY` on this machine (no
+env var, no `.env`). Everything up to the API call runs and is tested:
+- Retrieval (measured): both gold paragraphs in the top 5 for 71% of questions, at least one for
+  100%.
+- The full evaluation path, driven by a scripted oracle generator in the tests, scores every
+  official metric at exactly 1.0 in the distractor setting.
+- Estimated cost of the full run: 200 calls at roughly 1.5–3k input tokens each, about $0.5–1.
+
+**Decisions**
+- HotpotQA from the original distractor release (via Hugging Face), not BEIR's HotpotQA: BEIR
+  keeps only retrieval qrels, and answer evaluation needs the answers and supporting facts.
+- Two conditions separate retrieval errors from generation errors.
+- `answer-in-citations` is a simple string check (normalized short answer inside normalized cited
+  text); it is reported next to the official metrics, not instead of them.

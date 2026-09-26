@@ -171,9 +171,9 @@ First version will likely be slower than hnswlib. That's expected.
 - [x] BM25 inverted index in C++ (Lucene/Anserini-exact; SciFact nDCG@10 0.6789 = published)
 - [x] Hybrid retrieval with reciprocal rank fusion
 - [ ] Cross-encoder reranking
-- [ ] Cited answer generation with Claude Haiku
+- [x] Cited answer generation with Claude Haiku (live run pending API key)
 - [ ] Generate embeddings for BEIR corpora on the IdeaPad GPU
-- [ ] Evaluation scripts for BEIR and HotpotQA
+- [x] Evaluation scripts for BEIR and HotpotQA
 
 **Measure:** nDCG@10 for keyword-only, vector-only, hybrid, hybrid + rerank (ablation table);
 answer groundedness on HotpotQA.
