@@ -82,13 +82,25 @@ overhead (their QPS does not). `*` = uncommitted changes when measured.
 
 | Dataset | Dense model @ revision | Method | nDCG@10 | R@100 | QPS | Machine | Commit |
 |---|---|---|---|---|---|---|---|
-| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | bm25 | 0.6789 | 0.9253 | 86269 | Apple M2 | `f3b40230` |
-| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | dense | 0.7127 | 0.9417 | 25858 | Apple M2 | `f3b40230` |
-| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | rrf (k=60) | 0.7273 | 0.9683 | 17653 | Apple M2 | `f3b40230` |
-| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | weighted (dense 0.65, tuned on train) | 0.7316 | 0.9667 | 17512 | Apple M2 | `f3b40230` |
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | bm25 | 0.6789 | 0.9253 | 85225 | Apple M2 | `8d4f6e77` |
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | dense | 0.7127 | 0.9417 | 22489 | Apple M2 | `8d4f6e77` |
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | rrf (k=60) | 0.7273 | 0.9683 | 17960 | Apple M2 | `8d4f6e77` |
+| scifact | BAAI/bge-small-en-v1.5 @ `5c38ec7c405e` | weighted (dense 0.65, tuned on train) | 0.7316 | 0.9667 | 17582 | Apple M2 | `8d4f6e77` |
+
+Paired differences in nDCG@10, scifact (Apple M2): mean over queries, 95% paired bootstrap CI, two-sided randomization test, Holm-adjusted over the 6 pairs.
+
+| A - B | Mean diff | 95% CI | p | p (Holm) | Wins/Losses/Ties |
+|---|---|---|---|---|---|
+| bm25 - dense | -0.0338 | [-0.0656, -0.0019] | 0.0421 | 0.1263 | 47/75/178 |
+| bm25 - rrf | -0.0484 | [-0.0702, -0.0264] | 0.0001 | 0.0006 | 21/79/200 |
+| bm25 - weighted | -0.0527 | [-0.0789, -0.0265] | 0.0004 | 0.0020 | 30/78/192 |
+| dense - rrf | -0.0146 | [-0.0368, +0.0075] | 0.2065 | 0.4130 | 44/59/197 |
+| dense - weighted | -0.0189 | [-0.0360, -0.0024] | 0.0290 | 0.1160 | 33/48/219 |
+| rrf - weighted | -0.0042 | [-0.0194, +0.0107] | 0.5834 | 0.5834 | 34/30/236 |
 
 Fusion candidates: top 100 from each retriever. Weighted-fusion weight chosen on the
-train split only. BM25 and dense baselines are checked against published results
+dev split if present, else train, else fixed 0.5. BM25 and dense baselines are checked
+against published results
 (results/bm25/ANSERINI_REFERENCE.md, results/hybrid/dense_reference.json).
 
 ## Storage (Collection: WAL + snapshot)
