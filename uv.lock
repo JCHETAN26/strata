@@ -460,34 +460,36 @@ wheels = [
 ]
 
 [[package]]
-name = "strata-tools"
+name = "strata"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
-    { name = "faiss-cpu" },
-    { name = "h5py" },
-    { name = "hnswlib" },
-    { name = "matplotlib" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 
 [package.dev-dependencies]
+bench = [
+    { name = "faiss-cpu" },
+    { name = "h5py" },
+    { name = "hnswlib" },
+    { name = "matplotlib" },
+]
 dev = [
     { name = "pytest" },
     { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [
+requires-dist = [{ name = "numpy", specifier = ">=1.26" }]
+
+[package.metadata.requires-dev]
+bench = [
     { name = "faiss-cpu", specifier = ">=1.15.1" },
     { name = "h5py", specifier = ">=3.10" },
     { name = "hnswlib", specifier = ">=0.8.0" },
     { name = "matplotlib", specifier = ">=3.11.2" },
-    { name = "numpy", specifier = ">=1.26" },
 ]
-
-[package.metadata.requires-dev]
 dev = [
     { name = "pytest", specifier = ">=8" },
     { name = "ruff", specifier = ">=0.6" },

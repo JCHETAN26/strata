@@ -33,12 +33,60 @@ ctest --preset debug
 
 Build output goes to `build/<preset>/`.
 
+## Python
+
+The bindings (nanobind, built by scikit-build-core) expose brute-force search, product
+quantization, filtered search, and the distance kernels. `VCPKG_ROOT` must be set.
+
+```sh
+python3.11 -m venv .venv && source .venv/bin/activate   # or: uv venv --python 3.11
+pip install -e .                  # re-run after changing C++; the build is incremental
+python -c "import strata; print(strata.build_info())"
+```
+
+```python
+import numpy as np
+import strata
+
+base = np.random.default_rng(0).standard_normal((10_000, 128), dtype=np.float32)
+queries = base[:5] + 0.01
+
+# Exact search. float32 C-contiguous arrays are used without copying.
+index = strata.BruteForceIndex(dim=128, metric="l2")
+index.add(base)
+ids, dists = index.search_batch(queries, k=10)        # (5, 10) each; GIL released
+
+# Product quantization: 16 bytes per vector, exact rerank of the top 100.
+pq = strata.ProductQuantizer.train(base, m=16)
+pq_index = strata.PqIndex(pq)
+pq_index.add(base)
+ids, dists = pq_index.search(queries, k=10, rerank=100)
+
+# Filtered search over metadata.
+table = strata.AttributeTable([("year", "int"), ("source", "category")])
+table.extend([[2015 + i % 10, ["arxiv", "blog"][i % 2]] for i in range(len(base))])
+recent_arxiv = (strata.Filter.range("year", 2020, 2024)
+                & strata.Filter.equals("source", "arxiv")).compile(table)
+ids, dists = index.search_filtered(queries, k=10, filter=recent_arxiv)
+```
+
+- Results are `(ids, distances)`; missing results (fewer than k matches) are id `-1`,
+  distance `inf`.
+- Other dtypes/layouts (float64, slices) are converted with one copy.
+- Searches release the GIL and share the index's lock, so Python threads search in parallel.
+  `add()`/`remove()` take the lock exclusively: inserts are serialized.
+- `strata.HnswIndex` raises `NotImplementedError` until `src/index/hnsw.cpp` exists; then it
+  switches on at the next `pip install -e .`.
+- `strata.build_info()` reports the kernel, compiler, and floating-point flags. The binding
+  tests compare against the C++ build bit for bit when these match, and within a relative
+  tolerance of 1e-5 when they don't (`tests/python/test_bindings.py`).
+
 ## Datasets
 
 Python tooling uses [uv](https://docs.astral.sh/uv/) with Python 3.11.
 
 ```sh
-uv sync
+uv sync                        # builds the strata package too (needs VCPKG_ROOT)
 uv run python scripts/prepare_datasets.py siftsmall       # SIFT10K, ~5 MB
 uv run python scripts/prepare_datasets.py sift1m glove100 # ~500 MB and ~460 MB downloads
 uv run pytest

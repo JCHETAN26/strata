@@ -38,7 +38,7 @@ class ProductQuantizer {
   static constexpr std::size_t kCentroids = 256;
 
   // Fails if dim % m != 0, m == 0, or there are fewer than 256 training rows.
-  [[nodiscard]] static Expected<ProductQuantizer> train(const Matrix<float>& data, Metric metric,
+  [[nodiscard]] static Expected<ProductQuantizer> train(MatrixView<const float> data, Metric metric,
                                                         const PqParams& params,
                                                         ThreadPool* pool = nullptr);
 
@@ -90,7 +90,7 @@ class PqIndex {
  public:
   [[nodiscard]] static Expected<PqIndex> create(ProductQuantizer quantizer, bool keep_originals);
 
-  Expected<void> add_batch(const Matrix<float>& vectors, ThreadPool* pool = nullptr);
+  Expected<void> add_batch(MatrixView<const float> vectors, ThreadPool* pool = nullptr);
   [[nodiscard]] Expected<std::vector<Neighbor>> search(std::span<const float> query, std::size_t k,
                                                        const PqSearchParams& params = {}) const;
 

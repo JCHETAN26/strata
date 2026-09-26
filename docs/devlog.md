@@ -239,3 +239,55 @@ build (the `ThreadPool` is ready for it), and profiling the graph search.
 - Strategy B (filter during graph traversal) and automatic strategy selection. The selection
   threshold should come from the measured crossover between pre-filter + brute force and
   in-graph filtering, not a guess; `estimate_selectivity` is ready for it.
+
+## 2026-09-25 — Python bindings
+
+**Done**
+- nanobind module `strata._core`, built by scikit-build-core (`pip install -e .`): distances,
+  `BruteForceIndex` (incl. `search_filtered` with a compiled filter, bool mask, or id array),
+  `ProductQuantizer` / `PqIndex`, `AttributeTable` / `Filter` / `CompiledFilter`, `build_info()`.
+  `HnswIndex` is bound when `STRATA_HAS_HNSW` is set and otherwise raises `NotImplementedError`.
+- `MatrixView<const T>` (non-owning) for read-only batch APIs, including
+  `HnswIndex::add_batch` in the header. `Matrix` converts implicitly, so C++ callers are unchanged.
+- `tests/strata_reference` writes C++ results on SIFT10K; `tests/python/test_bindings.py`
+  (37 tests) checks that the bindings agree with them, plus conversions, padding, errors, locking,
+  filters, PQ.
+
+**Decisions**
+- **Results:** padded `(ids, distances)`, FAISS style (`-1` / `inf`).
+- **Input conversion:** float32 C-contiguous is a zero-copy view; anything else is converted
+  with one copy (nanobind implicit conversion). Python lists are rejected with `TypeError`.
+- **Locking:** each bound index has a `shared_mutex`. Searches share it; `add`/`remove` take it
+  exclusively, so Python inserts are serialized. The GIL is always released *before* taking the
+  lock (the opposite order can deadlock). Filter bitsets are evaluated with the GIL held,
+  because `AttributeTable.append` also runs under the GIL. Appending after `compile()`
+  invalidates the compiled filter (it raises instead of reading reallocated columns).
+- **Floating point is now pinned:** `-ffp-contract=off -fno-fast-math` on every target
+  (PUBLIC on `strata`). Clang contracts `a*b + c` into FMA by default and GCC doesn't in
+  `-std=c++20` mode, so the scalar "reference" kernel used to compute different bits depending
+  on the compiler. Explicit FMA intrinsics in NEON/AVX2 kernels are unaffected. The flags,
+  compiler, kernel, and target go into a generated `build_info.hpp`.
+- **Python-vs-C++ comparison:** ids and PQ codes must match exactly. Distances must be
+  bit-identical when kernel, compiler, FP flags, and target all match (they do when both are
+  built from this CMakeLists on one machine; a test asserts it). Otherwise they must be within
+  a relative 1e-5 (`DISTANCE_RTOL`, the SIMD tolerance scale). Both branches are tested.
+- **vcpkg:** gtest/benchmark moved behind a `tests` feature (on in the presets), so the Python
+  build only fetches `tl-expected`.
+- **HNSW switch-on:** CMake now re-checks for `src/index/hnsw.cpp` whenever `src/index/`
+  changes (the directory is a configure dependency), so creating the file turns HNSW on at the
+  next build in both the C++ and Python builds. Verified with a probe file (nothing was written
+  under `src/index/hnsw*`). The HNSW bindings and `tests/hnsw_test.cpp` were syntax-checked
+  with `STRATA_HAS_HNSW=1`.
+
+- **Effect of `-ffp-contract=off` on speed:** checked at d=128 (median of 5, M2): scalar L2
+  61 ns (was 66), IP 55 (59), cosine 90 (86); NEON unchanged (its FMAs are intrinsics). Within
+  the laptop's noise, so the recorded scalar baselines still stand.
+- All presets pass after the change: debug, asan, tsan, release, rosetta-avx2 (125 C++ tests).
+
+**Problems**
+- `ProductQuantizer.codebooks` failed: properties default to `reference_internal`, which can't
+  apply to an array that already owns its buffer. Fixed with `rv_policy::move`.
+- First draft evaluated filter bitsets with the GIL released, racing with
+  `AttributeTable.append` on another Python thread. Caught in review before running.
+- With build isolation, the persistent build dir caches the path of pip's temporary Python, so
+  `cmake --build build/python/...` fails after the install. Rebuild with `pip install -e .`.

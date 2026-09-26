@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.25)
 
+# Use vcpkg from VCPKG_ROOT when no toolchain was given (e.g. pip / scikit-build-core builds).
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{VCPKG_ROOT})
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "")
+endif()
+
 project(strata VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -9,6 +14,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(STRATA_BUILD_TESTS "Build unit tests" ON)
 option(STRATA_BUILD_BENCHMARKS "Build benchmarks" ON)
+option(STRATA_BUILD_PYTHON "Build the Python extension module (strata._core)" OFF)
 option(STRATA_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
 option(STRATA_TSAN "Build with ThreadSanitizer (exclusive with STRATA_SANITIZE)" OFF)
 
@@ -19,6 +25,13 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|amd64" OR CMAKE_OSX_ARCHITECTURE
 endif()
 include(CMakeDependentOption)
 cmake_dependent_option(STRATA_AVX2 "Compile AVX2 + FMA kernels (x86_64)" ON "STRATA_IS_X86_64" OFF)
+
+# Floating point: no FMA contraction of separate multiply and add, no fast-math. The scalar kernel
+# is the reference, so it must compute the same IEEE operations with every compiler (clang
+# contracts by default, GCC does not in -std=c++20 mode). Explicit intrinsics (vfmaq, fmadd) are
+# unaffected. Every target that computes distances gets these flags, and build_info.hpp records
+# them so results from two builds can be compared bit for bit only when they match.
+set(STRATA_FP_FLAGS -ffp-contract=off -fno-fast-math)
 
 # Warnings and sanitizers apply to every Strata target through this interface library.
 add_library(strata_options INTERFACE)
@@ -56,7 +69,11 @@ add_library(strata STATIC
 add_library(strata::strata ALIAS strata)
 
 # The HNSW implementation is written by hand (see CLAUDE.md). Until src/index/hnsw.cpp exists,
-# the library, tests, and harness build without it.
+# the library, tests, harness, and Python module build without it. Re-run this check whenever
+# src/index changes (adding a file updates the directory's timestamp), so creating hnsw.cpp
+# switches HNSW on at the next build without a manual reconfigure.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/index")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/index/hnsw.cpp")
   set(STRATA_HAS_HNSW ON)
   target_sources(strata PRIVATE src/index/hnsw.cpp)
@@ -72,10 +89,28 @@ find_package(Threads REQUIRED)
 target_link_libraries(strata
   PUBLIC tl::expected Threads::Threads
   PRIVATE strata_options)
+# PUBLIC so tests, tools, benchmarks, and the Python module compile with the same FP semantics.
+target_compile_options(strata PUBLIC ${STRATA_FP_FLAGS})
+if(STRATA_BUILD_PYTHON)
+  set_target_properties(strata PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 if(STRATA_AVX2)
   # PUBLIC: headers test __AVX2__ to declare the avx2:: kernels, so every consumer needs the flags.
   target_compile_options(strata PUBLIC -mavx2 -mfma)
+  list(APPEND STRATA_FP_FLAGS -mavx2 -mfma)
 endif()
+
+# Generated build description (compiler, FP flags, target) for result provenance.
+list(JOIN STRATA_FP_FLAGS " " STRATA_FP_FLAGS_STRING)
+if(CMAKE_OSX_ARCHITECTURES)
+  set(STRATA_TARGET_ARCH "${CMAKE_OSX_ARCHITECTURES}")
+else()
+  set(STRATA_TARGET_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+configure_file(include/strata/build_info.hpp.in
+               "${CMAKE_CURRENT_BINARY_DIR}/generated/strata/build_info.hpp" @ONLY)
+target_include_directories(strata PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>)
 
 if(STRATA_BUILD_TESTS)
   enable_testing()
@@ -84,4 +119,8 @@ endif()
 
 if(STRATA_BUILD_BENCHMARKS)
   add_subdirectory(bench)
+endif()
+
+if(STRATA_BUILD_PYTHON)
+  add_subdirectory(python)
 endif()

@@ -40,7 +40,7 @@ Expected<VectorId> BruteForceIndex::add(std::span<const float> vector) {
   return static_cast<VectorId>(size_++);
 }
 
-Expected<void> BruteForceIndex::add_batch(const Matrix<float>& vectors) {
+Expected<void> BruteForceIndex::add_batch(MatrixView<const float> vectors) {
   if (vectors.empty()) {
     return {};
   }
@@ -181,7 +181,7 @@ Expected<std::vector<Neighbor>> BruteForceIndex::search_predicate(
 }
 
 Expected<std::vector<std::vector<Neighbor>>> BruteForceIndex::search_batch(
-    const Matrix<float>& queries, std::size_t k, ThreadPool& pool) const {
+    MatrixView<const float> queries, std::size_t k, ThreadPool& pool) const {
   if (!queries.empty() && queries.cols() != dim_) {
     return dimension_error(dim_, queries.cols());
   }

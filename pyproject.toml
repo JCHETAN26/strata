@@ -1,24 +1,48 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.4"]
+build-backend = "scikit_build_core.build"
+
 [project]
-name = "strata-tools"
+name = "strata"
 version = "0.1.0"
-description = "Python tooling for Strata: dataset conversion, benchmarks, RAG layer"
+description = "Strata vector search engine: Python bindings (brute force, PQ, filtered search)"
 requires-python = ">=3.11,<3.13"
-dependencies = [
-    "numpy>=1.26",
-    "h5py>=3.10",
-    "hnswlib>=0.8.0",
-    "faiss-cpu>=1.15.1",
-    "matplotlib>=3.11.2",
-]
+dependencies = ["numpy>=1.26"]
 
 [dependency-groups]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
 ]
+# Benchmark and dataset tooling (bench/, scripts/).
+bench = [
+    "h5py>=3.10",
+    "hnswlib>=0.8.0",
+    "faiss-cpu>=1.15.1",
+    "matplotlib>=3.11.2",
+]
 
 [tool.uv]
-package = false
+default-groups = ["dev", "bench"]
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+# Persistent build directory: re-running `pip install -e .` after a C++ change is incremental.
+build-dir = "build/python/{wheel_tag}"
+cmake.build-type = "Release"
+wheel.packages = ["python/strata"]
+# Editable installs import the pure-Python package from the source tree and the compiled module
+# from the install location.
+editable.mode = "redirect"
+# Rebuild when the C++ changes (sdist.include keeps the tracked sources in the build).
+sdist.include = ["src", "include", "python", "CMakeLists.txt", "vcpkg.json"]
+
+[tool.scikit-build.cmake.define]
+STRATA_BUILD_PYTHON = "ON"
+STRATA_BUILD_TESTS = "OFF"
+STRATA_BUILD_BENCHMARKS = "OFF"
+# gtest/benchmark are behind the vcpkg "tests" feature; the module needs only tl-expected.
+VCPKG_MANIFEST_FEATURES = ""
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]

@@ -32,7 +32,7 @@ struct KMeansResult {
 //
 // Fails if k == 0, the data is empty, or there are fewer rows than k.
 // Thread safety: pure function; uses `pool` (if given) for the assignment step.
-[[nodiscard]] Expected<KMeansResult> kmeans(const Matrix<float>& data, const KMeansParams& params,
-                                            ThreadPool* pool = nullptr);
+[[nodiscard]] Expected<KMeansResult> kmeans(MatrixView<const float> data,
+                                            const KMeansParams& params, ThreadPool* pool = nullptr);
 
 }  // namespace strata

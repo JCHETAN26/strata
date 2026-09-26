@@ -45,7 +45,7 @@ class HnswIndex {
   // Inserts a vector and returns its id (dense, in insertion order). Fails on dimension mismatch.
   Expected<VectorId> add(std::span<const float> vector);
   // Inserts every row in order. Fails (adding nothing) on dimension mismatch.
-  Expected<void> add_batch(const Matrix<float>& vectors);
+  Expected<void> add_batch(MatrixView<const float> vectors);
 
   // Approximate k nearest neighbors. Fails on dimension mismatch. k == 0 or an empty index gives
   // an empty result.

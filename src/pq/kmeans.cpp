@@ -29,7 +29,7 @@ std::pair<std::uint32_t, float> nearest(std::span<const float> x, const Matrix<f
 
 // k-means++: first centroid uniform, each next one sampled with probability proportional to
 // squared distance from the nearest centroid chosen so far.
-Matrix<float> init_plus_plus(const Matrix<float>& data, std::size_t k, std::mt19937_64& rng,
+Matrix<float> init_plus_plus(MatrixView<const float> data, std::size_t k, std::mt19937_64& rng,
                              DistanceFn l2) {
   const std::size_t n = data.rows();
   Matrix<float> centroids(k, data.cols());
@@ -66,7 +66,7 @@ Matrix<float> init_plus_plus(const Matrix<float>& data, std::size_t k, std::mt19
 
 }  // namespace
 
-Expected<KMeansResult> kmeans(const Matrix<float>& data, const KMeansParams& params,
+Expected<KMeansResult> kmeans(MatrixView<const float> data, const KMeansParams& params,
                               ThreadPool* pool) {
   const std::size_t n = data.rows();
   const std::size_t dim = data.cols();

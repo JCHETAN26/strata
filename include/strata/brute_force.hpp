@@ -31,7 +31,7 @@ class BruteForceIndex {
   // Appends a vector and returns its id. Fails on dimension mismatch.
   Expected<VectorId> add(std::span<const float> vector);
   // Appends every row. Fails (adding nothing) on dimension mismatch.
-  Expected<void> add_batch(const Matrix<float>& vectors);
+  Expected<void> add_batch(MatrixView<const float> vectors);
 
   // Marks a vector deleted (tombstone): it is skipped by search but keeps its id, so ids stay
   // dense and stable. Fails with kNotFound if id >= size() or it is already deleted.
@@ -57,7 +57,7 @@ class BruteForceIndex {
   // search() for every row of `queries`, spread across `pool`. results[i] answers queries.row(i).
   // Fails on dimension mismatch before doing any work.
   [[nodiscard]] Expected<std::vector<std::vector<Neighbor>>> search_batch(
-      const Matrix<float>& queries, std::size_t k, ThreadPool& pool) const;
+      MatrixView<const float> queries, std::size_t k, ThreadPool& pool) const;
 
   // Number of ids assigned, including deleted ones.
   [[nodiscard]] std::size_t size() const noexcept { return size_; }

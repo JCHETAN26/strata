@@ -39,7 +39,7 @@ void push_top(std::vector<Neighbor>& heap, std::size_t k, Neighbor candidate) {
 
 }  // namespace
 
-Expected<ProductQuantizer> ProductQuantizer::train(const Matrix<float>& data, Metric metric,
+Expected<ProductQuantizer> ProductQuantizer::train(MatrixView<const float> data, Metric metric,
                                                    const PqParams& params, ThreadPool* pool) {
   const std::size_t dim = data.cols();
   const std::size_t m = params.m;
@@ -177,7 +177,7 @@ Expected<PqIndex> PqIndex::create(ProductQuantizer quantizer, bool keep_original
   return PqIndex(std::move(quantizer), keep_originals);
 }
 
-Expected<void> PqIndex::add_batch(const Matrix<float>& vectors, ThreadPool* pool) {
+Expected<void> PqIndex::add_batch(MatrixView<const float> vectors, ThreadPool* pool) {
   if (vectors.empty()) {
     return {};
   }

@@ -21,3 +21,7 @@ target_link_libraries(strata_tests PRIVATE strata::strata strata_options GTest::
 target_compile_definitions(strata_tests PRIVATE
   STRATA_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
 gtest_discover_tests(strata_tests)
+
+# Writes C++ results for tests/python/test_bindings.py to compare the Python bindings against.
+add_executable(strata_reference strata_reference.cpp)
+target_link_libraries(strata_reference PRIVATE strata::strata strata_options)

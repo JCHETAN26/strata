@@ -85,7 +85,7 @@ After the core works (I can build these, on the Mac):
 
 ## 💻 Can be built on the Mac now (no heavy compute)
 
-- [ ] Python bindings (nanobind)
+- [x] Python bindings (nanobind): brute force, PQ, filtered search, distances; HNSW switches on with the core
 - [ ] BM25 inverted index in C++
 - [ ] Hybrid retrieval with reciprocal rank fusion
 - [ ] Cited answer generation with Claude Haiku (API call, not local compute)
