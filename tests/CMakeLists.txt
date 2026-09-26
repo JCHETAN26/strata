@@ -6,6 +6,7 @@ add_executable(strata_tests
   crash_recovery_test.cpp
   dataset_test.cpp
   distance_test.cpp
+  filter_test.cpp
   recall_test.cpp
   simd_test.cpp
   smoke_test.cpp

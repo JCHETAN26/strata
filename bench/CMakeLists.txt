@@ -15,3 +15,9 @@ target_compile_definitions(strata_search PRIVATE STRATA_BUILD_TYPE="${CMAKE_BUIL
 add_executable(strata_storage_bench
   storage_bench.cpp)
 target_link_libraries(strata_storage_bench PRIVATE strata::strata strata_options)
+
+# Filtered search: QPS and recall per strategy and selectivity.
+add_executable(strata_filter_bench
+  filter_bench.cpp)
+target_link_libraries(strata_filter_bench PRIVATE strata::strata strata_options)
+target_compile_definitions(strata_filter_bench PRIVATE STRATA_BUILD_TYPE="${CMAKE_BUILD_TYPE}")

@@ -117,6 +117,69 @@ Expected<std::vector<Neighbor>> BruteForceIndex::search(std::span<const float> q
   return heap;
 }
 
+namespace {
+
+void push_top(std::vector<Neighbor>& heap, std::size_t k, Neighbor candidate) {
+  if (heap.size() < k) {
+    heap.push_back(candidate);
+    std::push_heap(heap.begin(), heap.end());
+  } else if (candidate < heap.front()) {
+    std::pop_heap(heap.begin(), heap.end());
+    heap.back() = candidate;
+    std::push_heap(heap.begin(), heap.end());
+  }
+}
+
+}  // namespace
+
+Expected<std::vector<Neighbor>> BruteForceIndex::search_filtered(std::span<const float> query,
+                                                                 std::size_t k,
+                                                                 const Bitset& allowed) const {
+  if (query.size() != dim_) {
+    return dimension_error(dim_, query.size());
+  }
+  if (allowed.size() != size_) {
+    return make_error(ErrorCode::kInvalidArgument,
+                      "filter bitset has " + std::to_string(allowed.size()) + " bits for " +
+                          std::to_string(size_) + " vectors");
+  }
+  std::vector<Neighbor> heap;
+  if (k == 0) {
+    return heap;
+  }
+  heap.reserve(k + 1);
+  allowed.for_each_set([&](std::size_t i) {
+    if (deleted_[i] == 0) {
+      push_top(heap, k,
+               {static_cast<VectorId>(i), distance_(query, {data_.data() + i * dim_, dim_})});
+    }
+  });
+  std::sort_heap(heap.begin(), heap.end());
+  return heap;
+}
+
+Expected<std::vector<Neighbor>> BruteForceIndex::search_predicate(
+    std::span<const float> query, std::size_t k,
+    const std::function<bool(VectorId)>& allowed_fn) const {
+  if (query.size() != dim_) {
+    return dimension_error(dim_, query.size());
+  }
+  std::vector<Neighbor> heap;
+  if (k == 0) {
+    return heap;
+  }
+  heap.reserve(k + 1);
+  const float* row = data_.data();
+  for (std::size_t i = 0; i < size_; ++i, row += dim_) {
+    const auto id = static_cast<VectorId>(i);
+    if (deleted_[i] == 0 && allowed_fn(id)) {
+      push_top(heap, k, {id, distance_(query, {row, dim_})});
+    }
+  }
+  std::sort_heap(heap.begin(), heap.end());
+  return heap;
+}
+
 Expected<std::vector<std::vector<Neighbor>>> BruteForceIndex::search_batch(
     const Matrix<float>& queries, std::size_t k, ThreadPool& pool) const {
   if (!queries.empty() && queries.cols() != dim_) {

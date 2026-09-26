@@ -45,7 +45,8 @@ def search_table() -> list[str]:
             lines.append(
                 f"| {r['dataset']['name']} | {r['library']} | {r['index']} | {build} | {search} "
                 f"| {machine(r)} | {r['threads']} | {len(point['runs'])} "
-                f"| {s['recall']['mean']:.4f} (k={r['k']}) | {s['recall_by_id']['mean']:.4f} "
+                f"| {s['recall']['mean']:.4f} (k={r['k']}) "
+                f"| {s['recall_by_id']['mean'] if 'recall_by_id' in s else float('nan'):.4f} "
                 f"| {fmt(s['qps'], 1)} | {fmt(s['latency_p50_us'], 1)} "
                 f"| {fmt(s['latency_p99_us'], 1)} | {r['build_seconds']:.2f} | `{commit}` |"
             )

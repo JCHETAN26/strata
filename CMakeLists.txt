@@ -42,6 +42,7 @@ add_library(strata STATIC
   src/distance/neon.cpp
   src/distance/scalar.cpp
   src/eval/recall.cpp
+  src/filter/filter.cpp
   src/index/brute_force.cpp
   src/pq/kmeans.cpp
   src/pq/pq.cpp

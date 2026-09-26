@@ -2,9 +2,11 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <span>
 #include <vector>
 
+#include "strata/bitset.hpp"
 #include "strata/distance.hpp"
 #include "strata/error.hpp"
 #include "strata/matrix.hpp"
@@ -40,6 +42,17 @@ class BruteForceIndex {
   // Fails on dimension mismatch. k == 0 or an empty index gives an empty result.
   [[nodiscard]] Expected<std::vector<Neighbor>> search(std::span<const float> query,
                                                        std::size_t k) const;
+
+  // Filtered search, pre-filter strategy: only ids set in `allowed` are scored, visiting set bits
+  // directly (cost ~ size/64 + matches). Deleted ids are skipped. `allowed` must have size() bits.
+  [[nodiscard]] Expected<std::vector<Neighbor>> search_filtered(std::span<const float> query,
+                                                                std::size_t k,
+                                                                const Bitset& allowed) const;
+  // Filtered search, scan-and-check: every id is visited and tested with `allowed_fn(id)`.
+  // Baseline for the pre-filter strategy; also the shape of an in-traversal filter.
+  [[nodiscard]] Expected<std::vector<Neighbor>> search_predicate(
+      std::span<const float> query, std::size_t k,
+      const std::function<bool(VectorId)>& allowed_fn) const;
 
   // search() for every row of `queries`, spread across `pool`. results[i] answers queries.row(i).
   // Fails on dimension mismatch before doing any work.
