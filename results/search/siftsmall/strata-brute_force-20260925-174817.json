@@ -1,0 +1,186 @@
+{
+  "timestamp": "2026-09-26T00:48:17+00:00",
+  "git": {
+    "commit": "902632fc22e22c5a97657bdcc480e6c41edc2d91",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      4.29,
+      5.99,
+      5.8
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "dataset": {
+    "name": "siftsmall",
+    "source_url": "ftp://ftp.irisa.fr/local/texmex/corpus/siftsmall.tar.gz",
+    "source_sha256": "b8f1e59b20319ac44279d5251706909dd3a5b8ca5ce2a11ddb1e73902252770e",
+    "metric": "l2",
+    "base_shape": [
+      10000,
+      128
+    ],
+    "query_shape": [
+      100,
+      128
+    ],
+    "groundtruth_shape": [
+      100,
+      100
+    ]
+  },
+  "library": "strata",
+  "index": "brute_force",
+  "build_params": {
+    "kernel": "neon"
+  },
+  "build_seconds": 0.000963959,
+  "k": 10,
+  "threads": 8,
+  "num_queries": 100,
+  "command": [
+    "/Users/chetan/Strata/build/release/bench/strata_search",
+    "--data",
+    "/Users/chetan/Strata/data/siftsmall",
+    "--metric",
+    "l2",
+    "--index",
+    "brute_force",
+    "--k",
+    "10",
+    "--runs",
+    "5",
+    "--max-queries",
+    "0",
+    "--kernel",
+    "best",
+    "--threads",
+    "8"
+  ],
+  "points": [
+    {
+      "search_params": {},
+      "runs": [
+        {
+          "search_seconds": 0.002522375,
+          "qps": 39645.1757,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 172.29368,
+          "latency_p50_us": 109.5,
+          "latency_p95_us": 279.958,
+          "latency_p99_us": 333.542,
+          "latency_max_us": 359.041
+        },
+        {
+          "search_seconds": 0.002480833,
+          "qps": 40309.0414,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 164.02744,
+          "latency_p50_us": 121.917,
+          "latency_p95_us": 305.167,
+          "latency_p99_us": 455.458,
+          "latency_max_us": 610.875
+        },
+        {
+          "search_seconds": 0.002269,
+          "qps": 44072.2785,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 164.22339,
+          "latency_p50_us": 119.958,
+          "latency_p95_us": 272.833,
+          "latency_p99_us": 280.334,
+          "latency_max_us": 284
+        },
+        {
+          "search_seconds": 0.002232208,
+          "qps": 44798.6926,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 154.23756,
+          "latency_p50_us": 112.75,
+          "latency_p95_us": 272.292,
+          "latency_p99_us": 302.333,
+          "latency_max_us": 322
+        },
+        {
+          "search_seconds": 0.002462458,
+          "qps": 40609.8297,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 164.93083,
+          "latency_p50_us": 109.542,
+          "latency_p95_us": 272.125,
+          "latency_p99_us": 279.375,
+          "latency_max_us": 296.583
+        }
+      ],
+      "summary": {
+        "qps": {
+          "mean": 41887.003580000004,
+          "median": 40609.8297,
+          "stdev": 2366.447201501624,
+          "min": 39645.1757,
+          "max": 44798.6926
+        },
+        "recall": {
+          "mean": 1.0,
+          "median": 1,
+          "stdev": 0.0,
+          "min": 1,
+          "max": 1
+        },
+        "recall_by_id": {
+          "mean": 1.0,
+          "median": 1,
+          "stdev": 0.0,
+          "min": 1,
+          "max": 1
+        },
+        "latency_mean_us": {
+          "mean": 163.94258,
+          "median": 164.22339,
+          "stdev": 6.4224406954949735,
+          "min": 154.23756,
+          "max": 172.29368
+        },
+        "latency_p50_us": {
+          "mean": 114.7334,
+          "median": 112.75,
+          "stdev": 5.85605539591285,
+          "min": 109.5,
+          "max": 121.917
+        },
+        "latency_p95_us": {
+          "mean": 280.475,
+          "median": 272.833,
+          "stdev": 14.186668971256067,
+          "min": 272.125,
+          "max": 305.167
+        },
+        "latency_p99_us": {
+          "mean": 330.2084,
+          "median": 302.333,
+          "stdev": 73.39465826134762,
+          "min": 279.375,
+          "max": 455.458
+        }
+      }
+    }
+  ],
+  "raw": {
+    "build_type": "Release",
+    "asserts": false,
+    "compiler": "Apple LLVM 21.0.0 (clang-2100.1.1.101)",
+    "warmup_passes": 1,
+    "kernel": "neon"
+  }
+}

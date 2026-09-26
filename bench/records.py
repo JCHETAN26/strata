@@ -21,7 +21,7 @@ import statistics
 from pathlib import Path
 from typing import Any
 
-from benchmeta import REPO_ROOT, metadata, timestamp_slug
+from benchmeta import REPO_ROOT, metadata, timestamp_slug, write_new
 
 SUMMARY_FIELDS = [
     "qps",
@@ -83,8 +83,7 @@ def save_record(
         "raw": raw or {},
     }
     path = out_dir / dataset / f"{library}-{index}-{timestamp_slug()}.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record, indent=2) + "\n")
+    write_new(path, json.dumps(record, indent=2) + "\n")
     return path
 
 

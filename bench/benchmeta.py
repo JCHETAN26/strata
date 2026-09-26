@@ -63,4 +63,12 @@ def metadata() -> dict[str, Any]:
 
 
 def timestamp_slug() -> str:
-    return dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # Microseconds: short runs finish within the same second and must not share a filename.
+    return dt.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+
+
+def write_new(path: Path, text: str) -> None:
+    """Write a result file, refusing to overwrite an existing one."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x") as f:
+        f.write(text)

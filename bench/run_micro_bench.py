@@ -14,7 +14,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from benchmeta import REPO_ROOT, metadata, timestamp_slug
+from benchmeta import REPO_ROOT, metadata, timestamp_slug, write_new
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -49,9 +49,8 @@ def main(argv: list[str] | None = None) -> int:
         print("warning: Google Benchmark library is a debug build", file=sys.stderr)
 
     record = {**metadata(), "command": cmd, "benchmark": gbench}
-    args.out_dir.mkdir(parents=True, exist_ok=True)
     out_path = args.out_dir / f"{args.name}-{timestamp_slug()}.json"
-    out_path.write_text(json.dumps(record, indent=2) + "\n")
+    write_new(out_path, json.dumps(record, indent=2) + "\n")
     print(f"saved {out_path.relative_to(REPO_ROOT)}")
     return 0
 
