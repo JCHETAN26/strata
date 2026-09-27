@@ -104,7 +104,7 @@ request hash, so re-running an evaluation is free and reproducible.
 
 ```sh
 cp .env.example .env            # then set ANTHROPIC_API_KEY (the file is gitignored)
-# BEIR setting (retrieval over BEIR passages). Subset on the Mac; full 5.2M corpus on the IdeaPad.
+# BEIR setting (retrieval over BEIR passages). Subset on the Mac; full 5.2M corpus via kaggle/.
 uv run python scripts/prepare_hotpotqa_beir.py --n 100 --seed 0 --background 20000
 uv run python bench/eval_hotpotqa_beir.py                          # cost estimate only
 uv run python bench/eval_hotpotqa_beir.py --run --max-cost-usd 1.25
@@ -116,6 +116,18 @@ uv run python bench/eval_hotpotqa.py --subset subset-n100-seed0
 
 Retrieval methods compared (fused, union, cross-encoder reranking, two-hop, joint two-hop
 reranking), with their quality, latency, and when to use each: `docs/rag-results.md`.
+
+Headline results (details and caveats in that doc):
+
+| | Result |
+|---|---|
+| Full BEIR HotpotQA (5.2M passages) | BM25 nDCG@10 0.6329 (Anserini: 0.633), dense 0.6993 (published: 0.69935), **RRF 0.7297** |
+| HotpotQA subset, answer F1 | fused 0.517 → joint two-hop bge rerank 0.669 (gold passages: 0.739) |
+| SciFact reranking | no gain: bge nDCG@10 0.727 = fused 0.727 |
+| Reranking latency, M2 CPU → T4 GPU | bge 3029 → 688 ms, MiniLM 231 → 47 ms per query (different machines) |
+
+GPU stages (full-corpus retrieval, SciFact reranking, GPU latency) run in a Kaggle notebook;
+see `kaggle/README.md`.
 
 ## Datasets
 

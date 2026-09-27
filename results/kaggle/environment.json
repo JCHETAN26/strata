@@ -1,0 +1,51 @@
+{
+  "hardware": {
+    "machine": "x86_64",
+    "os": "Linux 6.12.90+",
+    "logical_cpus": 4,
+    "load_average_1m_5m_15m": [
+      0.08,
+      0.09,
+      0.23
+    ],
+    "cpu": "Intel(R) Xeon(R) CPU @ 2.00GHz",
+    "memory_gib": 31.3,
+    "cpu_flags_avx2": true,
+    "cpu_governor": null
+  },
+  "accelerator": {
+    "gpus": [
+      {
+        "name": "Tesla T4",
+        "driver_version": "580.159.04",
+        "memory_mib": 15360,
+        "compute_capability": "7.5"
+      },
+      {
+        "name": "Tesla T4",
+        "driver_version": "580.159.04",
+        "memory_mib": 15360,
+        "compute_capability": "7.5"
+      }
+    ],
+    "cuda": {
+      "torch": "2.14.0+cu130",
+      "torch_cuda": "13.0",
+      "available": true,
+      "device_count": 2,
+      "device_name": "Tesla T4"
+    },
+    "hosted": {
+      "KAGGLE_KERNEL_RUN_TYPE": "Interactive",
+      "KAGGLE_DOCKER_IMAGE": "gcr.io/kaggle-gpu-images/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461",
+      "KAGGLE_URL_BASE": "https://www.kaggle.com",
+      "kaggle_dirs": [
+        "/kaggle/input",
+        "/kaggle/working"
+      ]
+    }
+  },
+  "available_ram_gib": 31.34774398803711,
+  "python": "3.11.15 (main, May 10 2026, 19:28:18) [Clang 22.1.3 ]",
+  "repo_root": "/kaggle/working/strata"
+}

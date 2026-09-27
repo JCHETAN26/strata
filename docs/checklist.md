@@ -90,7 +90,7 @@ After the core works (I can build these, on the Mac):
 - [x] Hybrid retrieval with reciprocal rank fusion (+ train-tuned weighted fusion); SciFact nDCG@10 0.7273 RRF / 0.7316 weighted vs 0.6789 BM25, 0.7127 dense
 - [x] Cited answer generation with Claude Haiku (sentence-level native citations; live run needs ANTHROPIC_API_KEY)
 - [x] BEIR and HotpotQA evaluation scripts (BEIR runner with significance; HotpotQA answer + groundedness eval in the distractor and BEIR settings, subset built and cost estimated, generation awaiting API key)
-- [x] Cross-encoder reranking on the HotpotQA BEIR subset (bge-reranker-base: both-gold@5 0.65 -> 0.83; not significant vs the no-model union baseline). SciFact and full-corpus reranking go on the IdeaPad GPU.
+- [x] Cross-encoder reranking on the HotpotQA BEIR subset (bge-reranker-base: both-gold@5 0.65 -> 0.83; not significant vs the no-model union baseline). SciFact reranking done on Kaggle (no gain); full-corpus reranking still to do.
 - [x] Two-hop retrieval and joint two-hop bge reranking on the HotpotQA BEIR subset, end to end (answer F1 0.517 -> 0.669); summary in docs/rag-results.md. RAG experiments on the Mac are closed.
 - [ ] Design doc drafts: graph parameters, compression, filtering strategies
 - [ ] Group commit for the WAL (optional; durable inserts are capped at ~330/s by one fsync each)
@@ -116,10 +116,11 @@ After the core works (I can build these, on the Mac):
 > The IdeaPad's disk is full (2.6 GiB free), so these run on a Kaggle GPU notebook instead — see
 > `kaggle/` (`run_stages.py`, `notebook.ipynb`, `README.md`). Runner + supporting changes are done
 > and locally tested; the boxes below get checked once the Kaggle run's result JSONs land in `results/`.
-- [ ] Embeddings for the BEIR corpora (SciFact, FiQA, NFCorpus) on the GPU — `kaggle` stage3 does SciFact; extend for FiQA/NFCorpus
-- [ ] Full BEIR nDCG@10 runs: keyword-only, vector-only, hybrid, hybrid + rerank — `kaggle` stage2 (full-corpus HotpotQA), vs published BEIR references
+- [ ] Embeddings for the BEIR corpora (SciFact, FiQA, NFCorpus) on the GPU — HotpotQA (5.2M) and SciFact done on Kaggle; FiQA/NFCorpus still to do
+- [x] Full BEIR HotpotQA nDCG@10 (5.2M passages, Kaggle T4): BM25 0.6329 (Anserini 0.633), dense 0.6993 (published 0.69935), RRF 0.7297 — `results/hybrid/hotpotqa-bge-small-en-v1.5-20260927-094841-995184.json`
+- [ ] Full-corpus hybrid + rerank, and FiQA/NFCorpus
 - [ ] HotpotQA answer-groundedness evaluation on the full BEIR corpus (5.2M passages): `scripts/prepare_hotpotqa_beir.py --full` + `bench/eval_hotpotqa_beir.py` — `kaggle` stage2b (behind a cost estimate + `--enable-api`)
-- [ ] GPU cross-encoder reranking + latency (SciFact tuned on train; GPU-vs-CPU latency) — `kaggle` stage3 / stage4
+- [x] GPU cross-encoder reranking + latency: SciFact reranking gives no gain (bge nDCG@10 0.727 = fused); T4 latency bge 3029 → 688 ms, MiniLM 231 → 47 ms vs M2 CPU (different machines) — `docs/rag-results.md`
 
 ### Phase 9 — Final results (all reported numbers)
 - [ ] SIFT1M and GloVe-100 full runs, several runs each, with variance

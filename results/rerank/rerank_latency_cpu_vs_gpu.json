@@ -1,0 +1,47 @@
+{
+  "dataset": "hotpotqa-subset-n100-seed0-bg20000",
+  "by_model": {
+    "bge-reranker-base": {
+      "cpu": {
+        "pool_depth_N": 20,
+        "mean_pool_size": 32.4,
+        "ms_mean": 3029.2823870060965,
+        "ms_p50": 2862.807916942984,
+        "ms_p95": 4886.715301964432,
+        "device": "cpu",
+        "torch_threads": 4
+      },
+      "cuda": {
+        "pool_depth_N": 20,
+        "mean_pool_size": 32.4,
+        "ms_mean": 687.7963662801994,
+        "ms_p50": 672.2640330026479,
+        "ms_p95": 1070.1641951483907,
+        "device": "cuda",
+        "batch_size": 64,
+        "torch_threads": 2
+      }
+    },
+    "minilm-l6": {
+      "cpu": {
+        "pool_depth_N": 10,
+        "mean_pool_size": 15.05,
+        "ms_mean": 231.10982955433428,
+        "ms_p50": 197.70260457880795,
+        "ms_p95": 463.65814337041223,
+        "device": "cpu",
+        "torch_threads": 4
+      },
+      "cuda": {
+        "pool_depth_N": 10,
+        "mean_pool_size": 15.05,
+        "ms_mean": 47.1239305999552,
+        "ms_p50": 42.842427999858046,
+        "ms_p95": 85.63348189891258,
+        "device": "cuda",
+        "batch_size": 64,
+        "torch_threads": 2
+      }
+    }
+  }
+}

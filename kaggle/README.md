@@ -142,7 +142,10 @@ folder from the notebook's **Output** tab (or the Data panel). It contains:
 - `hotpotqa-subset-*-*.json` + `rerank_latency_cpu_vs_gpu.json` — Stage 4 latency;
 - and any `stage2b` answer-generation result.
 
-Commit those into `results/` in the repo when you're back on a normal machine.
+Commit those into `results/` in the repo when you're back on a normal machine: `<folder>__<name>.json`
+goes to `results/<folder>/<name>.json`, `rerank_latency_cpu_vs_gpu.json` to `results/rerank/`, and
+`environment.json` to `results/kaggle/environment.json`. Copy only files that don't exist yet; never
+overwrite a committed result.
 
 ## 7. GPU not detected
 

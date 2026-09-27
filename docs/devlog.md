@@ -909,3 +909,33 @@ weighted grid runs only when `weighted` is selected; and results now print incre
 tuning point and each method as it completes, flushed). The Kaggle `stage2` defaults to
 `--methods bm25 dense rrf`, skipping the tuning bomb; `--methods ... weighted` opts back in.
 Because `corpus.fbin` persists, killing the eval and rerunning reuses the embeddings.
+
+## 2026-09-27: Kaggle GPU results: full-corpus HotpotQA, SciFact reranking, GPU latency
+
+Ran `kaggle/run_stages.py` (env, stage2, stage3, stage4) at code `43ca3ce` on a Kaggle T4 x2
+session (one GPU used; 4-vCPU Xeon host, 31 GiB RAM; `results/kaggle/environment.json`). No API
+spend (stage2b not run). Of the 41 downloaded files, 36 were byte-identical copies of committed
+results. Only the 5 new ones were copied in, none overwriting:
+`results/hybrid/hotpotqa-bge-small-en-v1.5-20260927-094841-995184.json`,
+`results/rerank/scifact-20260927-101744-604023.json`,
+`results/rerank/hotpotqa-subset-n100-seed0-bg20000-20260927-105611-634422.json`,
+`results/rerank/rerank_latency_cpu_vs_gpu.json`, `results/kaggle/environment.json`.
+
+- **Full-corpus HotpotQA** (7,405 queries, 5,233,329 passages): BM25 nDCG@10 0.6329 / R@100
+  0.7957 (Anserini 0.633 / 0.7957); dense 0.6993 / 0.8487 (published 0.69935 / 0.84862);
+  RRF 0.7297 / 0.8722. `baselines_match_published: true`. RRF − dense +0.030 [+0.026, +0.035],
+  p_holm 0.0003; larger than on SciFact (+0.015).
+- **SciFact reranking** (N tuned on train: 10 for both): fused nDCG@10 0.7269, bge 0.7266
+  (p_holm 0.98), MiniLM 0.6991 (p_holm 0.076). Reranking doesn't help. The likely causes are
+  domain mismatch (web-trained cross-encoders, scientific claims) and little headroom (fused
+  all-relevant@5 0.77 vs pool ceiling 0.87). These are hypotheses and have not been tested.
+- **GPU latency** on the HotpotQA subset: bge 3029 → 688 ms, MiniLM 231 → 47 ms per query (M2 CPU
+  vs T4). These are different machines, and the GPU is underused: one partial batch of 15–32
+  pairs per query. The GPU rerank produced top-5 lists identical to the CPU run for all
+  100 queries and both models.
+- Small unexplained difference: SciFact fused nDCG@10 0.7269 in the rerank run vs 0.7273 in the
+  committed hybrid run.
+
+Placement of `environment.json`: `kaggle/README.md` only said "commit into `results/`". I used
+`results/kaggle/environment.json` so it's labeled as the Kaggle environment, and documented
+that in the README.
