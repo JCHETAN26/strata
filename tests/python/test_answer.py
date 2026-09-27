@@ -167,9 +167,23 @@ def has_api_key() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
+def skip_if_api_capped(exc: BaseException) -> None:
+    """Skip loudly if exc is Anthropic's account usage-cap 400 (distinct from a pass and from a
+    real failure); otherwise return so the caller re-raises the genuine error."""
+    text = str(exc).lower()
+    if "usage limit" in text or "regain access" in text:
+        pytest.skip("SKIPPED: API usage cap reached (Anthropic account usage limit)")
+
+
 @pytest.mark.skipif(not has_api_key(), reason="needs ANTHROPIC_API_KEY (env or .env)")
 def test_live_cited_answer(tmp_path: Path) -> None:
-    answer = AnswerGenerator(cache_dir=tmp_path).answer("When did the Eiffel Tower open?", PASSAGES)
+    try:
+        answer = AnswerGenerator(cache_dir=tmp_path).answer(
+            "When did the Eiffel Tower open?", PASSAGES
+        )
+    except Exception as exc:
+        skip_if_api_capped(exc)
+        raise
     assert answer.ok, answer.text
     assert "1889" in answer.short_answer
     assert ("Eiffel Tower", 2) in answer.cited_sentences

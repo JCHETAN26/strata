@@ -57,6 +57,8 @@ VCPKG_MANIFEST_FEATURES = ""
 
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
+# Print skip reasons, so a live test skipped for the API usage cap is visible in every run.
+addopts = "-rs"
 pythonpath = ["scripts", "bench", "rag"]
 
 [tool.ruff]
