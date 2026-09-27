@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import os
 import platform
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -54,11 +56,40 @@ def hardware_info() -> dict[str, Any]:
     return info
 
 
+# Run in a separate interpreter: importing torch here would load its bundled OpenMP runtime into
+# the benchmark process, and a process that already loaded FAISS's copy aborts on macOS
+# (OMP Error #15). It also keeps torch's import time and memory out of the measured process.
+_TORCH_CUDA_PROBE = """
+import json
+try:  # torch is optional; only the embed group installs it
+    import torch
+    available = torch.cuda.is_available()
+    print(json.dumps({
+        "torch": torch.__version__,
+        "torch_cuda": torch.version.cuda,
+        "available": available,
+        "device_count": torch.cuda.device_count() if available else 0,
+        "device_name": torch.cuda.get_device_name(0) if available else None,
+    }))
+except Exception:  # torch missing or a driver/runtime mismatch; record nothing
+    print("null")
+"""
+
+
+def _torch_cuda_info() -> dict[str, Any] | None:
+    out = _run([sys.executable, "-c", _TORCH_CUDA_PROBE])
+    try:
+        return json.loads(out) if out else None
+    except json.JSONDecodeError:
+        return None
+
+
 def accelerator_info() -> dict[str, Any]:
     """Best-effort GPU and hosted-environment capture, for results produced on a GPU box (e.g.
     Kaggle). Never raises and adds no import dependency: it reads nvidia-smi if present, torch's
-    CUDA view only if torch is already importable, and a few well-known Kaggle env vars. Absent
-    hardware or tools just yield empty fields, so it is safe to record on every result."""
+    CUDA view (from a subprocess) only if torch is importable, and a few well-known Kaggle env
+    vars. Absent hardware or tools just yield empty fields, so it is safe to record on every
+    result."""
     info: dict[str, Any] = {"gpus": [], "cuda": None, "hosted": None}
 
     smi = _run(
@@ -81,18 +112,7 @@ def accelerator_info() -> dict[str, Any]:
                 }
             )
 
-    try:  # torch is optional; only the embed group installs it
-        import torch
-
-        info["cuda"] = {
-            "torch": torch.__version__,
-            "torch_cuda": torch.version.cuda,
-            "available": torch.cuda.is_available(),
-            "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
-            "device_name": (torch.cuda.get_device_name(0) if torch.cuda.is_available() else None),
-        }
-    except Exception:  # torch missing or a driver/runtime mismatch; record nothing
-        info["cuda"] = None
+    info["cuda"] = _torch_cuda_info()
 
     # Kaggle sets these in kernel sessions; harmless (and empty) elsewhere.
     kaggle = {
