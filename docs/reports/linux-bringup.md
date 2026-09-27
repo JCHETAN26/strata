@@ -165,10 +165,11 @@ pinned, background load present — **do not cite these**.
    ModuleNotFoundError: No module named 'yaml'
    ```
    Diagnosis: pytest autoloads the ROS plugin from the leaked path; it can't import `yaml` inside the
-   venv. Workaround: run with `PYTHONPATH=` cleared (used for all Python results above). Suggested
-   permanent fix: set `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` (or clear `PYTHONPATH`) in the test
-   environment, or add it to `[tool.pytest.ini_options]`/CI env. Not committed since it's a
-   workstation-config issue, not a repo issue.
+   venv. Workaround: run with `PYTHONPATH=` cleared (used for all Python results above). Fixed in
+   `9225f6b`: a `make test-python` target runs pytest with `PYTHONPATH` cleared and
+   `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`, so the caller's environment cannot change imports or load
+   pytest plugins. The README points to `make test-python` as the recommended way to run the Python
+   suite on this machine.
 
 2. **Harmless CMake warning.** Every Linux configure prints
    `Manually-specified variables were not used by the project: CMAKE_C_COMPILER`, because the project
