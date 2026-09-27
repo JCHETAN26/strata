@@ -127,11 +127,20 @@ def main(argv: list[str] | None = None, rerankers: dict[str, Reranker] | None = 
     parser.add_argument("--models", nargs="+", default=sorted(RERANKERS))
     parser.add_argument("--pools", nargs="+", type=int, default=[10, 20, 50])
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--device",
+        default="cpu",
+        help="torch device for the cross-encoder: cpu, cuda, or mps. Recorded per model in the "
+        "latency block, so CPU and GPU runs are directly comparable.",
+    )
+    parser.add_argument("--batch-size", type=int, default=32, help="cross-encoder batch size")
     parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "results" / "rerank")
     args = parser.parse_args(argv)
     import torch
 
-    rerankers = rerankers or {m: Reranker(m) for m in args.models}
+    rerankers = rerankers or {
+        m: Reranker(m, device=args.device, batch_size=args.batch_size) for m in args.models
+    }
     depth = max(args.pools)
 
     # --- Tuning: choose each model's pool depth on the tuning split only.
@@ -196,6 +205,7 @@ def main(argv: list[str] | None = None, rerankers: dict[str, Reranker] | None = 
             "ms_p50": float(np.percentile(per_query, 50)),
             "ms_p95": float(np.percentile(per_query, 95)),
             "device": model.device,
+            "batch_size": model.batch_size,
             "torch_threads": torch.get_num_threads(),
         }
         ceiling[name] = float(np.mean([relevant[q] <= set(pools[q]) for q in test_qids]))

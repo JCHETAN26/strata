@@ -16,5 +16,20 @@
     "config_url": "https://github.com/castorini/anserini/blob/anserini-2.3.0/src/main/resources/reproduce/from-document-collection/configs/beir-v1.0.0-scifact.flat.yaml",
     "also_checked": "Same values on master at 6caeb33a27385d6acc726d81874e34d3a567f46f (2026-08-16), the last commit touching the config",
     "retrieved": "2026-09-25"
+  },
+  "hotpotqa": {
+    "system": "Anserini",
+    "anserini_version": "2.3.0",
+    "anserini_release_tag": "anserini-2.3.0",
+    "lucene_version": "10.5.0",
+    "configuration": "beir-v1.0.0-hotpotqa.flat",
+    "configuration_notes": "flat: title and text concatenated into one 'contents' field (BeirFlatCollection, title + \"\\n\" + text); not multifield",
+    "analyzer": "DefaultEnglishAnalyzer: StandardTokenizer, EnglishPossessiveFilter, LowerCaseFilter, StopFilter(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET), PorterStemFilter",
+    "search": "-bm25 (k1=0.9, b=0.4) -removeQuery -hits 1000",
+    "evaluation": "trec_eval -c -m ndcg_cut.10 / recall.100 / recall.1000 on beir-v1.0.0-hotpotqa.test (7,405 queries)",
+    "published": {"nDCG@10": 0.6330, "R@100": 0.7957, "R@1000": 0.8820},
+    "corpus_passages": 5233329,
+    "published_results_url": "https://github.com/castorini/anserini/blob/anserini-2.3.0/docs/reproduce/from-document-collection/beir-v1.0.0-hotpotqa.flat.md",
+    "retrieved": "2026-09-26"
   }
 }

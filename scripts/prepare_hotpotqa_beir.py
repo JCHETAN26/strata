@@ -90,6 +90,85 @@ def keep_background(doc_id: str, seed: int, fraction: float) -> bool:
     return int.from_bytes(h[:8], "big") / 2**64 < fraction
 
 
+def build_full(splits: tuple[str, ...] = ("test", "dev")) -> int:
+    """Write the entire BEIR HotpotQA corpus (5,233,329 passages) as a BEIR-format dataset for
+    full-corpus retrieval evaluation on the IdeaPad/GPU. Unlike the subset builder this does not
+    need HotpotQA's Hugging Face copy or sentence splits (those are only for the RAG answer
+    evaluation); it writes id/title/text passages, the qrels for the requested splits, and only
+    the queries those splits reference. Streams the corpus so peak memory stays small.
+
+    Writes data/beir/hotpotqa/: corpus.jsonl, queries.jsonl, qrels/<split>.tsv, meta.json.
+    meta.source_sha256 = the BEIR zip's SHA-256, which scripts/embed_beir.py records as
+    dataset_sha256 and bench/eval_hybrid_beir.py checks the embeddings against."""
+    ensure_zip()
+    z = zipfile.ZipFile(BEIR_ZIP)
+    available = set(z.namelist())
+
+    qrels: dict[str, dict[str, dict[str, int]]] = {}
+    needed_qids: set[str] = set()
+    for split in splits:
+        member = f"hotpotqa/qrels/{split}.tsv"
+        if member not in available:
+            continue
+        qrels[split] = {}
+        with z.open(member) as f:
+            reader = csv.reader(io.TextIOWrapper(f), delimiter="\t")
+            next(reader)
+            for qid, doc, score in reader:
+                qrels[split].setdefault(qid, {})[doc] = int(score)
+                needed_qids.add(qid)
+    if "test" not in qrels:
+        raise SystemExit("BEIR HotpotQA zip has no test qrels")
+
+    out = REPO_ROOT / "data" / "beir" / "hotpotqa"
+    (out / "qrels").mkdir(parents=True, exist_ok=True)
+
+    scanned = 0
+    with z.open("hotpotqa/corpus.jsonl") as f, (out / "corpus.jsonl").open("w") as w:
+        for line in io.TextIOWrapper(f, encoding="utf-8"):
+            d = json.loads(line)
+            scanned += 1
+            w.write(
+                json.dumps({"_id": d["_id"], "title": d.get("title", ""), "text": d["text"]}) + "\n"
+            )
+    if scanned != CORPUS_SIZE:
+        raise SystemExit(f"corpus has {scanned} passages, expected {CORPUS_SIZE}")
+
+    written_qids: set[str] = set()
+    with z.open("hotpotqa/queries.jsonl") as f, (out / "queries.jsonl").open("w") as w:
+        for line in io.TextIOWrapper(f, encoding="utf-8"):
+            q = json.loads(line)
+            if q["_id"] in needed_qids:
+                w.write(json.dumps({"_id": q["_id"], "text": q["text"]}) + "\n")
+                written_qids.add(q["_id"])
+    missing_q = needed_qids - written_qids
+    if missing_q:
+        raise SystemExit(f"queries missing from the corpus zip: {sorted(missing_q)[:5]}")
+
+    for split, rel in qrels.items():
+        with (out / "qrels" / f"{split}.tsv").open("w") as w:
+            w.write("query-id\tcorpus-id\tscore\n")
+            for qid in sorted(rel):
+                for doc, s in sorted(rel[qid].items()):
+                    w.write(f"{qid}\t{doc}\t{s}\n")
+
+    meta = {
+        "setting": "BEIR HotpotQA, full corpus",
+        "beir_source": BEIR_URL,
+        "source_sha256": BEIR_SHA256,
+        "corpus_passages": scanned,
+        "splits": {s: len(qrels[s]) for s in qrels},
+        "comparable_to_full_beir": True,
+        "sentence_splits": "none (retrieval only; RAG answer eval uses the subset builder)",
+    }
+    (out / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+    print(
+        f"wrote {out}: {scanned:,} passages, "
+        + ", ".join(f"{len(qrels[s])} {s} queries" for s in qrels)
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument(
@@ -101,7 +180,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--n", type=int, default=100)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--background", type=int, default=20_000)
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="build the entire 5.2M-passage BEIR HotpotQA corpus (test + dev splits) for "
+        "full-corpus retrieval evaluation; ignores --n/--seed/--background",
+    )
     args = parser.parse_args(argv)
+
+    if args.full:
+        return build_full()
 
     ensure_zip()
     hf_files = download_split(HOTPOTQA_SPLIT[args.split])

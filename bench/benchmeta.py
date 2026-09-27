@@ -54,11 +54,73 @@ def hardware_info() -> dict[str, Any]:
     return info
 
 
+def accelerator_info() -> dict[str, Any]:
+    """Best-effort GPU and hosted-environment capture, for results produced on a GPU box (e.g.
+    Kaggle). Never raises and adds no import dependency: it reads nvidia-smi if present, torch's
+    CUDA view only if torch is already importable, and a few well-known Kaggle env vars. Absent
+    hardware or tools just yield empty fields, so it is safe to record on every result."""
+    info: dict[str, Any] = {"gpus": [], "cuda": None, "hosted": None}
+
+    smi = _run(
+        [
+            "nvidia-smi",
+            "--query-gpu=name,driver_version,memory.total,compute_cap",
+            "--format=csv,noheader,nounits",
+        ]
+    )
+    for line in (ln.strip() for ln in smi.splitlines() if ln.strip()):
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) == 4:
+            name, driver, mem_mib, cap = parts
+            info["gpus"].append(
+                {
+                    "name": name,
+                    "driver_version": driver,
+                    "memory_mib": int(mem_mib) if mem_mib.isdigit() else mem_mib,
+                    "compute_capability": cap,
+                }
+            )
+
+    try:  # torch is optional; only the embed group installs it
+        import torch
+
+        info["cuda"] = {
+            "torch": torch.__version__,
+            "torch_cuda": torch.version.cuda,
+            "available": torch.cuda.is_available(),
+            "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
+            "device_name": (
+                torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
+            ),
+        }
+    except Exception:  # torch missing or a driver/runtime mismatch; record nothing
+        info["cuda"] = None
+
+    # Kaggle sets these in kernel sessions; harmless (and empty) elsewhere.
+    kaggle = {
+        var: os.environ[var]
+        for var in (
+            "KAGGLE_KERNEL_RUN_TYPE",
+            "KAGGLE_DOCKER_IMAGE",
+            "KAGGLE_URL_BASE",
+            "KAGGLE_DATA_PROXY_TOKEN",
+        )
+        if var in os.environ and var != "KAGGLE_DATA_PROXY_TOKEN"  # never record the proxy token
+    }
+    if os.path.isdir("/kaggle"):
+        kaggle["kaggle_dirs"] = sorted(
+            d for d in ("/kaggle/input", "/kaggle/working", "/kaggle/temp") if os.path.isdir(d)
+        )
+    info["hosted"] = kaggle or None
+    return info
+
+
 def metadata() -> dict[str, Any]:
     return {
         "timestamp": dt.datetime.now(dt.UTC).isoformat(timespec="microseconds"),
         "git": git_info(),
         "hardware": hardware_info(),
+        "accelerator": accelerator_info(),
     }
 
 

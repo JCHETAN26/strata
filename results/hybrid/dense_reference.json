@@ -10,5 +10,18 @@
       "retrieved": "2026-09-25",
       "notes": "Sanity check for the dense pipeline (prefixes, normalization, pooling, revision); MTEB uses title + ' ' + text and the query instruction."
     }
+  },
+  "hotpotqa": {
+    "bge-small-en-v1.5": {
+      "system": "MTEB results published in the model card (model-index metadata)",
+      "model": "BAAI/bge-small-en-v1.5",
+      "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+      "task": "MTEB HotpotQA, split test (full BEIR corpus, 5,233,329 passages)",
+      "published": {"nDCG@10": 0.69935, "R@100": 0.84862},
+      "also_published": {"nDCG@100": 0.73013, "R@1000": 0.92208},
+      "source_url": "https://huggingface.co/BAAI/bge-small-en-v1.5/blob/5c38ec7c405ec4b44b94cc5a9bb96e735b38267a/README.md",
+      "retrieved": "2026-09-26",
+      "notes": "Full-corpus BEIR HotpotQA reference. MTEB reports exact (brute-force) dense search, title + ' ' + text, bge query instruction; matches Strata's dense setting. Model-card values are in percent (ndcg_at_10 69.935); recorded here as fractions. A small gap vs Strata is expected from CPU-vs-GPU float arithmetic and tokenizer truncation on long passages."
+    }
   }
 }

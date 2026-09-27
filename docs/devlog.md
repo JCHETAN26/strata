@@ -848,3 +848,44 @@ works by letting the model answer more questions, not by improving the answers i
    not.
 
 RAG experiments on the Mac are closed. The write-up is in `docs/rag-results.md`.
+
+## Kaggle GPU runner (IdeaPad disk full)
+
+The IdeaPad's root filesystem is at 99% (2.6 GiB free), and the only reclaimable space belongs to
+other projects in the owner's home directory. That is not enough for CUDA PyTorch (~6–8 GiB
+installed) let alone the full-corpus HotpotQA embeddings (~7.5 GiB). So Stage 1 (embed group +
+`uv sync`) was **cancelled** and the GPU stages moved to a Kaggle notebook. `uv.lock` already
+pins `torch==2.14.0` to its CUDA (cu13) build on Linux, so no dependency change was needed.
+
+New runner in `kaggle/` (`setup.sh`, `run_stages.py`, `notebook.ipynb`, `README.md`): clones the
+repo with a token from Kaggle Secrets (never printed), builds the bindings (vcpkg pinned baseline
++ `uv sync`), installs the embed/rag deps, and runs full-corpus BEIR HotpotQA retrieval (Stage 2),
+SciFact reranking (Stage 3), and GPU reranking latency (Stage 4). Only result JSONs are downloaded;
+embeddings and indexes stay on Kaggle. Answer generation (Stage 2b) stays behind a cost estimate
+and an explicit `--enable-api` flag.
+
+Supporting changes:
+
+- **`bench/benchmeta.py`:** `accelerator_info()` records GPU (via `nvidia-smi`), torch's CUDA view
+  (only if torch imports), and Kaggle env vars (never the data-proxy token). Added to `metadata()`,
+  so every result now records the exact GPU and environment.
+- **`scripts/embed_beir.py`:** sharded, **resumable** embedding. Each shard is appended to
+  `corpus.fbin` with a progress sidecar; a session killed at Kaggle's time limit resumes from the
+  last completed shard, and a finished file is skipped. Verified locally (stubbed encoder): a run
+  killed after 2 of 4 shards resumes to a byte-identical `corpus.fbin`. Peak encode RAM is bounded
+  by one shard (default 200k × 384 × 4 ≈ 0.3 GiB) instead of the whole 7.5 GiB.
+- **`scripts/prepare_hotpotqa_beir.py`:** `--full` builds the entire 5,233,329-passage BEIR
+  HotpotQA corpus (test + dev) as `data/beir/hotpotqa/`, streamed, with `source_sha256`.
+- **`bench/eval_rerank.py`:** `--device` / `--batch-size` so the cross-encoder runs on the GPU;
+  device and batch size are recorded in the latency block for direct CPU-vs-GPU comparison.
+- **Published references (`results/bm25/`, `results/hybrid/`):** added BEIR HotpotQA references so
+  Stage 2 checks against them — BM25 nDCG@10 0.6330 / R@100 0.7957 (Anserini
+  `beir-v1.0.0-hotpotqa.flat`, 2.3.0) and bge-small-en-v1.5 nDCG@10 0.69935 / R@100 0.84862 (model
+  card MTEB at the pinned revision). A gap vs MTEB is expected (CPU-vs-GPU float, tokenizer
+  truncation), so the runner reports the comparison rather than treating a miss as a hard failure.
+- **Stage 2 memory guard:** the runner estimates corpus-embedding disk (~7.5 GiB) and exact-dense
+  retrieval RAM (~15 GiB) up front and refuses to embed if it will not fit, proposing a higher-RAM
+  accelerator, `--embed-only`, or `--allow-large-memory`.
+
+Local tests: full Python suite passes (105 passed, 15 skipped — the torch-only ones). The full
+GPU run happens on Kaggle.

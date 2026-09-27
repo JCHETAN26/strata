@@ -113,9 +113,13 @@ After the core works (I can build these, on the Mac):
 - [ ] Brief cloud run on 3–5 VMs for multi-machine scaling (cloud, not the IdeaPad)
 
 ### Phase 8 — Compute-heavy parts
-- [ ] Embeddings for the BEIR corpora (SciFact, FiQA, NFCorpus) on the RTX 3050
-- [ ] Full BEIR nDCG@10 runs: keyword-only, vector-only, hybrid, hybrid + rerank
-- [ ] HotpotQA answer-groundedness evaluation on the full BEIR corpus (5.2M passages): `scripts/prepare_hotpotqa_beir.py` + `bench/eval_hotpotqa_beir.py` with a full-corpus mode
+> The IdeaPad's disk is full (2.6 GiB free), so these run on a Kaggle GPU notebook instead — see
+> `kaggle/` (`run_stages.py`, `notebook.ipynb`, `README.md`). Runner + supporting changes are done
+> and locally tested; the boxes below get checked once the Kaggle run's result JSONs land in `results/`.
+- [ ] Embeddings for the BEIR corpora (SciFact, FiQA, NFCorpus) on the GPU — `kaggle` stage3 does SciFact; extend for FiQA/NFCorpus
+- [ ] Full BEIR nDCG@10 runs: keyword-only, vector-only, hybrid, hybrid + rerank — `kaggle` stage2 (full-corpus HotpotQA), vs published BEIR references
+- [ ] HotpotQA answer-groundedness evaluation on the full BEIR corpus (5.2M passages): `scripts/prepare_hotpotqa_beir.py --full` + `bench/eval_hotpotqa_beir.py` — `kaggle` stage2b (behind a cost estimate + `--enable-api`)
+- [ ] GPU cross-encoder reranking + latency (SciFact tuned on train; GPU-vs-CPU latency) — `kaggle` stage3 / stage4
 
 ### Phase 9 — Final results (all reported numbers)
 - [ ] SIFT1M and GloVe-100 full runs, several runs each, with variance
