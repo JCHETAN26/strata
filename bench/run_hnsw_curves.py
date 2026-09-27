@@ -20,12 +20,11 @@ is indicative only; the outputs say so. Final speed comparisons run on dedicated
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 import time
 from typing import Any
 
-import run_reference_bench
-import run_search_bench
 from benchmeta import REPO_ROOT, git_info, hardware_note
 from plot_recall_qps import plot_dataset
 from records import latest_records, load_records
@@ -34,40 +33,30 @@ LIBRARIES = [("strata", "hnsw"), ("hnswlib", "hnsw"), ("faiss", "hnsw"), ("strat
 # Brute force on SIFT1M runs at ~50 QPS on the M2; a query subset keeps each run under a minute.
 BRUTE_FORCE_MAX_QUERIES = {"sift1m": 1000}
 OUT_TABLE = REPO_ROOT / "results" / "hnsw" / "hnsw_vs_reference.md"
+BENCH = REPO_ROOT / "bench"
 
 
 def run(args: argparse.Namespace) -> None:
+    # Every step runs in its own process: hnswlib and FAISS each ship an OpenMP runtime, and
+    # loading both into one process aborts on macOS (OMP Error #15). Separate processes also
+    # free each index (hundreds of MB on SIFT1M) before the next build starts.
     hnsw_args = ["--M", str(args.M), "--ef-construction", str(args.ef_construction)]
     sweep = ["--ef-search", args.ef_search, "--runs", str(args.runs)]
     for dataset in args.datasets:
+        bench = ["--dataset", dataset]
         steps = [
-            lambda d=dataset: run_search_bench.main(
-                ["--dataset", d, "--index", "hnsw", *hnsw_args, *sweep]
-            ),
-            lambda d=dataset: run_reference_bench.main(
-                ["--dataset", d, "--library", "hnswlib", *hnsw_args, *sweep]
-            ),
-            lambda d=dataset: run_reference_bench.main(
-                ["--dataset", d, "--library", "faiss", "--index", "hnsw", *hnsw_args, *sweep]
-            ),
-            lambda d=dataset: run_search_bench.main(
-                [
-                    "--dataset",
-                    d,
-                    "--index",
-                    "brute_force",
-                    "--runs",
-                    str(args.runs),
-                    "--max-queries",
-                    str(BRUTE_FORCE_MAX_QUERIES.get(d, 0)),
-                ]
-            ),
-        ]
-        for step in steps:
-            code = step()
-            if code != 0:
-                raise SystemExit(code)
-            print(f"cooling down {args.cooldown} s", file=sys.stderr)
+            ["run_search_bench.py", *bench, "--index", "hnsw", *hnsw_args, *sweep],
+            ["run_reference_bench.py", *bench, "--library", "hnswlib", *hnsw_args, *sweep],
+            ["run_reference_bench.py", *bench, "--library", "faiss", "--index", "hnsw",
+             *hnsw_args, *sweep],
+            ["run_search_bench.py", *bench, "--index", "brute_force", "--runs", str(args.runs),
+             "--max-queries", str(BRUTE_FORCE_MAX_QUERIES.get(dataset, 0))],
+        ]  # fmt: skip
+        for script, *step_args in steps:
+            cmd = [sys.executable, "-u", str(BENCH / script), *step_args]
+            print("$", " ".join(cmd), file=sys.stderr, flush=True)
+            subprocess.run(cmd, check=True)
+            print(f"cooling down {args.cooldown} s", file=sys.stderr, flush=True)
             time.sleep(args.cooldown)
 
 
