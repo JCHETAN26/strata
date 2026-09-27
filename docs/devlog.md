@@ -889,3 +889,23 @@ Supporting changes:
 
 Local tests: full Python suite passes (105 passed, 15 skipped — the torch-only ones). The full
 GPU run happens on Kaggle.
+
+### Full-corpus retrieval eval: weighted-tuning grid and silent output (fixed)
+
+First Kaggle run: embedding finished cleanly (5,233,329 passages in 10,832 s on the RTX 3050 via
+the sharded path), then `eval_hybrid_beir.py` printed nothing for a long time. Two causes, both in
+that script's original small-dataset design:
+
+1. Every `print` was at the *end* of `run_dataset`, so a run over 5.2M passages showed no output
+   for its entire (long) duration — indistinguishable from a hang.
+2. The weighted-fusion weight tuning re-runs the full search once per grid point (21 points) over
+   the tuning split. On SciFact (5,183 docs) that is nothing; over 5.2M passages and ~5,447 dev
+   queries it is ~21 full-corpus brute-force passes before any result prints — realistically
+   longer than a Kaggle session, and it produces nothing the published-reference comparison uses
+   (references are BM25 and dense only; RRF is fixed k=60).
+
+Fix: `eval_hybrid_beir.py` gained `--methods` (evaluate a subset of bm25/dense/rrf/weighted); the
+weighted grid runs only when `weighted` is selected; and results now print incrementally (each
+tuning point and each method as it completes, flushed). The Kaggle `stage2` defaults to
+`--methods bm25 dense rrf`, skipping the tuning bomb; `--methods ... weighted` opts back in.
+Because `corpus.fbin` persists, killing the eval and rerunning reuses the embeddings.

@@ -167,10 +167,12 @@ def cmd_stage2(args: argparse.Namespace) -> int:
         print("embed-only: embeddings ready; run retrieval on a larger box.")
         return 0
 
-    # 3. Full-corpus retrieval vs published references.
+    # 3. Full-corpus retrieval vs published references. Skip weighted-fusion tuning by default:
+    #    its grid re-searches all 5.2M vectors 21 times over the dev split (hours), and the
+    #    published references cover BM25 and dense only. Pass --methods to override.
     rc = sh(
         [sys.executable, "bench/eval_hybrid_beir.py", "--dataset", "hotpotqa",
-         "--model", EMBED_MODEL]
+         "--model", EMBED_MODEL, "--methods", *args.methods]
     ).returncode
     collect_results()
     if rc:
@@ -324,6 +326,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--shard-size", type=int, default=200_000)
     p.add_argument("--allow-large-memory", action="store_true")
     p.add_argument("--embed-only", action="store_true", help="stop after embeddings")
+    p.add_argument(
+        "--methods",
+        nargs="+",
+        default=["bm25", "dense", "rrf"],
+        help="retrieval methods (default skips 'weighted' to avoid its full-corpus tuning grid; "
+        "add 'weighted' to include it — expect many extra hours)",
+    )
     p.set_defaults(func=cmd_stage2)
 
     p = sub.add_parser("stage3", help="SciFact reranking on GPU (tuned on train)")

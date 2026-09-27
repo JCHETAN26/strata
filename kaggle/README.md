@@ -15,7 +15,7 @@ GPU stages run in a **Kaggle notebook** instead. This directory is the runner:
 | Stage | What | Anthropic API? |
 |-------|------|----------------|
 | `env` | Print + save the exact GPU and environment | no |
-| `stage2` | Full-corpus BEIR HotpotQA (5.2M passages): BM25 / dense / hybrid retrieval vs published BEIR references | no |
+| `stage2` | Full-corpus BEIR HotpotQA (5.2M passages): BM25 / dense / RRF retrieval vs published BEIR references | no |
 | `stage3` | SciFact cross-encoder reranking on the GPU, tuned on the train split | no |
 | `stage4` | GPU reranking latency on the HotpotQA subset, printed next to the committed CPU numbers | no |
 | `stage2b` | *Optional:* HotpotQA answer generation on the BEIR **subset** (the split with gold answers; not the full corpus) | **yes — off by default** |
@@ -111,7 +111,13 @@ Before embedding, `stage2` prints an estimate:
 - corpus embeddings on disk (`corpus.fbin`): **~7.5 GiB** (5,233,329 × 384 × float32);
 - peak RAM for exact dense retrieval: **~15 GiB** (the corpus vectors plus the index's own copy).
 
-If that does **not** fit safely in the session's RAM, the runner **stops before embedding** and
+By default `stage2` evaluates BM25, dense, and RRF — it **skips weighted-fusion tuning**, whose
+grid re-searches all 5.2M vectors 21 times over the dev split (many hours) and isn't part of the
+published-reference comparison. Add it back with `... run_stages.py stage2 --methods bm25 dense
+rrf weighted` if you want it and have the session time. Each method prints as it completes, so you
+see progress rather than silence.
+
+If the estimate does **not** fit safely in the session's RAM, the runner **stops before embedding** and
 tells you the options (attach a higher-RAM accelerator; or `--allow-large-memory` to try anyway;
 or `--embed-only` to produce the embeddings now and run retrieval elsewhere). Embedding itself is
 cheap on RAM (bounded by one shard) and is always safe to run.

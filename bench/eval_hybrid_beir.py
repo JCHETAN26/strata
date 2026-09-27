@@ -142,38 +142,60 @@ def run_dataset(dataset: str, args: argparse.Namespace) -> int:
             "per_query": {"nDCG@10": ndcg, "R@100": recall},
         }
 
-    # Weighted-fusion weight, by the pre-declared rule.
+    # Methods to evaluate, in the canonical order; each search over a large corpus is slow, so
+    # print progress as it happens rather than only at the end.
+    selected = [m for m in METHODS if m in args.methods]
+    print(f"{dataset} test ({len(splits['test'])} queries, {len(corpus):,} passages), dense = "
+          f"{emb_meta['hf_name']}@{emb_meta['revision'][:12]}", flush=True)  # fmt: skip
+    print(f"  methods: {', '.join(selected)}", flush=True)
+
+    # Weighted-fusion weight, by the pre-declared rule. Only tuned when 'weighted' is evaluated:
+    # the grid re-searches the whole corpus once per point, which is the dominant cost at scale.
     curve: dict[float, float] = {}
-    if tuning_split is not None:
-        curve = {w: evaluate(tuning_split, "weighted", w)["nDCG@10"] for w in WEIGHT_GRID}
+    if "weighted" in selected and tuning_split is not None:
+        n_tune = len(splits[tuning_split])
+        print(f"  tuning weighted weight on {tuning_split} ({n_tune} q), "
+              f"{len(WEIGHT_GRID)} points:", flush=True)
+        for w in WEIGHT_GRID:
+            curve[w] = evaluate(tuning_split, "weighted", w)["nDCG@10"]
+            print(f"    weight={w:.2f}  nDCG@10 {curve[w]:.4f}", flush=True)
         weight = max(WEIGHT_GRID, key=lambda w: (curve[w], -w))
     else:
         weight = FIXED_WEIGHT
 
-    results = {m: evaluate("test", m, weight) for m in METHODS}
+    results = {}
+    for m in selected:
+        results[m] = evaluate("test", m, weight)
+        r = results[m]
+        print(f"  {m:9s} nDCG@10 {r['nDCG@10']:.4f}  R@100 {r['R@100']:.4f}  "
+              f"{r['qps']:.0f} QPS", flush=True)  # fmt: skip
     per_query = {m: r.pop("per_query") for m, r in results.items()}
-    significance = {
-        metric: [
-            c.to_dict()
-            for c in compare_all(
-                {m: per_query[m][metric] for m in METHODS},
-                n_resamples=BOOTSTRAP_RESAMPLES,
-                confidence=CONFIDENCE,
-                seed=SEED,
-            )
-        ]
-        for metric in ("nDCG@10", "R@100")
-    }
+    significance = (
+        {
+            metric: [
+                c.to_dict()
+                for c in compare_all(
+                    {m: per_query[m][metric] for m in selected},
+                    n_resamples=BOOTSTRAP_RESAMPLES,
+                    confidence=CONFIDENCE,
+                    seed=SEED,
+                )
+            ]
+            for metric in ("nDCG@10", "R@100")
+        }
+        if len(selected) >= 2
+        else {"nDCG@10": [], "R@100": []}
+    )
 
-    # Baselines against published references (when this dataset/model has one).
+    # Baselines against published references (when this dataset/model has one and it was run).
     checks = {}
     bm25_ref = ANSERINI_REFERENCE.get(dataset)
-    if bm25_ref:
+    if bm25_ref and "bm25" in results:
         checks["bm25"] = {
             m: (results["bm25"][m], bm25_ref["published"][m]) for m in ("nDCG@10", "R@100")
         }
     dense_ref = DENSE_REFERENCE.get(dataset, {}).get(args.model)
-    if dense_ref and dense_ref["revision"] == emb_meta["revision"]:
+    if dense_ref and dense_ref["revision"] == emb_meta["revision"] and "dense" in results:
         checks["dense"] = {
             m: (results["dense"][m], dense_ref["published"][m]) for m in ("nDCG@10", "R@100")
         }
@@ -182,27 +204,27 @@ def run_dataset(dataset: str, args: argparse.Namespace) -> int:
     )
 
     source = (
-        f"tuned on {tuning_split} ({len(splits[tuning_split])} queries, "
-        f"nDCG@10 {curve[weight]:.4f})"
-        if tuning_split
-        else "fixed (no dev or train split)"
+        f"tuned on {tuning_split} ({len(splits[tuning_split])} q, nDCG@10 {curve[weight]:.4f})"
+        if curve
+        else ("fixed (no dev or train split)" if "weighted" in selected else "not evaluated")
     )
-    print(f"{dataset} test ({results['bm25']['queries']} queries), dense = "
-          f"{emb_meta['hf_name']}@{emb_meta['revision'][:12]}")  # fmt: skip
     print(f"  weighted fusion weight (dense) = {weight}, {source}")
-    for name, m in results.items():
+    for name in selected:
         ref = checks.get(name, {}).get("nDCG@10")
-        note = f"  (published {ref[1]:.4f})" if ref else ""
-        print(f"  {name:9s} nDCG@10 {m['nDCG@10']:.4f}  R@100 {m['R@100']:.4f}  "
-              f"{m['qps']:.0f} QPS{note}")  # fmt: skip
-    print(
-        f"  paired differences in nDCG@10 ({CONFIDENCE:.0%} bootstrap CI, randomization p, Holm):"
-    )
-    for c in significance["nDCG@10"]:
-        print(f"    {c['a']:>8s} - {c['b']:<8s} {c['mean_diff']:+.4f} "
-              f"[{c['ci_low']:+.4f}, {c['ci_high']:+.4f}]  p={c['p_value']:.4f}  "
-              f"p_holm={c['p_holm']:.4f}  W/L/T {c['wins']}/{c['losses']}/{c['ties']}")  # fmt: skip
-    print("  baselines match published references" if baselines_ok else "  BASELINE MISMATCH")
+        if ref:
+            ours = results[name]["nDCG@10"]
+            print(f"    {name:9s} published nDCG@10 {ref[1]:.4f} "
+                  f"(ours {ours:.4f}, Δ {ours - ref[1]:+.4f})")  # fmt: skip
+    if significance["nDCG@10"]:
+        print(f"  paired differences in nDCG@10 "
+              f"({CONFIDENCE:.0%} bootstrap CI, randomization p, Holm):")  # fmt: skip
+        for c in significance["nDCG@10"]:
+            wlt = f"{c['wins']}/{c['losses']}/{c['ties']}"
+            print(f"    {c['a']:>8s} - {c['b']:<8s} {c['mean_diff']:+.4f} "
+                  f"[{c['ci_low']:+.4f}, {c['ci_high']:+.4f}]  p={c['p_value']:.4f}  "
+                  f"p_holm={c['p_holm']:.4f}  WLT {wlt}")  # fmt: skip
+    if checks:
+        print("  baselines match published references" if baselines_ok else "  BASELINE MISMATCH")
 
     record = {
         **metadata(),
@@ -210,13 +232,14 @@ def run_dataset(dataset: str, args: argparse.Namespace) -> int:
         "dataset_sha256": beir_meta["source_sha256"],
         "embedding": emb_meta,
         "protocol": {
+            "methods": selected,
             "candidates": args.candidates,
             "rrf_k": args.rrf_k,
             "rrf_k_tuned": False,
             "weight_rule": "dev if present, else train, else fixed 0.5",
-            "weight_source": tuning_split or "fixed",
-            "weight_tuned_on": tuning_split,
-            "tuning_queries": len(splits[tuning_split]) if tuning_split else 0,
+            "weight_source": (tuning_split or "fixed") if curve else "not tuned (weighted skipped)",
+            "weight_tuned_on": tuning_split if curve else None,
+            "tuning_queries": len(splits[tuning_split]) if curve else 0,
             "weight_grid": WEIGHT_GRID,
             "weight": weight,
             "tie_break": "smaller weight",
@@ -256,6 +279,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--candidates", type=int, default=100)
     parser.add_argument("--rrf-k", type=float, default=60.0)
     parser.add_argument("--threads", type=int, default=None)
+    parser.add_argument(
+        "--methods",
+        nargs="+",
+        choices=METHODS,
+        default=list(METHODS),
+        help="which methods to evaluate (default: all). On a huge corpus, drop 'weighted' to skip "
+        "its per-weight tuning grid, which re-searches the whole corpus once per grid point.",
+    )
     parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "results" / "hybrid")
     args = parser.parse_args(argv)
     status = 0
