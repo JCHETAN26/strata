@@ -32,6 +32,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--M", type=int, default=16)
     parser.add_argument("--ef-construction", type=int, default=200)
+    parser.add_argument(
+        "--selection", default="heuristic", choices=["heuristic", "simple"],
+        help="HNSW neighbor selection: paper Algorithm 4 (heuristic) or closest M (simple)",
+    )  # fmt: skip
     parser.add_argument("--ef-search", default="10,20,40,80,160,320")
     parser.add_argument("--pq-m", type=int, default=16)
     parser.add_argument("--rerank", default="0,10,20,50,100,200,500")
@@ -62,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         cmd += [
             "--M", str(args.M),
             "--ef-construction", str(args.ef_construction),
+            "--selection", args.selection,
             "--ef-search", args.ef_search,
         ]  # fmt: skip
     if args.index == "pq":

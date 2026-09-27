@@ -1,0 +1,240 @@
+"""Before/after comparison of HNSW neighbor selection: closest M vs the paper's heuristic.
+
+    uv run python bench/run_selection_comparison.py                # run both modes, then report
+    uv run python bench/run_selection_comparison.py --report-only  # report from saved records
+
+For each dataset, builds Strata HNSW twice with identical M, ef_construction, seed, and
+ef_search sweep, once with --selection simple (paper Algorithm 3) and once with --selection
+heuristic (Algorithm 4), via bench/run_search_bench.py, which saves the raw records to
+results/search/. Then writes:
+
+    results/selection/selection_comparison.md   recall and QPS per ef_search, graph statistics
+    results/plots/hnsw_selection.png            recall vs QPS, both modes, one panel per dataset
+
+Datasets: SIFT10K (siftsmall) and a synthetic clustered set (scripts/make_clustered.py,
+generated on first use), where the heuristic is expected to matter most.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from typing import Any
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import run_search_bench
+from benchmeta import REPO_ROOT, git_info
+from plot_recall_qps import MUTED, SURFACE, TEXT
+from records import latest_records, load_records
+
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+import make_clustered
+
+CLUSTERED = {"clusters": 100, "per_cluster": 1000, "dim": 16, "spread": 0.05, "seed": 0}
+CLUSTERED_NAME = make_clustered.dataset_name(**CLUSTERED)
+DATASETS = ["siftsmall", CLUSTERED_NAME]
+SELECTIONS = ["simple", "heuristic"]
+# Heuristic in Strata's blue; the baseline in a neutral gray with a different marker.
+STYLE = {"heuristic": ("#2a78d6", "o"), "simple": (MUTED, "s")}
+OUT_TABLE = REPO_ROOT / "results" / "selection" / "selection_comparison.md"
+OUT_PLOT = REPO_ROOT / "results" / "plots" / "hnsw_selection.png"
+
+
+def ensure_clustered() -> None:
+    if not (REPO_ROOT / "data" / CLUSTERED_NAME / "meta.json").exists():
+        make_clustered.main(
+            [
+                "--clusters", str(CLUSTERED["clusters"]),
+                "--per-cluster", str(CLUSTERED["per_cluster"]),
+                "--dim", str(CLUSTERED["dim"]),
+                "--spread", str(CLUSTERED["spread"]),
+                "--seed", str(CLUSTERED["seed"]),
+            ]
+        )  # fmt: skip
+
+
+def run(args: argparse.Namespace) -> None:
+    ensure_clustered()
+    for dataset in DATASETS:
+        for selection in SELECTIONS:
+            code = run_search_bench.main(
+                [
+                    "--dataset", dataset, "--index", "hnsw", "--selection", selection,
+                    "--M", str(args.M), "--ef-construction", str(args.ef_construction),
+                    "--ef-search", args.ef_search, "--runs", str(args.runs),
+                ]
+            )  # fmt: skip
+            if code != 0:
+                raise SystemExit(code)
+
+
+def find_records(args: argparse.Namespace) -> dict[tuple[str, str], dict[str, Any]]:
+    """Latest Strata HNSW record per (dataset, selection) with this M and ef_construction."""
+    found: dict[tuple[str, str], dict[str, Any]] = {}
+    for record in sorted(latest_records(load_records()), key=lambda r: r["timestamp"]):
+        params = record["build_params"]
+        if (
+            record["library"] == "strata"
+            and record["index"] == "hnsw"
+            and record["threads"] == 1
+            and record["dataset"]["name"] in DATASETS
+            and params.get("selection") in SELECTIONS
+            and params.get("M") == args.M
+            and params.get("ef_construction") == args.ef_construction
+        ):
+            found[(record["dataset"]["name"], params["selection"])] = record
+    missing = [f"{d}/{s}" for d in DATASETS for s in SELECTIONS if (d, s) not in found]
+    if missing:
+        raise SystemExit(f"no records for {', '.join(missing)}; run without --report-only")
+    return found
+
+
+def by_ef(record: dict[str, Any]) -> dict[int, dict[str, Any]]:
+    return {p["search_params"]["ef_search"]: p["summary"] for p in record["points"]}
+
+
+def fmt(summary: dict[str, float], digits: int) -> str:
+    return f"{summary['mean']:.{digits}f} ± {summary['stdev']:.{digits}f}"
+
+
+def hardware_note(record: dict[str, Any]) -> str:
+    cpu = record["hardware"].get("cpu") or record["hardware"]["machine"]
+    if cpu.startswith("Apple"):
+        return (
+            f"{cpu} (fanless development machine): recall is valid; QPS is indicative only. "
+            "Final speed comparisons run on dedicated hardware (Phase 9)."
+        )
+    return cpu
+
+
+def write_table(records: dict[tuple[str, str], dict[str, Any]], args: argparse.Namespace) -> None:
+    any_record = next(iter(records.values()))
+    commits = sorted(
+        {
+            r["git"]["commit"][:10] + ("-dirty" if r["git"]["dirty"] else "")
+            for r in records.values()
+        }
+    )
+    lines = [
+        "# HNSW neighbor selection: closest M vs the paper's heuristic",
+        "",
+        "Generated by `bench/run_selection_comparison.py`. Do not edit by hand.",
+        "",
+        f"- Hardware: {hardware_note(any_record)}",
+        f"- Commit(s): {', '.join(commits)}",
+        f"- Build: M={args.M}, ef_construction={args.ef_construction}, seed=42, single thread; "
+        f"k={any_record['k']}; {len(any_record['points'][0]['runs'])} runs per point, "
+        "mean ± stdev.",
+        "- Recall is tie-aware recall@10 against exact ground truth.",
+        f"- Clustered set: `{CLUSTERED_NAME}` ({CLUSTERED['clusters']} Gaussian clusters x "
+        f"{CLUSTERED['per_cluster']} points, dim {CLUSTERED['dim']}, stdev {CLUSTERED['spread']}; "
+        "queries from the same mixture).",
+        "",
+    ]
+    for dataset in DATASETS:
+        simple, heuristic = records[(dataset, "simple")], records[(dataset, "heuristic")]
+        s_pts, h_pts = by_ef(simple), by_ef(heuristic)
+        lines += [
+            f"## {dataset}",
+            "",
+            "| ef_search | recall (simple) | recall (heuristic) | Δ recall "
+            "| QPS (simple) | QPS (heuristic) |",
+            "|---:|---:|---:|---:|---:|---:|",
+        ]
+        for ef in sorted(set(s_pts) & set(h_pts)):
+            s, h = s_pts[ef], h_pts[ef]
+            delta = h["recall"]["mean"] - s["recall"]["mean"]
+            lines.append(
+                f"| {ef} | {fmt(s['recall'], 4)} | {fmt(h['recall'], 4)} | {delta:+.4f} "
+                f"| {fmt(s['qps'], 0)} | {fmt(h['qps'], 0)} |"
+            )
+        lines += ["", "| Graph (after build) | simple | heuristic |", "|---|---:|---:|"]
+        sg, hg = simple["raw"].get("graph") or {}, heuristic["raw"].get("graph") or {}
+        rows = [
+            ("Build time (s)", f"{simple['build_seconds']:.2f}",
+             f"{heuristic['build_seconds']:.2f}"),
+            ("Mean layer-0 out-degree", f"{sg.get('layer0_mean_degree', float('nan')):.2f}",
+             f"{hg.get('layer0_mean_degree', float('nan')):.2f}"),
+            ("Layer-0 nodes reachable from entry point",
+             f"{100 * sg.get('layer0_reachable_fraction', float('nan')):.2f}%",
+             f"{100 * hg.get('layer0_reachable_fraction', float('nan')):.2f}%"),
+            ("Nodes per layer", str(sg.get("nodes_per_layer")), str(hg.get("nodes_per_layer"))),
+        ]  # fmt: skip
+        lines += [f"| {name} | {a} | {b} |" for name, a, b in rows]
+        lines.append("")
+    OUT_TABLE.parent.mkdir(parents=True, exist_ok=True)
+    OUT_TABLE.write_text("\n".join(lines))
+    print(f"wrote {OUT_TABLE.relative_to(REPO_ROOT)}")
+
+
+def write_plot(records: dict[tuple[str, str], dict[str, Any]]) -> None:
+    fig, axes = plt.subplots(1, len(DATASETS), figsize=(11, 4.8), dpi=150)
+    fig.patch.set_facecolor(SURFACE)
+    for ax, dataset in zip(axes, DATASETS, strict=True):
+        ax.set_facecolor(SURFACE)
+        for selection in SELECTIONS:
+            record = records[(dataset, selection)]
+            color, marker = STYLE[selection]
+            points = sorted(record["points"], key=lambda p: p["search_params"]["ef_search"])
+            xs = [p["summary"]["recall"]["mean"] for p in points]
+            ys = [p["summary"]["qps"]["mean"] for p in points]
+            errs = [p["summary"]["qps"]["stdev"] for p in points]
+            ax.errorbar(
+                xs, ys, yerr=errs, color=color, marker=marker, markersize=6, linewidth=2,
+                markeredgecolor=SURFACE, markeredgewidth=1.2, elinewidth=1, capsize=0,
+                label=f"{selection} ({'Algorithm 4' if selection == 'heuristic' else 'closest M'})",
+            )  # fmt: skip
+        ax.set_yscale("log")
+        ax.set_title(dataset, color=TEXT, loc="left", fontsize=10)
+        ax.set_xlabel(f"Recall@{records[(dataset, 'simple')]['k']}", color=TEXT)
+        ax.grid(True, which="major", color="#e4e3df", linewidth=0.8)
+        ax.set_axisbelow(True)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+        for spine in ("left", "bottom"):
+            ax.spines[spine].set_color(MUTED)
+        ax.tick_params(colors=MUTED)
+        ax.legend(frameon=False, fontsize=8, labelcolor=TEXT, loc="lower left")
+    axes[0].set_ylabel("Queries per second (log scale, single thread)", color=TEXT)
+    any_record = next(iter(records.values()))
+    fig.suptitle(
+        "Strata HNSW: neighbor-selection heuristic vs closest M "
+        f"(M={any_record['build_params']['M']}, "
+        f"ef_construction={any_record['build_params']['ef_construction']})",
+        color=TEXT, x=0.01, ha="left", fontsize=11,
+    )  # fmt: skip
+    fig.text(0.01, 0.01, hardware_note(any_record), ha="left", fontsize=7, color=MUTED)
+    fig.text(
+        0.99, 0.01, "Up and to the right is better. bench/run_selection_comparison.py",
+        ha="right", fontsize=7, color=MUTED,
+    )  # fmt: skip
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    OUT_PLOT.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(OUT_PLOT, facecolor=SURFACE)
+    plt.close(fig)
+    print(f"wrote {OUT_PLOT.relative_to(REPO_ROOT)}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--report-only", action="store_true", help="skip runs; report only")
+    parser.add_argument("--M", type=int, default=16)
+    parser.add_argument("--ef-construction", type=int, default=200)
+    parser.add_argument("--ef-search", default="10,20,40,80,160,320")
+    parser.add_argument("--runs", type=int, default=5)
+    args = parser.parse_args(argv)
+    if not args.report_only:
+        if git_info()["dirty"]:
+            print("warning: uncommitted changes; records will be marked dirty", file=sys.stderr)
+        run(args)
+    records = find_records(args)
+    write_table(records, args)
+    write_plot(records)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

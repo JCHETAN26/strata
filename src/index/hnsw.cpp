@@ -9,6 +9,7 @@
 #include <functional>
 #include <limits>
 #include <queue>
+#include <ranges>
 #include <string>
 
 namespace strata {
@@ -202,9 +203,9 @@ VectorId HnswIndex::insert(std::span<const float> values) {
     entry = greedy_search(query, entry, layer);
   }
 
-  // Phase 2: on every layer the node lives on, beam-search ef_construction candidates, link to
-  // the best M of them, and link them back. The whole candidate set W seeds the next layer down,
-  // as in the paper (hnswlib passes only the closest one).
+  // Phase 2: on every layer the node lives on, beam-search ef_construction candidates, select up
+  // to M of them (select_neighbors), link to them, and link them back. The whole candidate set W
+  // seeds the next layer down, as in the paper (hnswlib passes only the closest one).
   std::vector<Neighbor> entry_points{entry};
   for (int layer = std::min(level, max_level_); layer >= 0; --layer) {
     auto candidates = search_layer(query, entry_points, params_.ef_construction, layer);
@@ -246,7 +247,7 @@ void HnswIndex::reserve(std::size_t n) {
 
 bool HnswIndex::aliases_storage(std::span<const float> values) const noexcept {
   // std::less gives a total order even for pointers into different objects.
-  const std::less<const float*> less;
+  const std::less<> less;
   const float* begin = data_.data();
   const float* end = begin + data_.size();
   return !values.empty() && less(values.data(), end) && less(begin, values.data() + values.size());
@@ -317,8 +318,8 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
 
   // Drain the max-heap back to front to get ascending order.
   std::vector<Neighbor> sorted(results.size());
-  for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
-    *it = results.top();
+  for (Neighbor& slot : std::views::reverse(sorted)) {
+    slot = results.top();
     results.pop();
   }
   return sorted;
@@ -326,12 +327,40 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
 
 // --- Links ---------------------------------------------------------------------------------------
 
-void HnswIndex::select_neighbors(std::vector<Neighbor>& candidates, std::size_t m) {
-  // SELECT-NEIGHBORS-SIMPLE: the m closest. Candidates arrive sorted, so that is a prefix.
+void HnswIndex::select_neighbors(std::vector<Neighbor>& candidates, std::size_t m) const {
   assert(std::ranges::is_sorted(candidates));
-  if (candidates.size() > m) {
-    candidates.resize(m);
+  if (params_.selection == NeighborSelection::kSimple) {
+    // SELECT-NEIGHBORS-SIMPLE (Algorithm 3): the m closest. Candidates are sorted: a prefix.
+    if (candidates.size() > m) {
+      candidates.resize(m);
+    }
+    return;
   }
+
+  // SELECT-NEIGHBORS-HEURISTIC (Algorithm 4), with extendCandidates and keepPrunedConnections
+  // off. Each candidate's distance is to the base node b. Walking nearest first, candidate e is
+  // kept only if no already-kept r is strictly closer to e than b is: d(e, r) < d(e, b) means
+  // the edge b -> r already leads toward e, so b -> e would be redundant. Ties keep e, so exact
+  // duplicates (all distances 0) still link to each other instead of collapsing to one link.
+  // Applied even when there are <= m candidates, as in the paper (hnswlib skips that case).
+  // Kept candidates are compacted to the front in place (kept <= i, so nothing is overwritten
+  // before it is read).
+  std::size_t kept = 0;
+  for (std::size_t i = 0; i < candidates.size() && kept < m; ++i) {
+    const Neighbor candidate = candidates[i];
+    const auto values = vector(candidate.id);
+    bool diverse = true;
+    for (std::size_t j = 0; j < kept; ++j) {
+      if (dist(values, candidates[j].id) < candidate.distance) {
+        diverse = false;
+        break;
+      }
+    }
+    if (diverse) {
+      candidates[kept++] = candidate;
+    }
+  }
+  candidates.resize(kept);
 }
 
 void HnswIndex::set_links(VectorId id, int layer, std::span<const Neighbor> links) {

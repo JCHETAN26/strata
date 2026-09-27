@@ -5,9 +5,9 @@ line by line. It follows Malkov & Yashunin, *Efficient and robust approximate ne
 search using Hierarchical Navigable Small World graphs* (TPAMI 2018). "Algorithm N" always means
 the paper's pseudocode.
 
-Status: **stage (a)**: levels, layer search, and insertion with the *simple* neighbor selection
-(closest M). The paper's heuristic (stage b) and the measured recall-vs-QPS curves (stage c) are
-marked TODO below and will be filled in with numbers from `bench/`.
+Status: **stage (b)**: levels, layer search, insertion, and the paper's neighbor-selection
+heuristic (the default), with closest-M selection kept as a switchable baseline. The measured
+recall-vs-QPS curves against hnswlib and FAISS (stage c) are marked TODO below.
 
 ---
 
@@ -188,8 +188,9 @@ force bit for bit (`ResultsAreSortedDistinctAndExact`).
    - `search_layer` with beam `ef_construction` finds candidates W. This is the same search a
      query does, just wider: a better candidate list gives better neighbors, so
      `ef_construction` trades build time for graph quality.
-   - `select_neighbors` picks M of them, and `set_links` writes them as the new node's out-links.
-     The new node gets **M** links on every layer, including layer 0 (as in the paper and
+   - `select_neighbors` picks up to M of them (the heuristic may keep fewer), and `set_links`
+     writes them as the new node's out-links.
+     The new node gets up to **M** links on every layer, including layer 0 (as in the paper and
      hnswlib), while layer 0's *capacity* is **2M**. The spare room absorbs back-links from
      later insertions without immediately forcing a prune.
    - `add_link(neighbor → new)` for each selected neighbor, so edges go both ways. Without
@@ -216,9 +217,17 @@ The price: edges are not guaranteed to be bidirectional, and a node can in princ
 in-link and become unreachable. `Layer0IsReachableFromEntryPoint` measures that. How pruning
 chooses which links to keep is exactly where the heuristic (section 4) matters most.
 
-### `select_neighbors(candidates, m)`: stage (a), SELECT-NEIGHBORS-SIMPLE (Algorithm 3)
+### `select_neighbors(candidates, m)`: Algorithm 3 or Algorithm 4
 
-Keep the m closest. Candidates always arrive sorted, so this is a truncation.
+Input: candidates sorted by distance to a *base node* b (the new node in `insert`, or the node
+whose list overflowed in `add_link`), never containing b itself. Output: at most m of them,
+chosen according to `params.selection`:
+
+- `kSimple` (Algorithm 3): keep the m closest, which is a prefix because the input is sorted.
+- `kHeuristic` (Algorithm 4, the default): see section 4. It walks the candidates nearest first
+  and keeps each one only if no already-kept neighbor is strictly closer to it than b is. The kept
+  entries are compacted to the front of the same vector (the write index `kept` never passes the
+  read index `i`), so it allocates nothing.
 
 ### `add`, `add_batch`: API boundary
 
@@ -241,10 +250,102 @@ recall.
 
 ## 4. Why the neighbor-selection heuristic matters
 
-TODO (stage b): Algorithm 4, the clustered-data failure of "closest M", and the measured
-before/after recall from `bench/`.
+### The failure of "closest M"
 
----
+Picture clustered data: many tight groups, far apart. Under closest-M selection, the M nearest
+candidates of almost every node are in its own cluster, so almost every layer-0 edge stays inside
+a cluster. Edges *between* clusters appear only by accident, for example when a cluster's first
+node is inserted before its neighbors exist. On layer 0 the clusters become islands, joined weakly
+or not at all.
+
+Search suffers in two ways:
+
+1. **Unreachable nodes.** A node with no path from the entry point can never be returned, whatever
+   `ef_search` is.
+2. **Trapped beams.** If the upper-layer descent ends in the wrong cluster, the layer-0 beam search
+   cannot leave it. Raising `ef` only explores the wrong island more thoroughly, so recall levels
+   off below 1 instead of approaching it.
+
+### The rule (Algorithm 4)
+
+Walk the candidates from nearest to furthest. Keep a candidate e only if, for every neighbor r
+already kept,
+
+    d(e, b) <= d(e, r)          (e is at least as close to the base b as to r)
+
+Otherwise discard e: some kept r is strictly closer to e than b is, so b → r already leads toward
+e. A search can reach e through r, and a separate b → e edge would be redundant.
+
+Geometrically, each kept neighbor r "claims" the region of space closer to r than to b. Later
+candidates are kept only if they lie in a direction no kept neighbor covers. The links therefore
+spread out in all directions from b, including toward other clusters, instead of piling up on the
+nearest clump. This is the relative neighborhood graph idea, which is also used by other graph
+indexes (e.g. NSG, Vamana/DiskANN's α-pruning).
+
+### Worked example (the `HeuristicPrefersDiverseNeighbors` test)
+
+M = 2. A tight cluster to the right of the new node q, and a lone point to the left:
+
+    B(-3,0)            q(0,0)  A0(1,0) A1(1.1,0) A2(1.2,0)
+
+Squared L2 distances to q: A0 = 1, A1 = 1.21, A2 = 1.44, B = 9.
+
+- **Closest M:** A0 and A1. Both edges point into the same cluster, and q has no edge toward B.
+- **Heuristic:** keep A0 (nothing kept yet). A1: d(A1, A0) = 0.01 < d(A1, q) = 1.21, so A0 covers
+  it; discard. A2: 0.04 < 1.44; discard. B: d(B, A0) = 16 > d(B, q) = 9, so no kept neighbor covers
+  it; keep. Result: {A0, B}, one edge each way.
+
+### Measured difference
+
+Source: `results/selection/selection_comparison.md` and `results/plots/hnsw_selection.png`, both
+generated by `bench/run_selection_comparison.py`. M = 16, ef_construction = 200, seed 42. The
+recall and graph numbers below are deterministic for a given seed, so they reproduce exactly. For
+QPS see the generated table (Apple M2, fanless: indicative only).
+
+**Clustered data** (`clustered-c100-n1000-d16-s0.05-seed0`: 100 Gaussian clusters × 1000 points,
+16 dimensions):
+
+| | closest M | heuristic |
+|---|---:|---:|
+| recall@10, ef 10 | 0.745 | 0.908 |
+| recall@10, ef 40 | 0.806 | 0.998 |
+| recall@10, ef 320 | 0.853 | 1.000 |
+| Layer-0 nodes reachable from the entry point | 93.1% | 100% |
+| Mean layer-0 out-degree | 24.2 | 16.5 |
+
+Closest M levels off at 0.85: raising ef from 40 to 320 buys only +0.05, the "trapped beam"
+failure above. About 7% of nodes cannot be reached at all. The heuristic reaches 1.000 by ef 80
+**with a third fewer edges**, so each hop is also cheaper.
+
+**SIFT10K** (real descriptors, dim 128, not strongly clustered): the effect is small. The
+heuristic gains +0.022 recall at ef 10 and +0.024 at ef 20, then the two are equal. At ef 80 it
+is slightly *behind*, 0.998 vs 1.000 (2 of 1000 results). Both graphs are fully reachable. This
+matches the paper: the heuristic matters most for clustered and low-dimensional data, and barely
+matters for data that is already well spread out.
+
+**Cost.** Checking a candidate costs up to (number kept so far) extra distance computations, so
+selection is O(|C| · m · d) instead of O(1) past the sort. Build time rose about 8% on both
+datasets (indicative, same caveat as QPS). Because it keeps fewer edges, the heuristic graph is
+also cheaper to search per hop.
+
+### Details and choices
+
+- **Ties keep the candidate** (`d(e, r) < d(e, b)` rejects; equal does not). With exact
+  duplicates every distance is 0. A strict "must be closer to b than to every r" rule would reject
+  every duplicate after the first, collapsing each node to a single link. With ties kept,
+  duplicates link to each other normally (`DuplicateVectors`). hnswlib makes the same choice.
+- **Applied even when there are at most m candidates**, as in the paper. hnswlib skips the
+  heuristic in that case and keeps them all.
+- **`extendCandidates` off.** The paper's option to add the candidates' own neighbors to the
+  pool before selecting helps only on extremely clustered data, and costs many more distance
+  computations. It is not implemented.
+- **`keepPrunedConnections` off.** The paper's option to top the list up to m with discarded
+  candidates would give back part of the sparsity that makes the heuristic work. It is not
+  implemented, and hnswlib doesn't have it either.
+- **Pruning uses it too.** When a neighbor's list overflows (`add_link`), the same rule
+  re-selects from that neighbor's point of view. That is the place it matters most for keeping
+  bridges between clusters: a pure distance cut would drop the long bridge edges first, since
+  they are the longest.
 
 ## 5. Complexity
 
@@ -267,7 +368,7 @@ expected number of layers per node is 1 + 1/(M−1).
 - The same descent, plus a beam search with `ef_construction` on each of the new node's
   1 + 1/(M−1) expected layers: O(ef_construction · M · d).
 - Plus linking: M back-links per layer. An overflow re-selection costs O(M_max · d) distances
-  plus a sort; the heuristic in stage (b) costs O(M_max² · d) in the worst case.
+  plus a sort; with the heuristic it is O(M_max² · d) in the worst case.
 - Total per insert: **O((M · log N + ef_construction · M) · d)**, so a build is
   **O(N · log N)** in the paper's empirical scaling.
 
@@ -318,3 +419,6 @@ TODO (stage c): measured recall-vs-QPS curves on SIFT10K and SIFT1M against hnsw
 | Ties | unspecified | by heap order | by (distance, id) | Deterministic; duplicates stay well-defined |
 | Level RNG | unspecified | `std::uniform_real_distribution` | hand-built U from mt19937_64 | Same graph on libc++ and libstdc++ |
 | Visited set | a set | pool of epoch arrays | `thread_local` epoch array | Lock-free concurrent search |
+| Heuristic with <= m candidates | applied | skipped (keep all) | applied | Faithful to the paper |
+| Heuristic ties d(e,r) = d(e,b) | unspecified | keep | keep | Duplicates stay connected |
+| extendCandidates / keepPrunedConnections | optional flags | not implemented | not implemented | See section 4 |

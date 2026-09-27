@@ -97,7 +97,7 @@ Convert them to raw binary with a Python script so the C++ code needs no HDF5 de
 
 - [x] Random level assignment
 - [x] Layered graph insertion
-- [ ] Neighbor-selection heuristic from the paper (not just "closest M")
+- [x] Neighbor-selection heuristic from the paper (not just "closest M")
 - [x] Search: greedy descent through upper layers, `efSearch`-bounded search at layer 0
 - [x] Parameters: `M`, `efConstruction`, `efSearch`
 - [x] Tests: recall vs. brute force; edge cases (empty index, one vector, duplicates) — spec in `tests/hnsw_test.cpp`

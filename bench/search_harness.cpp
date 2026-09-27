@@ -59,6 +59,7 @@ struct Options {
   // HNSW
   std::size_t m = 16;
   std::size_t ef_construction = 200;
+  std::string selection = "heuristic";  // "heuristic" (paper Algorithm 4) or "simple" (closest M)
   std::vector<std::size_t> ef_search{10, 20, 40, 80, 160, 320};
   // PQ
   std::size_t pq_m = 16;
@@ -66,14 +67,15 @@ struct Options {
 };
 
 [[noreturn]] void usage(std::string_view error) {
-  std::cerr << "error: " << error << "\n\n"
-            << "usage: strata_search --data DIR [--metric l2|ip|cosine|angular]\n"
-            << "                     [--index brute_force|hnsw] [--k 10] [--runs 5]\n"
-            << "                     [--max-queries N] [--warmup 1] [--kernel best|scalar]\n"
-            << "                     [--threads 1]\n"
-            << "       hnsw only:    [--M 16] [--ef-construction 200]\n"
-            << "                     [--ef-search 10,20,40,80,160,320]\n"
-            << "       pq only:      [--pq-m 16] [--rerank 0,10,20,50,100,200,500]\n";
+  std::cerr
+      << "error: " << error << "\n\n"
+      << "usage: strata_search --data DIR [--metric l2|ip|cosine|angular]\n"
+      << "                     [--index brute_force|hnsw] [--k 10] [--runs 5]\n"
+      << "                     [--max-queries N] [--warmup 1] [--kernel best|scalar]\n"
+      << "                     [--threads 1]\n"
+      << "       hnsw only:    [--M 16] [--ef-construction 200] [--selection heuristic|simple]\n"
+      << "                     [--ef-search 10,20,40,80,160,320]\n"
+      << "       pq only:      [--pq-m 16] [--rerank 0,10,20,50,100,200,500]\n";
   std::exit(2);
 }
 
@@ -136,6 +138,11 @@ Options parse_args(int argc, char** argv) {
       opt.m = parse_size(flag, value);
     } else if (flag == "--ef-construction") {
       opt.ef_construction = parse_size(flag, value);
+    } else if (flag == "--selection") {
+      if (value != "heuristic" && value != "simple") {
+        usage("--selection must be heuristic or simple");
+      }
+      opt.selection = value;
     } else if (flag == "--ef-search") {
       opt.ef_search = parse_list(flag, value);
     } else if (flag == "--pq-m") {
@@ -270,11 +277,56 @@ strata::Expected<Point> run_point(const SweepPoint& point, const strata::Matrix<
   return result;
 }
 
+#ifdef STRATA_HAS_HNSW
+// Graph statistics that explain recall: a node that no search can reach on layer 0 can never be
+// returned, whatever ef_search is. Uses only the index's public introspection accessors.
+std::string hnsw_graph_json(const strata::HnswIndex& index) {
+  if (!index.entry_point()) {
+    return "null";
+  }
+  const std::size_t n = index.size();
+  std::vector<std::size_t> nodes_per_layer(static_cast<std::size_t>(index.max_level()) + 1, 0);
+  std::size_t layer0_edges = 0;
+  for (strata::VectorId id = 0; id < n; ++id) {
+    for (int layer = 0; layer <= index.level(id); ++layer) {
+      ++nodes_per_layer[static_cast<std::size_t>(layer)];
+    }
+    layer0_edges += index.neighbors(id, 0).size();
+  }
+  std::vector<char> seen(n, 0);
+  std::vector<strata::VectorId> stack{*index.entry_point()};
+  seen[stack.front()] = 1;
+  std::size_t reached = 1;
+  while (!stack.empty()) {
+    const strata::VectorId id = stack.back();
+    stack.pop_back();
+    for (strata::VectorId nbr : index.neighbors(id, 0)) {
+      if (seen[nbr] == 0) {
+        seen[nbr] = 1;
+        ++reached;
+        stack.push_back(nbr);
+      }
+    }
+  }
+  std::ostringstream out;
+  out.precision(9);
+  out << "{\"max_level\": " << index.max_level() << ", \"nodes_per_layer\": [";
+  for (std::size_t l = 0; l < nodes_per_layer.size(); ++l) {
+    out << (l > 0 ? ", " : "") << nodes_per_layer[l];
+  }
+  out << "], \"layer0_mean_degree\": " << static_cast<double>(layer0_edges) / static_cast<double>(n)
+      << ", \"layer0_reachable_fraction\": "
+      << static_cast<double>(reached) / static_cast<double>(n) << "}";
+  return out.str();
+}
+#endif
+
 struct RunInfo {
   const Options& opt;
   std::string_view metric;
   std::string_view kernel;
   std::string_view build_params_json;
+  std::string_view graph_json;  // HNSW graph statistics, or null
   double build_seconds;
   std::size_t num_base;
   std::size_t index_bytes;
@@ -298,6 +350,7 @@ void write_json(std::ostream& os, const RunInfo& info, const std::vector<Point>&
       << "  \"index\": " << json_string(info.opt.index) << ",\n"
       << "  \"build_params\": " << info.build_params_json << ",\n"
       << "  \"build_seconds\": " << info.build_seconds << ",\n"
+      << "  \"graph\": " << info.graph_json << ",\n"
       << "  \"metric\": " << json_string(info.metric) << ",\n"
       << "  \"kernel\": " << json_string(info.kernel) << ",\n"
       << "  \"k\": " << info.opt.k << ",\n"
@@ -378,6 +431,7 @@ int main(int argc, char** argv) {
 
   // Build the index once.
   std::string build_params_json = "{}";
+  std::string graph_json = "null";
   // Bytes the index needs to answer queries (excluding originals kept only for reranking).
   std::size_t index_bytes = dataset->base.data().size_bytes();
   std::size_t rerank_bytes = 0;
@@ -399,8 +453,10 @@ int main(int argc, char** argv) {
         {"{}", [&](std::span<const float> q, std::size_t k) { return brute_force->search(q, k); }});
 #ifdef STRATA_HAS_HNSW
   } else if (opt.index == "hnsw") {
-    auto index = strata::HnswIndex::create(dim, *metric,
-                                           {.M = opt.m, .ef_construction = opt.ef_construction});
+    const auto selection = opt.selection == "simple" ? strata::NeighborSelection::kSimple
+                                                     : strata::NeighborSelection::kHeuristic;
+    auto index = strata::HnswIndex::create(
+        dim, *metric, {.M = opt.m, .ef_construction = opt.ef_construction, .selection = selection});
     if (!index) {
       std::cerr << "error: " << index.error().message << "\n";
       return 1;
@@ -410,8 +466,10 @@ int main(int argc, char** argv) {
       return 1;
     }
     hnsw.emplace(std::move(*index));
+    graph_json = hnsw_graph_json(*hnsw);
     build_params_json = "{\"M\": " + std::to_string(opt.m) +
-                        ", \"ef_construction\": " + std::to_string(opt.ef_construction) + "}";
+                        ", \"ef_construction\": " + std::to_string(opt.ef_construction) +
+                        ", \"selection\": \"" + opt.selection + "\"}";
     for (std::size_t ef : opt.ef_search) {
       sweep.push_back(
           {"{\"ef_search\": " + std::to_string(ef) + "}",
@@ -460,6 +518,7 @@ int main(int argc, char** argv) {
                      .metric = strata::to_string(*metric),
                      .kernel = kernel_name,
                      .build_params_json = build_params_json,
+                     .graph_json = graph_json,
                      .build_seconds = build_seconds,
                      .num_base = dataset->base.rows(),
                      .index_bytes = index_bytes,

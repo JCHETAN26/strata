@@ -14,6 +14,17 @@
 
 namespace strata {
 
+// How a node's neighbors are chosen from its candidates (on insert, and when a full neighbor list
+// is re-selected).
+enum class NeighborSelection {
+  // The M closest candidates (paper Algorithm 3). Kept as a baseline for comparison.
+  kSimple,
+  // Paper Algorithm 4: take candidates nearest first, skipping any that is closer to an
+  // already-selected neighbor than to the node itself. Keeps links pointing in diverse
+  // directions, so clusters stay connected.
+  kHeuristic,
+};
+
 // Construction parameters, named as in Malkov & Yashunin (2018) and hnswlib.
 struct HnswParams {
   // Max neighbors per node on layers >= 1. Layer 0 allows 2 * M (M_max0 in the paper).
@@ -22,6 +33,7 @@ struct HnswParams {
   std::size_t ef_construction = 200;
   // Seed for level assignment. Same seed + same insertion order = same graph.
   std::uint64_t seed = 42;
+  NeighborSelection selection = NeighborSelection::kHeuristic;
 };
 
 // Hierarchical Navigable Small World graph index (approximate k-NN).
@@ -91,8 +103,9 @@ class HnswIndex {
   [[nodiscard]] std::vector<Neighbor> search_layer(std::span<const float> query,
                                                    const std::vector<Neighbor>& entry_points,
                                                    std::size_t ef, int layer) const;
-  // Shrinks sorted candidates to at most m neighbors (paper Algorithm 3).
-  static void select_neighbors(std::vector<Neighbor>& candidates, std::size_t m);
+  // Shrinks candidates (sorted by distance to a base node, which they must not contain) to at
+  // most m neighbors of that node, per params_.selection.
+  void select_neighbors(std::vector<Neighbor>& candidates, std::size_t m) const;
   // Replaces id's out-links on a layer. Precondition: links.size() <= capacity(layer).
   void set_links(VectorId id, int layer, std::span<const Neighbor> links);
   // Adds the edge from -> to.id, re-selecting from's neighbors if the list overflows.

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <deque>
 #include <filesystem>
+#include <ostream>
 #include <set>
 #include <thread>
 #include <vector>
@@ -18,6 +19,13 @@
 #include "test_util.hpp"
 
 namespace strata {
+
+// Readable parameterized test names (see test_util.hpp). Outside the anonymous namespace so ADL
+// finds it.
+inline void PrintTo(NeighborSelection selection, std::ostream* os) {
+  *os << (selection == NeighborSelection::kSimple ? "simple" : "heuristic");
+}
+
 namespace {
 
 HnswIndex make_index(std::size_t dim, Metric metric = Metric::kL2, HnswParams params = {}) {
@@ -41,6 +49,27 @@ double measure_recall(const HnswIndex& index, const Matrix<float>& base,
     results.push_back(std::move(*found));
   }
   return *recall_at_k_with_ties(results, kth, k);
+}
+
+// Fraction of nodes reachable from the entry point along layer-0 edges. A node no search can
+// reach can never be returned.
+double reachable_fraction(const HnswIndex& index) {
+  std::vector<bool> seen(index.size(), false);
+  std::deque<VectorId> frontier{*index.entry_point()};
+  seen[*index.entry_point()] = true;
+  std::size_t reached = 1;
+  while (!frontier.empty()) {
+    const VectorId id = frontier.front();
+    frontier.pop_front();
+    for (VectorId nbr : index.neighbors(id, 0)) {
+      if (!seen[nbr]) {
+        seen[nbr] = true;
+        ++reached;
+        frontier.push_back(nbr);
+      }
+    }
+  }
+  return static_cast<double>(reached) / static_cast<double>(index.size());
 }
 
 // --- Construction and edge cases -----------------------------------------------------------------
@@ -275,22 +304,7 @@ TEST_F(HnswGraph, LevelDistributionMatchesMl) {
 // Every node should be reachable from the entry point along layer-0 edges; otherwise search can
 // never return it. Allow a tiny fraction for pruning artifacts.
 TEST_F(HnswGraph, Layer0IsReachableFromEntryPoint) {
-  std::vector<bool> seen(kSize, false);
-  std::deque<VectorId> frontier{*index_->entry_point()};
-  seen[*index_->entry_point()] = true;
-  std::size_t reached = 1;
-  while (!frontier.empty()) {
-    const VectorId id = frontier.front();
-    frontier.pop_front();
-    for (VectorId nbr : index_->neighbors(id, 0)) {
-      if (!seen[nbr]) {
-        seen[nbr] = true;
-        ++reached;
-        frontier.push_back(nbr);
-      }
-    }
-  }
-  EXPECT_GE(static_cast<double>(reached) / kSize, 0.999);
+  EXPECT_GE(reachable_fraction(*index_), 0.999);
 }
 
 // --- Search quality ------------------------------------------------------------------------------
@@ -308,6 +322,48 @@ TEST_P(HnswRecall, HighRecallOnRandomData) {
 INSTANTIATE_TEST_SUITE_P(AllMetrics, HnswRecall,
                          ::testing::Values(Metric::kL2, Metric::kInnerProduct, Metric::kCosine),
                          test::PrintedName{});
+
+// Both selection modes must meet the spec on easy (uniform) data; the heuristic's advantage on
+// clustered data is measured by bench/run_selection_comparison.py, not asserted here.
+class HnswSelection : public ::testing::TestWithParam<NeighborSelection> {};
+
+TEST_P(HnswSelection, RecallAndReachability) {
+  const auto base = test::random_matrix(3000, 32, 18);
+  const auto queries = test::random_matrix(100, 32, 19);
+  auto index = make_index(32, Metric::kL2, {.selection = GetParam()});
+  ASSERT_TRUE(index.add_batch(base));
+  EXPECT_GE(measure_recall(index, base, queries, 10, 128), 0.95);
+  EXPECT_GE(reachable_fraction(index), 0.999);
+}
+
+INSTANTIATE_TEST_SUITE_P(BothModes, HnswSelection,
+                         ::testing::Values(NeighborSelection::kSimple,
+                                           NeighborSelection::kHeuristic),
+                         test::PrintedName{});
+
+// The worked example in docs/explainers/hnsw.md, section 4. A tight cluster of three points on
+// one side of the new node q = (0, 0) and a lone point on the other:
+//
+//   B(-3,0)            q(0,0)  A0(1,0) A1(1.1,0) A2(1.2,0)
+//
+// With M = 2, closest-M links q to A0 and A1 (both in the cluster). The heuristic keeps A0, then
+// rejects A1 and A2 (each is closer to A0 than to q: 0.01 < 1.21), and keeps B (closer to q, 9,
+// than to A0, 16).
+TEST(Hnsw, HeuristicPrefersDiverseNeighbors) {
+  const std::vector<std::vector<float>> points{
+      {1.0F, 0.0F}, {1.1F, 0.0F}, {1.2F, 0.0F}, {-3.0F, 0.0F}, {0.0F, 0.0F}};
+  auto links_of_q = [&](NeighborSelection selection) {
+    auto index =
+        make_index(2, Metric::kL2, {.M = 2, .ef_construction = 100, .selection = selection});
+    for (const auto& point : points) {
+      EXPECT_TRUE(index.add(point).has_value());
+    }
+    const auto links = index.neighbors(4, 0);
+    return std::set<VectorId>(links.begin(), links.end());
+  };
+  EXPECT_EQ(links_of_q(NeighborSelection::kSimple), (std::set<VectorId>{0, 1}));
+  EXPECT_EQ(links_of_q(NeighborSelection::kHeuristic), (std::set<VectorId>{0, 3}));
+}
 
 TEST(Hnsw, RecallImprovesWithEf) {
   const auto base = test::random_matrix(3000, 32, 13);

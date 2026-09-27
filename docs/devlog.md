@@ -981,3 +981,32 @@ reviewed stages, with `docs/explainers/hnsw.md` as the line-by-line explainer.
   `uv sync --group embed --reinstall-package strata`.
 - `test_live_cited_answer` fails with an API usage-limit error (resets 2026-10-01). External,
   and unrelated to HNSW.
+
+## 2026-09-27: HNSW stage (b): the neighbor-selection heuristic
+
+**Done**
+- `NeighborSelection { kSimple, kHeuristic }` in `HnswParams` (default: heuristic).
+  `select_neighbors` implements Algorithm 4 (extendCandidates and keepPrunedConnections off) for
+  both new links and overflow re-selection.
+- Tests: `HeuristicPrefersDiverseNeighbors` (a hand-worked 5-point example where the two modes
+  must choose different neighbors), and `BothModes/HnswSelection` (recall and layer-0
+  reachability for each mode).
+- Harness: `--selection heuristic|simple`, recorded in `build_params`; a new `graph` block (max
+  level, nodes per layer, mean layer-0 degree, layer-0 reachable fraction).
+- `scripts/make_clustered.py` (synthetic Gaussian clusters, exact float64 ground truth);
+  `bench/run_selection_comparison.py` writes `results/selection/selection_comparison.md` and
+  `results/plots/hnsw_selection.png`.
+
+**Result** (M=16, efC=200; recall deterministic, QPS indicative on the M2)
+- Clustered (100 x 1000, d16): closest-M levels off at recall 0.853 even at ef 320; 6.9% of
+  nodes are unreachable from the entry point on layer 0. The heuristic reaches 1.000 at ef 80
+  and 100% reachability with mean degree 16.5 vs 24.2.
+- SIFT10K: +0.022 / +0.024 at ef 10 / 20, then parity; slightly behind at ef 80 (0.998 vs
+  1.000). Both graphs are fully reachable.
+
+**Decisions**
+- **Ties keep the candidate** (reject only if d(e, r) < d(e, b)), as hnswlib does. Otherwise
+  exact duplicates collapse to one link each.
+- **Heuristic applied even with <= m candidates** (paper); hnswlib skips it there.
+- The trial runs used to pick the clustered configuration (d16/c100, d8/c1000, d4/c100, all showing
+  the effect) went to the scratchpad, not `results/`. The committed comparison uses the first.
