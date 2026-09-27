@@ -89,9 +89,7 @@ def accelerator_info() -> dict[str, Any]:
             "torch_cuda": torch.version.cuda,
             "available": torch.cuda.is_available(),
             "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
-            "device_name": (
-                torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
-            ),
+            "device_name": (torch.cuda.get_device_name(0) if torch.cuda.is_available() else None),
         }
     except Exception:  # torch missing or a driver/runtime mismatch; record nothing
         info["cuda"] = None
@@ -122,6 +120,18 @@ def metadata() -> dict[str, Any]:
         "hardware": hardware_info(),
         "accelerator": accelerator_info(),
     }
+
+
+def hardware_note(hardware: dict[str, Any]) -> str:
+    """How to read speed numbers from this machine. The fanless M2 development laptop throttles
+    under sustained load, so its QPS is indicative only; recall is unaffected."""
+    cpu = hardware.get("cpu") or hardware["machine"]
+    if cpu.startswith("Apple"):
+        return (
+            f"{cpu} (fanless development machine): recall is valid; QPS is indicative only. "
+            "Final speed comparisons run on dedicated hardware (Phase 9)."
+        )
+    return cpu
 
 
 def timestamp_slug() -> str:

@@ -11,6 +11,9 @@
 //   pq_r{0,100}_ids.ibin, _dist.fbin    PQ search, rerank 0 (ADC) and 100 (exact)
 //   filt_{10,100}_ids.ibin, _dist.fbin  pre-filtered search, bucket in [0, 10) and [0, 100)
 //                                       where bucket = splitmix64(id) % 1000 (1% and 10%)
+//   hnsw_{heuristic,simple}_ef{16,64}_ids.ibin, _dist.fbin
+//                                       HNSW (M=16, ef_construction=200, seed 42) per
+//                                       neighbor-selection mode, searched at ef_search 16 and 64
 
 #include <cstdint>
 #include <cstdlib>
@@ -25,6 +28,9 @@
 #include "strata/build_info.hpp"
 #include "strata/dataset.hpp"
 #include "strata/filter.hpp"
+#ifdef STRATA_HAS_HNSW
+#include "strata/hnsw.hpp"
+#endif
 #include "strata/pq.hpp"
 
 namespace {
@@ -127,6 +133,24 @@ int main(int argc, char** argv) {
     }
     write_results(out, "filt_" + std::to_string(upper), results);
   }
+
+#ifdef STRATA_HAS_HNSW
+  // HNSW. Same seed + same insertion order = same graph, so the bindings must match exactly.
+  for (const auto& [name, selection] :
+       {std::pair{"heuristic", strata::NeighborSelection::kHeuristic},
+        std::pair{"simple", strata::NeighborSelection::kSimple}}) {
+    auto hnsw = check(strata::HnswIndex::create(
+        ds.base.cols(), strata::Metric::kL2,
+        {.M = 16, .ef_construction = 200, .seed = 42, .selection = selection}));
+    check(hnsw.add_batch(ds.base));
+    for (std::size_t ef : {16U, 64U}) {
+      for (std::size_t i = 0; i < q.rows(); ++i) {
+        results[i] = check(hnsw.search(q.row(i), kK, ef));
+      }
+      write_results(out, std::string("hnsw_") + name + "_ef" + std::to_string(ef), results);
+    }
+  }
+#endif
   std::cerr << "wrote " << out << "\n";
   return 0;
 }

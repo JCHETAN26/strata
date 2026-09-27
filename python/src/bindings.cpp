@@ -314,6 +314,16 @@ std::string describe(const strata::AnalyzerConfig& c) {
 }
 
 #ifdef STRATA_HAS_HNSW
+strata::NeighborSelection parse_selection(const std::string& name) {
+  if (name == "heuristic") {
+    return strata::NeighborSelection::kHeuristic;
+  }
+  if (name == "simple") {
+    return strata::NeighborSelection::kSimple;
+  }
+  throw nb::value_error(("unknown selection '" + name + "' (heuristic or simple)").c_str());
+}
+
 struct PyHnsw {
   strata::HnswIndex index;
   mutable std::shared_mutex mutex;
@@ -1217,13 +1227,18 @@ exclusive lock, so inserts are serialized.)doc")
       .def(
           "__init__",
           [](PyHnsw* self, std::size_t dim, const std::string& metric, std::size_t M,
-             std::size_t ef_construction, std::uint64_t seed) {
-            new (self) PyHnsw{unwrap(strata::HnswIndex::create(
-                                  dim, parse_metric(metric),
-                                  {.M = M, .ef_construction = ef_construction, .seed = seed})),
-                              {}};
+             std::size_t ef_construction, std::uint64_t seed, const std::string& selection) {
+            new (self)
+                PyHnsw{unwrap(strata::HnswIndex::create(dim, parse_metric(metric),
+                                                        {.M = M,
+                                                         .ef_construction = ef_construction,
+                                                         .seed = seed,
+                                                         .selection = parse_selection(selection)})),
+                       {}};
           },
-          "dim"_a, "metric"_a = "l2", "M"_a = 16, "ef_construction"_a = 200, "seed"_a = 42)
+          "dim"_a, "metric"_a = "l2", "M"_a = 16, "ef_construction"_a = 200, "seed"_a = 42,
+          "selection"_a = "heuristic",
+          R"doc(selection: "heuristic" (the paper's Algorithm 4, default) or "simple" (closest M).)doc")
       .def(
           "add",
           [](PyHnsw& self, const FloatArray& vectors) {
@@ -1257,6 +1272,15 @@ exclusive lock, so inserts are serialized.)doc")
       .def("__len__",
            [](const PyHnsw& self) { return shared(self.mutex, [&] { return self.index.size(); }); })
       .def_prop_ro("dim", [](const PyHnsw& self) { return self.index.dim(); })
+      .def_prop_ro("M", [](const PyHnsw& self) { return self.index.params().M; })
+      .def_prop_ro("ef_construction",
+                   [](const PyHnsw& self) { return self.index.params().ef_construction; })
+      .def_prop_ro("selection",
+                   [](const PyHnsw& self) {
+                     return self.index.params().selection == strata::NeighborSelection::kSimple
+                                ? "simple"
+                                : "heuristic";
+                   })
       .def_prop_ro("max_level",
                    [](const PyHnsw& self) {
                      return shared(self.mutex, [&] { return self.index.max_level(); });

@@ -1,7 +1,7 @@
 """Tests for the Python bindings (strata._core).
 
 Two groups:
-- Behavior: conversions, padding, errors, locking, filters, PQ, HNSW stub. No dataset needed.
+- Behavior: conversions, padding, errors, locking, filters, PQ, HNSW. No dataset needed.
 - Agreement with C++ on SIFT10K: the C++ tool tests/strata_reference writes its results; the
   bindings must return the same ids and codes. Distances must be bit-identical when both builds
   compute floating point the same way (same kernel, compiler, FP flags, target; see
@@ -267,24 +267,140 @@ def test_pq_roundtrip_and_errors() -> None:
 # --- HNSW ----------
 
 
-@pytest.mark.skipif(strata.has_hnsw, reason="HNSW is built")
-def test_hnsw_raises_until_implemented() -> None:
-    with pytest.raises(NotImplementedError, match=r"src/index/hnsw\.cpp"):
-        strata.HnswIndex(16)
+def id_recall(got: np.ndarray, truth: np.ndarray) -> float:
+    k = truth.shape[1]
+    return float(np.mean([len(set(g) & set(t)) / k for g, t in zip(got, truth, strict=True)]))
 
 
-@pytest.mark.skipif(not strata.has_hnsw, reason="HNSW not built yet")
-def test_hnsw_smoke() -> None:
-    base = rng_matrix(2000, 16, 10)
-    index = strata.HnswIndex(16, M=16, ef_construction=100)
+def test_hnsw_is_built() -> None:
+    # src/index/hnsw.cpp exists, so a module without HNSW is a stale or broken build, not a skip.
+    assert strata.has_hnsw
+    assert strata.build_info()["has_hnsw"]
+
+
+@pytest.mark.parametrize("selection", ["heuristic", "simple"])
+@pytest.mark.parametrize("metric", ["l2", "ip", "cosine"])
+def test_hnsw_recall_vs_brute_force(metric: str, selection: str) -> None:
+    base, queries = rng_matrix(3000, 32, 20), rng_matrix(100, 32, 21)
+    index = strata.HnswIndex(32, metric=metric, selection=selection)
     index.add(base)
-    exact = strata.BruteForceIndex(16)
+    exact = strata.BruteForceIndex(32, metric=metric)
     exact.add(base)
-    queries = rng_matrix(50, 16, 11)
-    got = index.search(queries, K, ef_search=100, threads=None)[0]
     truth = exact.search_batch(queries, K)[0]
-    recall = np.mean([len(set(g) & set(t)) / K for g, t in zip(got, truth, strict=True)])
-    assert recall >= 0.9
+    got, dists = index.search(queries, K, ef_search=128, threads=None)
+    assert id_recall(got, truth) >= 0.95
+    # Distances are exact: the same kernel, evaluated on the returned ids.
+    all_dists = strata.distances(queries, base, metric=metric)
+    np.testing.assert_array_equal(dists, np.take_along_axis(all_dists, got, axis=1))
+    assert (np.diff(dists, axis=1) >= 0).all()  # sorted ascending
+
+
+def test_hnsw_recall_improves_with_ef() -> None:
+    base, queries = rng_matrix(3000, 32, 22), rng_matrix(100, 32, 23)
+    index = strata.HnswIndex(32, M=8, ef_construction=64)
+    index.add(base)
+    exact = strata.BruteForceIndex(32)
+    exact.add(base)
+    truth = exact.search_batch(queries, K)[0]
+    low = id_recall(index.search(queries, K, ef_search=10)[0], truth)
+    high = id_recall(index.search(queries, K, ef_search=256)[0], truth)
+    assert high > low and high >= 0.95
+
+
+def test_hnsw_parameters_and_graph_introspection() -> None:
+    index = strata.HnswIndex(8, M=6, ef_construction=40, selection="simple")
+    assert (index.dim, index.M, index.ef_construction, index.selection) == (8, 6, 40, "simple")
+    assert strata.HnswIndex(8).selection == "heuristic"
+    assert len(index) == 0 and index.entry_point is None and index.max_level == -1
+    np.testing.assert_array_equal(index.add(rng_matrix(500, 8, 24)), np.arange(500))
+    assert len(index) == 500
+    assert index.level(index.entry_point) == index.max_level
+    for node in range(500):
+        for layer in range(index.level(node) + 1):
+            links = index.neighbors(node, layer)
+            assert links.dtype == np.int64
+            assert len(links) <= (12 if layer == 0 else 6)
+            assert node not in links and len(set(links)) == len(links)
+
+
+def test_hnsw_selection_worked_example() -> None:
+    # Same example as the C++ test HeuristicPrefersDiverseNeighbors and docs/explainers/hnsw.md.
+    points = np.array([[1, 0], [1.1, 0], [1.2, 0], [-3, 0], [0, 0]], dtype=np.float32)
+    links = {}
+    for selection in ("simple", "heuristic"):
+        index = strata.HnswIndex(2, M=2, ef_construction=100, selection=selection)
+        index.add(points)
+        links[selection] = set(index.neighbors(4, 0).tolist())
+    assert links == {"simple": {0, 1}, "heuristic": {0, 3}}
+
+
+def test_hnsw_edge_cases_and_padding() -> None:
+    empty = strata.HnswIndex(2)
+    ids, dists = empty.search(np.zeros((2, 2), np.float32), 3)
+    assert (ids == -1).all() and np.isinf(dists).all()
+    index = strata.HnswIndex(2)
+    index.add(np.array([[0, 0], [1, 1], [2, 2]], dtype=np.float32))
+    ids, dists = index.search(np.zeros(2, np.float32), 5, ef_search=1)  # 1-D in, 1-D out
+    np.testing.assert_array_equal(ids, [0, 1, 2, -1, -1])
+    np.testing.assert_array_equal(dists[:3], [0, 2, 8])
+    assert np.isinf(dists[3:]).all()
+    dup = strata.HnswIndex(4, M=8, ef_construction=50)
+    dup.add(np.tile(np.array([1, 2, 3, 4], np.float32), (100, 1)))
+    ids, dists = dup.search(np.array([1, 2, 3, 4], np.float32), K, ef_search=50)
+    assert len(set(ids.tolist())) == K and (dists == 0).all()
+
+
+def test_hnsw_errors_become_python_exceptions() -> None:
+    index = strata.HnswIndex(4)
+    index.add(rng_matrix(10, 4))
+    with pytest.raises(ValueError, match="dimension"):
+        index.search(np.zeros(3, np.float32), 1)
+    with pytest.raises(ValueError, match="dimension"):
+        index.add(rng_matrix(2, 5))
+    with pytest.raises(ValueError, match="M must be"):
+        strata.HnswIndex(4, M=1)
+    with pytest.raises(ValueError, match="ef_construction"):
+        strata.HnswIndex(4, ef_construction=0)
+    with pytest.raises(ValueError, match="selection"):
+        strata.HnswIndex(4, selection="closest")
+    with pytest.raises(ValueError, match="metric"):
+        strata.HnswIndex(4, metric="hamming")
+    with pytest.raises(IndexError):
+        index.level(10)
+    with pytest.raises(IndexError):
+        index.neighbors(0, index.level(0) + 1)
+    assert len(index) == 10  # failed add left the index unchanged
+
+
+def test_hnsw_same_seed_same_results_and_threads_agree() -> None:
+    base, queries = rng_matrix(2000, 16, 25), rng_matrix(200, 16, 26)
+    a, b = strata.HnswIndex(16, seed=7), strata.HnswIndex(16, seed=7)
+    a.add(base)
+    b.add(base)
+    serial = a.search(queries, K, ef_search=40, threads=1)
+    for other in (
+        b.search(queries, K, ef_search=40),
+        a.search(queries, K, ef_search=40, threads=None),
+    ):
+        np.testing.assert_array_equal(other[0], serial[0])
+        np.testing.assert_array_equal(other[1], serial[1])
+
+
+def test_hnsw_concurrent_adds_and_searches() -> None:
+    index = strata.HnswIndex(8, M=8, ef_construction=40)
+    index.add(rng_matrix(100, 8))
+    batches = [rng_matrix(50, 8, seed) for seed in range(20)]
+
+    def reader(seed: int) -> None:
+        ids, _ = index.search(rng_matrix(20, 8, 100 + seed), 5, ef_search=20, threads=1)
+        assert (ids >= 0).all()
+
+    with ThreadPoolExecutor(8) as pool:
+        added = pool.map(index.add, batches)
+        list(pool.map(reader, range(40)))
+        all_ids = np.concatenate(list(added))
+    assert len(index) == 100 + 20 * 50
+    np.testing.assert_array_equal(np.sort(all_ids), np.arange(100, 1100))
 
 
 # --- Concurrency ----------
@@ -462,3 +578,14 @@ def test_sift_filtered_matches_cpp(reference: dict, sift: dict, upper: int) -> N
     np.testing.assert_array_equal(compiled.evaluate(), buckets < upper)
     ids, dists = index.search_filtered(sift["query"], K, compiled, threads=None)
     assert_matches_reference(reference, f"filt_{upper}", ids, dists)
+
+
+@pytest.mark.parametrize("ef", [16, 64])
+@pytest.mark.parametrize("selection", ["heuristic", "simple"])
+def test_sift_hnsw_matches_cpp(reference: dict, sift: dict, selection: str, ef: int) -> None:
+    # Same parameters, seed, and insertion order as strata_reference: the same graph, so the same
+    # results.
+    index = strata.HnswIndex(128, M=16, ef_construction=200, seed=42, selection=selection)
+    index.add(sift["base"])
+    ids, dists = index.search(sift["query"], K, ef_search=ef, threads=None)
+    assert_matches_reference(reference, f"hnsw_{selection}_ef{ef}", ids, dists)
