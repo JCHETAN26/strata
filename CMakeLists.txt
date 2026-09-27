@@ -73,7 +73,7 @@ add_library(strata STATIC
   src/util/thread_pool.cpp)
 add_library(strata::strata ALIAS strata)
 
-# The HNSW implementation is written by hand (see CLAUDE.md). Until src/index/hnsw.cpp exists,
+# HNSW is built in reviewed stages (see CLAUDE.md). Until src/index/hnsw.cpp exists,
 # the library, tests, harness, and Python module build without it. Re-run this check whenever
 # src/index changes (adding a file updates the directory's timestamp), so creating hnsw.cpp
 # switches HNSW on at the next build without a manual reconfigure.

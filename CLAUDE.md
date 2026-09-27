@@ -9,14 +9,18 @@ feature count. Every performance claim must be backed by a reproducible benchmar
 
 The full phase-by-phase plan lives in `buildplan.md`. Check it before starting new work.
 
-## Ground rule: the core algorithm is mine
+## Ground rule: the HNSW core is AI-implemented, and I must be able to defend every line
 
-I (the developer) write or deeply review the core HNSW logic myself, because I must be able to
-explain every line in interviews. Specifically, for `src/index/hnsw*`:
+The original rule was that I write the HNSW core by hand. I changed it on 2026-09-27: at my
+request, the core in `src/index/hnsw*` is AI-implemented, under these conditions:
 
-- Do NOT write the core insertion, neighbor-selection heuristic, or search code unless I explicitly ask.
-- DO explain the algorithm, review my code, point out bugs, suggest improvements, and write tests.
-- When I ask you to implement part of it, explain each design choice so I understand it.
+- It is faithful to Malkov & Yashunin (2018); any deviation from the paper is called out and justified.
+- It is built in small stages, and each stage stops for my review before the next begins.
+- `docs/explainers/hnsw.md` explains it well enough that I can defend every line in interviews:
+  the intuition for the layers, a walkthrough of each function, why the neighbor-selection
+  heuristic matters (with measured numbers), complexity, and the trade-offs of M, efConstruction,
+  and efSearch. Any change to the core updates the explainer in the same commit.
+- Design choices are explained in code comments and in the explainer, not just made.
 
 Everything else (build system, harnesses, bindings, scripts, server, tests) you can build normally.
 

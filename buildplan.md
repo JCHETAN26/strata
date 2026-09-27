@@ -12,8 +12,9 @@ sharding), and applied AI (hybrid retrieval, reranking, RAG), benchmarked agains
 ## Ground rules
 
 - **Understand HNSW yourself.** Read the paper (Malkov & Yashunin, *Efficient and robust approximate
-  nearest neighbor search using Hierarchical Navigable Small World graphs*). Write the core insertion
-  and search logic yourself, or be able to explain every line. Interviewers will ask.
+  nearest neighbor search using Hierarchical Navigable Small World graphs*). The core is
+  AI-implemented at my request (changed 2026-09-27), in reviewed stages, with
+  `docs/explainers/hnsw.md` so I can explain every line. Interviewers will ask.
 - **AI handles scaffolding:** build files, harnesses, bindings, tests, scripts.
 - **Every result comes from a script** that saves raw data and generates its table or chart.
 - **Always compare against a baseline** (brute force, hnswlib, FAISS, scalar vs. SIMD, with vs. without).
@@ -94,11 +95,11 @@ Convert them to raw binary with a Python script so the C++ code needs no HDF5 de
 
 ## Phase 2 — HNSW from scratch (1–2 weeks, Mac) ★ core
 
-- [ ] Random level assignment
-- [ ] Layered graph insertion
+- [x] Random level assignment
+- [x] Layered graph insertion
 - [ ] Neighbor-selection heuristic from the paper (not just "closest M")
-- [ ] Search: greedy descent through upper layers, `efSearch`-bounded search at layer 0
-- [ ] Parameters: `M`, `efConstruction`, `efSearch`
+- [x] Search: greedy descent through upper layers, `efSearch`-bounded search at layer 0
+- [x] Parameters: `M`, `efConstruction`, `efSearch`
 - [x] Tests: recall vs. brute force; edge cases (empty index, one vector, duplicates) — spec in `tests/hnsw_test.cpp`
 - [x] Python comparison scripts for hnswlib and FAISS on the same data
 

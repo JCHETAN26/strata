@@ -9,6 +9,7 @@
 #include <deque>
 #include <filesystem>
 #include <set>
+#include <thread>
 #include <vector>
 
 #include "strata/brute_force.hpp"
@@ -101,6 +102,21 @@ TEST(Hnsw, IdsAreAssignedInInsertionOrder) {
   EXPECT_EQ(index.vector(4)[0], 0.0F);
 }
 
+// Re-adding vectors read from the index's own storage: the insert may reallocate that storage,
+// so the index must copy first (ASan catches the use-after-free otherwise).
+TEST(Hnsw, AddingItsOwnVectorsIsSafe) {
+  auto index = make_index(4);
+  ASSERT_TRUE(index.add_batch(test::random_matrix(3, 4, 1)));
+  for (VectorId id = 0; id < 51; ++id) {
+    ASSERT_TRUE(index.add(index.vector(id % 3)));
+  }
+  ASSERT_TRUE(index.add_batch(MatrixView<const float>(index.vector(0).data(), 3, 4)));
+  ASSERT_EQ(index.size(), 57U);
+  for (VectorId id = 3; id < index.size(); ++id) {
+    EXPECT_TRUE(std::ranges::equal(index.vector(id), index.vector(id % 3))) << id;
+  }
+}
+
 TEST(Hnsw, KLargerThanSizeReturnsEverything) {
   auto index = make_index(4);
   ASSERT_TRUE(index.add_batch(test::random_matrix(20, 4, 1)));
@@ -166,6 +182,37 @@ TEST(Hnsw, ResultsAreSortedDistinctAndExact) {
       EXPECT_EQ(n.distance, distance(Metric::kL2, queries.row(q), base.row(n.id)));
     }
     EXPECT_EQ(ids.size(), result->size());
+  }
+}
+
+// Concurrent const searches share the index but not scratch state. Under the tsan preset this
+// checks the read path is race-free; everywhere it checks results match a serial run.
+TEST(Hnsw, ConcurrentSearchesMatchSerial) {
+  const auto base = test::random_matrix(2000, 16, 20);
+  const auto queries = test::random_matrix(64, 16, 21);
+  auto index = make_index(16);
+  ASSERT_TRUE(index.add_batch(base));
+  std::vector<std::vector<Neighbor>> serial;
+  for (std::size_t q = 0; q < queries.rows(); ++q) {
+    serial.push_back(*index.search(queries.row(q), 10, 50));
+  }
+
+  constexpr std::size_t kThreads = 4;
+  std::vector<std::size_t> mismatches(kThreads, 0);
+  std::vector<std::thread> threads;
+  for (std::size_t t = 0; t < kThreads; ++t) {
+    threads.emplace_back([&, t] {
+      for (std::size_t q = 0; q < queries.rows(); ++q) {
+        auto found = index.search(queries.row(q), 10, 50);
+        mismatches[t] += (found && *found == serial[q]) ? 0 : 1;
+      }
+    });
+  }
+  for (auto& thread : threads) {
+    thread.join();
+  }
+  for (std::size_t t = 0; t < kThreads; ++t) {
+    EXPECT_EQ(mismatches[t], 0U) << "thread " << t;
   }
 }
 

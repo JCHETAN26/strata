@@ -939,3 +939,45 @@ results. Only the 5 new ones were copied in, none overwriting:
 Placement of `environment.json`: `kaggle/README.md` only said "commit into `results/`". I used
 `results/kaggle/environment.json` so it's labeled as the Kaggle environment, and documented
 that in the README.
+
+## 2026-09-27: HNSW stage (a): levels, layer search, insertion with simple selection
+
+The HNSW core is now AI-implemented at my request (ground rule in CLAUDE.md updated), built in
+reviewed stages, with `docs/explainers/hnsw.md` as the line-by-line explainer.
+
+**Done**
+- `src/index/hnsw.cpp`: level assignment (mL = 1/ln M), SEARCH-LAYER (Algorithm 2), greedy
+  upper-layer descent + ef-bounded layer-0 search (Algorithm 5), INSERT (Algorithm 1) with
+  back-links and overflow re-selection, using SELECT-NEIGHBORS-SIMPLE (Algorithm 3) for now.
+- Layout: contiguous vectors; layer-0 links at a fixed stride of 2M+1 ids per node (count first);
+  upper layers in small per-node blocks.
+- New tests: `ConcurrentSearchesMatchSerial` (4 threads, for TSan) and
+  `AddingItsOwnVectorsIsSafe` (for ASan).
+- All 185 C++ tests pass under debug, asan, and tsan; Python tests pass, including the HNSW
+  binding smoke test.
+
+**Decisions**
+- **Level RNG built from raw mt19937_64 bits**, not `std::uniform_real_distribution`: the engine
+  sequence is standardized, the distributions are not, so libc++ and libstdc++ would build
+  different graphs from the same seed.
+- **Ties broken by (distance, id)** everywhere: deterministic traversals, and duplicates stay
+  well-defined.
+- **Entry points for the next layer during insert = all of W** (paper), not only the closest
+  (hnswlib).
+- **Visited set is a thread_local epoch array**: O(1) reset, and concurrent const searches share
+  no scratch state. Inserts are single-writer.
+- **Aliasing guard:** `add(index.vector(i))` would read from storage that the append may
+  reallocate; such inputs are copied first.
+
+**Observed (quick check, one run, not a result)**
+- SIFT10K, M=16, efC=200, simple selection: recall@10 0.913 / 0.957 / 0.996 at ef 10 / 20 / 40;
+  build 0.6 s. The scripted before/after comparison against the heuristic comes in stage (b).
+
+**Went wrong**
+- The Python module didn't pick up HNSW until reinstalled, and `uv sync --reinstall-package`
+  needs `VCPKG_ROOT` (unset in the non-interactive shell; vcpkg is at `~/vcpkg`). Plain
+  `uv sync` also **removes the `embed` group** (sentence-transformers, torch), since it isn't a
+  default group. Restored with `uv sync --group embed`. Rebuild the module with
+  `uv sync --group embed --reinstall-package strata`.
+- `test_live_cited_answer` fails with an API usage-limit error (resets 2026-10-01). External,
+  and unrelated to HNSW.
