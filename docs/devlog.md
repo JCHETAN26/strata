@@ -1010,3 +1010,43 @@ reviewed stages, with `docs/explainers/hnsw.md` as the line-by-line explainer.
 - **Heuristic applied even with <= m candidates** (paper); hnswlib skips it there.
 - The trial runs used to pick the clustered configuration (d16/c100, d8/c1000, d4/c100, all showing
   the effect) went to the scratchpad, not `results/`. The committed comparison uses the first.
+
+## 2026-09-27: HNSW stage (c): Python bindings and curves against hnswlib and FAISS
+
+**Done**
+- Bindings: `HnswIndex(..., selection="heuristic"|"simple")`, plus read-only `M`,
+  `ef_construction`, and `selection`. The stub test was replaced by real tests: recall vs brute
+  force (3 metrics x 2 modes), exact distances, padding, errors, introspection, the worked
+  selection example, threads, and concurrent adds. `strata_reference` now writes HNSW results,
+  and the bindings match C++ exactly on SIFT10K (both modes, ef 16 and 64).
+- `bench/run_hnsw_curves.py`: Strata vs hnswlib vs FAISS HNSW plus a brute-force baseline, Mac
+  protocol (3 runs, one configuration, 60 s cool-down between builds). Charts and table are
+  titled "Mac development results, not final"; QPS is labeled indicative.
+
+**Result** (M2, M=16, efC=200, single thread; recall final, QPS/build indicative)
+- SIFT1M recall@10 matches hnswlib at every ef to within 0.001 (e.g. 0.9939 at ef 160 for both).
+  FAISS is +0.005 at ef 10, converging by ef 160.
+- Speed: Strata runs between the two references, ~1.6-1.8x hnswlib (no NEON path in hnswlib) and
+  ~0.7x FAISS at ef 10, closing to ~0.97x at ef 320. HNSW at recall 0.994 is ~39x SIMD brute
+  force on SIFT1M.
+- SIFT1M build, single thread: Strata 316 s, FAISS 406 s, hnswlib 578 s.
+
+**Went wrong**
+- **OpenMP double-load aborted the FAISS runs (OMP Error #15)**, twice, for different reasons:
+  1. The curves script imported hnswlib's and FAISS's drivers into one process. Fixed by running
+     every step as its own subprocess, which also frees each SIFT1M index before the next build.
+  2. Even alone, the FAISS process aborted when saving its record: `benchmeta.accelerator_info()`
+     imported torch (installed by the embed group), which loads its own libomp. That code came
+     with the Kaggle commit, after the last FAISS run, so it hadn't shown up before. Fixed by
+     probing torch in a subprocess; the same fields are recorded. I did not use the
+     `KMP_DUPLICATE_LIB_OK` workaround, which the OpenMP runtime itself documents as unsafe.
+  Partial records from both failed runs were deleted, so every committed curve comes from the
+  same commit (`72c148e`).
+- The first report included an old pre-SIMD brute-force record (no `kernel` field). The filter
+  now requires a recorded non-scalar kernel.
+
+**Open**
+- FAISS leads at low ef. Hypothesis: per-call allocations in `search_layer` (heaps, output
+  vector) and no prefetching. To be profiled in Phase 3, not assumed.
+- M and ef_construction are unmeasured beyond the single configuration; that sweep belongs on the
+  Ryzen.

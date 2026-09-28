@@ -105,6 +105,8 @@ Convert them to raw binary with a Python script so the C++ code needs no HDF5 de
 
 **Measure:** recall vs. QPS curve against hnswlib and FAISS on SIFT10K and SIFT1M.
 First version will likely be slower than hnswlib. That's expected.
+Done on the M2 as development results (`results/hnsw/hnsw_vs_reference.md`): recall matches
+hnswlib at every ef_search; QPS is indicative only, and final speed comparisons wait for Phase 9.
 
 ---
 
@@ -168,7 +170,7 @@ First version will likely be slower than hnswlib. That's expected.
 
 ## Phase 8 — Python bindings & RAG layer (1–2 weeks, IdeaPad)
 
-- [x] Python bindings (nanobind or pybind11) — nanobind; HNSW bound once the core exists
+- [x] Python bindings (nanobind or pybind11) — nanobind; HNSW bound, including `selection`
 - [x] BM25 inverted index in C++ (Lucene/Anserini-exact; SciFact nDCG@10 0.6789 = published)
 - [x] Hybrid retrieval with reciprocal rank fusion
 - [ ] Cross-encoder reranking
