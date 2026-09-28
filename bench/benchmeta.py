@@ -142,11 +142,16 @@ def metadata() -> dict[str, Any]:
     }
 
 
+def is_development_machine(hardware: dict[str, Any]) -> bool:
+    """The fanless Apple-silicon development laptop, whose QPS is indicative only."""
+    return (hardware.get("cpu") or hardware["machine"]).startswith("Apple")
+
+
 def hardware_note(hardware: dict[str, Any]) -> str:
     """How to read speed numbers from this machine. The fanless M2 development laptop throttles
     under sustained load, so its QPS is indicative only; recall is unaffected."""
     cpu = hardware.get("cpu") or hardware["machine"]
-    if cpu.startswith("Apple"):
+    if is_development_machine(hardware):
         return (
             f"{cpu} (fanless development machine): recall is valid; QPS is indicative only. "
             "Final speed comparisons run on dedicated hardware (Phase 9)."

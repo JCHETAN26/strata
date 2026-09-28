@@ -9,6 +9,7 @@ results/tables.md.
 
 from __future__ import annotations
 
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +17,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from benchmeta import REPO_ROOT
+from benchmeta import REPO_ROOT, hardware_note, is_development_machine
 from records import latest_records, load_records
 
 # Validated categorical palette (dataviz reference, light surface), assigned per entity so a
@@ -46,9 +47,11 @@ def plot_dataset(
     out: Path | None = None,
     note: str | None = None,
     source: str = "bench/plot_recall_qps.py",
+    title_suffix: str | None = None,
 ) -> str:
     """One recall-vs-QPS chart. out defaults to results/plots/recall_qps_<dataset>.png; note is
-    printed bottom left (e.g. how to read QPS from this machine)."""
+    printed bottom left (e.g. how to read QPS from this machine); title_suffix is appended to
+    the title (e.g. marking development results)."""
     fig, ax = plt.subplots(figsize=(8, 5.5), dpi=150)
     fig.patch.set_facecolor(SURFACE)
     ax.set_facecolor(SURFACE)
@@ -81,7 +84,8 @@ def plot_dataset(
     ax.set_yscale("log")
     ax.set_xlabel(f"Recall@{k}", color=TEXT)
     ax.set_ylabel("Queries per second (log scale, single thread)", color=TEXT)
-    ax.set_title(f"{dataset}: recall vs. throughput  ·  {hardware}", color=TEXT, loc="left")
+    title = f"{dataset}: recall vs. throughput  ·  {hardware}"
+    ax.set_title(f"{title}  ·  {title_suffix}" if title_suffix else title, color=TEXT, loc="left")
     ax.grid(True, which="major", color="#e4e3df", linewidth=0.8)
     ax.grid(True, which="minor", color="#efeeea", linewidth=0.5)
     ax.set_axisbelow(True)
@@ -98,8 +102,11 @@ def plot_dataset(
         ha="right", fontsize=7, color=MUTED,
     )  # fmt: skip
     if note:
-        fig.text(0.01, 0.01, note, ha="left", fontsize=7, color=MUTED, wrap=True)
-        fig.tight_layout(rect=(0, 0.04, 1, 1))
+        # Above the credit line, so notes never collide with it. Wrapped to the figure width;
+        # the plot area shrinks by one line height per wrapped line.
+        lines = textwrap.wrap(note, width=150)
+        fig.text(0.01, 0.035, "\n".join(lines), ha="left", va="bottom", fontsize=7, color=MUTED)
+        fig.tight_layout(rect=(0, 0.035 + 0.022 * len(lines), 1, 1))
     else:
         fig.tight_layout()
 
@@ -117,7 +124,10 @@ def main() -> int:
         if record["threads"] == 1:
             by_dataset.setdefault(record["dataset"]["name"], []).append(record)
     for dataset, group in sorted(by_dataset.items()):
-        print("wrote", plot_dataset(dataset, group))
+        dev = any(is_development_machine(r["hardware"]) for r in group)
+        note = hardware_note(group[0]["hardware"]) if dev else None
+        suffix = "Mac development results, not final" if dev else None
+        print("wrote", plot_dataset(dataset, group, note=note, title_suffix=suffix))
     return 0
 
 

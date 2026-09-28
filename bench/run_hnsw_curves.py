@@ -25,7 +25,7 @@ import sys
 import time
 from typing import Any
 
-from benchmeta import REPO_ROOT, git_info, hardware_note
+from benchmeta import REPO_ROOT, git_info, hardware_note, is_development_machine
 from plot_recall_qps import plot_dataset
 from records import latest_records, load_records
 
@@ -66,7 +66,8 @@ def matches(record: dict[str, Any], dataset: str, args: argparse.Namespace) -> b
     key = (record["library"], record["index"])
     params = record["build_params"]
     if key == ("strata", "brute_force"):
-        return params.get("kernel") != "scalar"
+        # SIMD brute force only; records from before the kernel was recorded were scalar.
+        return params.get("kernel") not in (None, "scalar")
     if key not in LIBRARIES:
         return False
     if params.get("M") != args.M or params.get("ef_construction") != args.ef_construction:
@@ -107,8 +108,10 @@ def write_table(by_dataset: dict[str, list[dict[str, Any]]], args: argparse.Name
         "tie-aware recall@10 against exact ground truth.",
         "- Strata QPS is measured in C++; hnswlib and FAISS QPS come from one batched Python call "
         "over all queries (Python overhead amortized away). See `bench/run_reference_bench.py`.",
-        "- On ARM, hnswlib's distance code has no NEON path (its SIMD is SSE/AVX only), while "
-        "Strata and FAISS use NEON. Expect hnswlib to look relatively stronger on x86.",
+        "- **The hnswlib speed comparison favors Strata on ARM:** hnswlib's distance code has "
+        "no NEON path (its SIMD is SSE/AVX only), so here it computes distances in scalar code "
+        "while Strata and FAISS use NEON. Fair speed comparisons against both libraries come "
+        "from the x86 runs in Phase 9.",
         f"- Commits: {'; '.join(commits)}",
         "",
     ]
@@ -155,8 +158,19 @@ def main(argv: list[str] | None = None) -> int:
             dataset,
             records,
             out=out,
-            note=hardware_note(records[0]["hardware"]),
+            note=hardware_note(records[0]["hardware"])
+            + (
+                " hnswlib has no NEON path, so on ARM its speed is understated; fair speed "
+                "comparisons against both libraries come from the x86 runs in Phase 9."
+                if is_development_machine(records[0]["hardware"])
+                else ""
+            ),
             source="bench/run_hnsw_curves.py",
+            title_suffix=(
+                "Mac development results, not final"
+                if is_development_machine(records[0]["hardware"])
+                else None
+            ),
         )
         print(f"wrote {out.relative_to(REPO_ROOT)}")
     return 0
