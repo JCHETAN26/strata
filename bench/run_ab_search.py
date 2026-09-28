@@ -14,15 +14,15 @@ ef_search with --runs timed passes per point. Writes:
     results/ab/<name>.md                     per-ef QPS (mean, stdev, range across runs), paired
                                              B/A ratios, and a check that recall is identical
 
-Thermal safeguard: checks `pmset -g therm` (macOS) before and after every run and stops at the
-first warning, keeping what finished. A cool-down separates runs.
+Safeguards: before every run, refuses to start on a thermal warning (`pmset -g therm`, macOS) or
+while another process is busy; checks the thermal state again after; stops at the first problem,
+keeping what finished. A cool-down separates runs.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import platform
 import statistics
 import subprocess
 import sys
@@ -30,16 +30,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from benchmeta import REPO_ROOT, git_info, hardware_note, metadata
+from benchmeta import REPO_ROOT, git_info, hardware_note, metadata, preflight, thermal_warnings
 
 OUT_ROOT = REPO_ROOT / "results" / "ab"
-
-
-def thermal_warnings() -> str:
-    if platform.system() != "Darwin":
-        return ""
-    out = subprocess.run(["pmset", "-g", "therm"], capture_output=True, text=True).stdout
-    return "\n".join(ln for ln in out.splitlines() if ln.strip() and not ln.startswith("Note: No"))
 
 
 def run_harness(binary: str, args: argparse.Namespace) -> dict[str, Any]:
@@ -63,8 +56,7 @@ def run(args: argparse.Namespace, out_dir: Path) -> None:
             path = out_dir / f"{label}-pair{pair}.json"
             if path.exists():
                 continue  # resume an interrupted comparison
-            if warning := thermal_warnings():
-                raise SystemExit(f"thermal warning before {path.name}; stopping:\n{warning}")
+            preflight(path.name)
             print(f"pair {pair}: {label}", file=sys.stderr, flush=True)
             raw = run_harness(binary, args)
             path.write_text(json.dumps(raw, indent=2) + "\n")

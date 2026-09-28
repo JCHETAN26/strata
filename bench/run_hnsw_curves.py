@@ -25,7 +25,14 @@ import sys
 import time
 from typing import Any
 
-from benchmeta import REPO_ROOT, git_info, hardware_note, is_development_machine
+from benchmeta import (
+    REPO_ROOT,
+    git_info,
+    hardware_note,
+    is_development_machine,
+    preflight,
+    thermal_warnings,
+)
 from plot_recall_qps import plot_dataset
 from records import latest_records, load_records
 
@@ -54,8 +61,11 @@ def run(args: argparse.Namespace) -> None:
         ]  # fmt: skip
         for script, *step_args in steps:
             cmd = [sys.executable, "-u", str(BENCH / script), *step_args]
+            preflight(" ".join(step_args[:4]))
             print("$", " ".join(cmd), file=sys.stderr, flush=True)
             subprocess.run(cmd, check=True)
+            if warning := thermal_warnings():
+                raise SystemExit(f"thermal warning after {script}; stopping:\n{warning}")
             print(f"cooling down {args.cooldown} s", file=sys.stderr, flush=True)
             time.sleep(args.cooldown)
 

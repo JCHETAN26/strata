@@ -7,8 +7,9 @@
 #
 # Writes results/profiles/<dataset>-ef<EF>-<commit>.sample.txt (the raw `sample` report: call
 # tree plus "Sort by top of stack" self-time summary) and the harness's JSON next to it.
-# macOS only. Refuses to start, and reports after, if `pmset -g therm` shows any thermal or
-# performance warning: the M2 development machine is fanless (see CLAUDE.md, Machines).
+# macOS only. Refuses to start while another process is busy or if `pmset -g therm` shows any
+# thermal or performance warning, and reports a warning after: the M2 development machine is
+# fanless (see CLAUDE.md, Machines).
 set -euo pipefail
 
 DATASET=${1:-sift1m-200k-q1000}
@@ -24,6 +25,14 @@ thermal_warnings() { pmset -g therm | grep -v "^Note: No" || true; }
 if [[ -n "$(thermal_warnings)" ]]; then
   echo "thermal warning present; not starting:" >&2
   thermal_warnings >&2
+  exit 1
+fi
+# Contention corrupts a profile, and the fanless machine should run one heavy job at a time:
+# refuse while any other process uses more than half a core (the coding agent excepted).
+BUSY=$(ps -Ao pid=,pcpu=,comm= | awk -v me=$$ '$1 != me && $2 > 50 && $3 !~ /claude/')
+if [[ -n "$BUSY" ]]; then
+  echo "other heavy processes running; not starting:" >&2
+  echo "$BUSY" >&2
   exit 1
 fi
 [[ -x $HARNESS ]] || { echo "build first: cmake --build --preset release" >&2; exit 1; }

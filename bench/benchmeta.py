@@ -147,6 +147,40 @@ def is_development_machine(hardware: dict[str, Any]) -> bool:
     return (hardware.get("cpu") or hardware["machine"]).startswith("Apple")
 
 
+def thermal_warnings() -> str:
+    """Thermal or performance warnings from `pmset -g therm` (macOS); empty when there are none
+    or on other systems."""
+    if platform.system() != "Darwin":
+        return ""
+    out = _run(["pmset", "-g", "therm"])
+    return "\n".join(ln for ln in out.splitlines() if ln.strip() and not ln.startswith("Note: No"))
+
+
+def busy_processes(threshold: float = 50.0) -> list[str]:
+    """Other processes using more than `threshold` percent of a core (ps's recent average).
+    Excludes this process and its parent, and the coding agent driving the run."""
+    mine = {os.getpid(), os.getppid()}
+    busy = []
+    for line in _run(["ps", "-Ao", "pid=,pcpu=,comm="]).splitlines():
+        parts = line.split(None, 2)
+        if len(parts) == 3 and parts[1].replace(".", "", 1).isdigit():
+            pid, cpu, comm = int(parts[0]), float(parts[1]), parts[2]
+            if cpu > threshold and pid not in mine and "claude" not in comm:
+                busy.append(f"{pid} {cpu:.0f}% {comm}")
+    return busy
+
+
+def preflight(what: str) -> None:
+    """Refuse to start a heavy benchmark step on a hot or busy machine. The M2 development
+    machine is fanless and has shut down under sustained load; contention also corrupts timings."""
+    if warning := thermal_warnings():
+        raise SystemExit(f"thermal warning before {what}; stopping:\n{warning}")
+    if busy := busy_processes():
+        raise SystemExit(
+            f"other heavy processes running before {what}; stopping:\n" + "\n".join(busy)
+        )
+
+
 def hardware_note(hardware: dict[str, Any]) -> str:
     """How to read speed numbers from this machine. The fanless M2 development laptop throttles
     under sustained load, so its QPS is indicative only; recall is unaffected."""
