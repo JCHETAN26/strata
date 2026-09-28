@@ -429,10 +429,14 @@ What the curves show:
     SSE/AVX only), so on the M2 it computes distances in scalar code while Strata and FAISS use
     NEON. The 1.6–1.8× says little about the two graph implementations. Fair speed comparisons
     against both libraries come from the x86 runs in Phase 9, where all three use AVX2.
-  - **FAISS is faster than Strata at low ef**, where per-query fixed costs dominate. Strata's
-    `search_layer` allocates its heaps and output vector on every call, while FAISS reuses
-    buffers and prefetches neighbor vectors. That is a hypothesis to test with a profiler, not a
-    measured cause.
+  - **FAISS is faster than Strata at low ef.** The first guess was the per-call allocation of
+    `search_layer`'s heaps and output vector. **Profiling refuted it:** allocator time is about
+    1.5% of search time (`results/profiles/sift1m-200k-q1000-ef40-9a5abdd.sample.txt`,
+    `bench/profile_hnsw_search.sh`), so removing it could not close a 10–30% gap. Search time
+    splits roughly evenly between the distance kernel (~45%) and `search_layer`'s own loop
+    (~48%: heap updates, visited checks, loading neighbor lists), which points at memory access
+    rather than allocation. FAISS prefetches upcoming neighbor vectors and computes distances
+    in batches of four. Those are the next candidates, each to be measured before it is kept.
 - **Build (indicative).** On SIFT1M, single-threaded, Strata took about 5 minutes, FAISS about
   7, and hnswlib about 10. Strata's build is not parallel yet (Phase 3).
 

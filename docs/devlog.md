@@ -1050,3 +1050,62 @@ reviewed stages, with `docs/explainers/hnsw.md` as the line-by-line explainer.
   vector) and no prefetching. To be profiled in Phase 3, not assumed.
 - M and ef_construction are unmeasured beyond the single configuration; that sweep belongs on the
   Ryzen.
+
+## 2026-09-28: Profiling HNSW search: the allocation hypothesis is refuted
+
+The M2 overheated and shut down during the previous session. On resuming, nothing from stage (c)
+had been committed. The results, labeling, report fix, explainer section 6, and the ARM caveat
+were all present on disk, and were committed as `1b1f9ec` and `8ce0868`.
+
+**Thermal safeguards for this step**
+- A 200k-vector subset instead of full SIFT1M: `scripts/make_subset.py` builds
+  `sift1m-200k-q1000` (the first 200k base vectors and first 1000 queries, exact ground truth
+  recomputed; brute force gets recall 1.0 against it, which validates it). Build takes ~40 s on
+  one core, instead of ~5 min for SIFT1M.
+- One heavy job at a time, checked with `ps` first; `pmset -g therm` before and after every run
+  (`bench/profile_hnsw_search.sh` refuses to start on a warning); a 2-minute cool-down between the
+  sweep and the profile; ground-truth BLAS pinned to one thread. No thermal or performance
+  warning was recorded at any point.
+
+**Profile** (`bench/profile_hnsw_search.sh sift1m-200k-q1000 40 6` at `9a5abdd`; macOS `sample`
+for 6 s during the search phase only; raw report in
+`results/profiles/sift1m-200k-q1000-ef40-9a5abdd.sample.txt`)
+
+| Self time | Samples | Share |
+|---|---:|---:|
+| `search_layer` (inlined heap pushes, visited checks, neighbor-list loads) | 2176 | 47.9% |
+| `neon::l2_squared` | 2060 | 45.3% |
+| `std::__pop_heap` | 210 | 4.6% |
+| Allocator (`_xzm_free`, `_free`, `_platform_memset`, and the `mach_absolute_time` calls `_xzm_free` makes) | 66 | 1.5% |
+| `greedy_search` (upper layers) | 26 | 0.6% |
+
+An earlier run of the same commands from a scratch script, before they were moved into `bench/`,
+gave the same picture (allocator ~1.7% of samples under `HnswIndex::search`).
+
+**Decision: no allocation fix.** Removing every per-query allocation could gain at most ~1.5-2%
+QPS. That is the same size as the run-to-run QPS noise in the baseline sweep below (stdev
+1-2%), and nowhere near the 10-30% gap to FAISS at low ef. Per the instruction ("fix it if it's
+confirmed"), the core was not changed, so there is no before/after pair: the sweep below is the
+"before" for the next optimization.
+
+**Baseline on the subset** (`bench/run_search_bench.py --dataset sift1m-200k-q1000 --index
+hnsw --runs 3` at `9a5abdd`; M=16, efC=200, single thread; Mac development results: recall final,
+QPS indicative). Recall@10 / QPS: ef 10 0.766 / 39.1k; ef 40 0.956 / 14.7k; ef 80 0.988 / 8.3k;
+ef 160 0.998 / 4.6k; ef 320 0.9995 / 2.6k. Raw record in
+`results/search/sift1m-200k-q1000/`; table in `results/tables.md`.
+
+**What the profile does point at.** Search time splits between the distance kernel and
+`search_layer`'s own loop. Both are dominated by first touches of scattered memory: a 512-byte
+vector per candidate, a 132-byte neighbor list per expanded node, and a 4-byte visited mark per
+neighbor. `sample` cannot separate stall cycles from arithmetic. Candidates, each to be measured
+on this subset before it is kept:
+1. Prefetch the next neighbors' vectors (and visited marks) while computing the current distance,
+   as hnswlib and FAISS do.
+2. Compute distances for neighbors in batches of four (FAISS's `distances_batch_4`), so several
+   cache misses are in flight at once.
+3. A smaller visited set (1-byte epochs or a bitset) to cut its cache footprint (800 KB for 200k
+   nodes today).
+
+**Went wrong**
+- The hypothesis I stated in stage (c) (per-call allocation explains the FAISS gap) was wrong. It
+  was labeled as a hypothesis, and the explainer now says it was tested and refuted.

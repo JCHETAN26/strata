@@ -1,0 +1,193 @@
+Analysis of sampling strata_search (pid 70557) every 1 millisecond
+Process:         strata_search [70557]
+Path:            /Users/USER/*/strata_search
+Load Address:    0x1043b8000
+Identifier:      strata_search
+Version:         0
+Code Type:       ARM64
+Platform:        macOS
+Parent Process:  bash [70531]
+Target Type:     live task
+
+Date/Time:       2026-09-28 14:08:42.343 -0700
+Launch Time:     2026-09-28 14:08:02.674 -0700
+OS Version:      macOS 26.5.2 (25F84)
+Report Version:  7
+Analysis Tool:   /usr/bin/sample
+
+Physical footprint:         233.4M
+Physical footprint (peak):  233.4M
+Idle exit:                  untracked
+----
+
+Call graph:
+    4565 Thread_572711   DispatchQueue_1: com.apple.main-thread  (serial)
+      4565 start  (in dyld) + 6992  [0x18b043e00]
+        2265 main  (in strata_search) + 7456  [0x1043bab70]
+        + 2265 strata::ThreadPool::parallel_for(unsigned long, std::function<void (unsigned long)> const&, unsigned long)  (in strata_search) + 312  [0x1043cdd1c]
+        +   2265 std::__function::__func<(anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::$_1, void (unsigned long)>::operator()(unsigned long&&)  (in strata_search) + 100  [0x1043bf9b4]
+        +     2149 strata::HnswIndex::search(std::span<float const, 18446744073709551615ul>, unsigned long, unsigned long) const  (in strata_search) + 248  [0x1043cfc00]
+        +     ! 1087 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 916,1016,...  [0x1043d01e0,0x1043d0244,...]
+        +     ! 925 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 980  [0x1043d0220]
+        +     ! : 925 strata::neon::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)  (in strata_search) + 84,112,...  [0x1043c042c,0x1043c0448,...]
+        +     ! 100 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 792  [0x1043d0164]
+        +     ! : 100 std::__pop_heap[abi:nqe210106]<std::_ClassicAlgPolicy, std::greater<void>, std::__wrap_iter<strata::Neighbor*>>(std::__wrap_iter<strata::Neighbor*>, std::__wrap_iter<strata::Neighbor*>, std::greater<void>&, std::iterator_traits<std::__wrap_iter<strata::Neighbor*>>::difference_type)  (in strata_search) + 160,56,...  [0x1043d1c38,0x1043d1bd0,...]
+        +     ! 21 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1216  [0x1043d030c]
+        +     ! : 12 _xzm_free  (in libsystem_malloc.dylib) + 1048  [0x18b21f484]
+        +     ! : | 12 mach_absolute_time  (in libsystem_kernel.dylib) + 108  [0x18b3be10c]
+        +     ! : 5 _xzm_free  (in libsystem_malloc.dylib) + 996,232,...  [0x18b21f450,0x18b21f154,...]
+        +     ! : 4 _xzm_free  (in libsystem_malloc.dylib) + 352  [0x18b21f1cc]
+        +     ! :   4 _platform_memset  (in libsystem_platform.dylib) + 160,140,...  [0x18b40b130,0x18b40b11c,...]
+        +     ! 5 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1548  [0x1043d0458]
+        +     ! : 3 _xzm_free  (in libsystem_malloc.dylib) + 220,988,...  [0x18b21f148,0x18b21f448,...]
+        +     ! : 2 _xzm_free  (in libsystem_malloc.dylib) + 352  [0x18b21f1cc]
+        +     ! :   2 _platform_memset  (in libsystem_platform.dylib) + 208  [0x18b40b160]
+        +     ! 5 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 2608  [0x1043d087c]
+        +     ! : 3 _xzm_free  (in libsystem_malloc.dylib) + 1048  [0x18b21f484]
+        +     ! : | 2 mach_absolute_time  (in libsystem_kernel.dylib) + 108  [0x18b3be10c]
+        +     ! : | 1 DYLD-STUB$$mach_absolute_time  (in libsystem_malloc.dylib) + 8  [0x18b236b14]
+        +     ! : 1 DYLD-STUB$$free  (in libc++abi.dylib) + 8  [0x18b3b8bd8]
+        +     ! : 1 _xzm_free  (in libsystem_malloc.dylib) + 720  [0x18b21f33c]
+        +     ! 2 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 2624  [0x1043d088c]
+        +     ! : 1 DYLD-STUB$$free  (in libc++abi.dylib) + 8  [0x18b3b8bd8]
+        +     ! : 1 _xzm_free  (in libsystem_malloc.dylib) + 684  [0x18b21f318]
+        +     ! 1 _xzm_free  (in libsystem_malloc.dylib) + 1548  [0x18b21f678]
+        +     ! 1 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 116  [0x1043cfec0]
+        +     ! : 1 _tlv_get_addr  (in libdyld.dylib) + 12  [0x18b00c394]
+        +     ! 1 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1488  [0x1043d041c]
+        +     ! : 1 operator new(unsigned long)  (in libc++abi.dylib) + 52  [0x18b3b87e8]
+        +     ! :   1 <deduplicated_symbol>  (in libsystem_malloc.dylib) + 212  [0x18b21e1a8]
+        +     ! 1 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 2192  [0x1043d06dc]
+        +     !   1 operator new(unsigned long)  (in libc++abi.dylib) + 52  [0x18b3b87e8]
+        +     !     1 _xzm_xzone_malloc_tiny  (in libsystem_malloc.dylib) + 364  [0x18b224040]
+        +     116 strata::HnswIndex::search(std::span<float const, 18446744073709551615ul>, unsigned long, unsigned long) const  (in strata_search) + 160  [0x1043cfba8]
+        +       108 strata::HnswIndex::greedy_search(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const  (in strata_search) + 188  [0x1043cfd58]
+        +       : 108 strata::neon::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)  (in strata_search) + 84,112,...  [0x1043c042c,0x1043c0448,...]
+        +       8 strata::HnswIndex::greedy_search(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const  (in strata_search) + 164,216,...  [0x1043cfd40,0x1043cfd74,...]
+        2260 main  (in strata_search) + 7184  [0x1043baa60]
+        + 2260 strata::ThreadPool::parallel_for(unsigned long, std::function<void (unsigned long)> const&, unsigned long)  (in strata_search) + 312  [0x1043cdd1c]
+        +   2260 std::__function::__func<(anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::$_0, void (unsigned long)>::operator()(unsigned long&&)  (in strata_search) + 80  [0x1043bf72c]
+        +     2116 strata::HnswIndex::search(std::span<float const, 18446744073709551615ul>, unsigned long, unsigned long) const  (in strata_search) + 248  [0x1043cfc00]
+        +     ! 1089 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 916,1016,...  [0x1043d01e0,0x1043d0244,...]
+        +     ! 873 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 980  [0x1043d0220]
+        +     ! : 873 strata::neon::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)  (in strata_search) + 112,84,...  [0x1043c0448,0x1043c042c,...]
+        +     ! 110 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 792  [0x1043d0164]
+        +     ! : 110 std::__pop_heap[abi:nqe210106]<std::_ClassicAlgPolicy, std::greater<void>, std::__wrap_iter<strata::Neighbor*>>(std::__wrap_iter<strata::Neighbor*>, std::__wrap_iter<strata::Neighbor*>, std::greater<void>&, std::iterator_traits<std::__wrap_iter<strata::Neighbor*>>::difference_type)  (in strata_search) + 160,112,...  [0x1043d1c38,0x1043d1c08,...]
+        +     ! 22 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1216  [0x1043d030c]
+        +     ! : 10 _xzm_free  (in libsystem_malloc.dylib) + 1048  [0x18b21f484]
+        +     ! : | 9 mach_absolute_time  (in libsystem_kernel.dylib) + 108  [0x18b3be10c]
+        +     ! : | 1 DYLD-STUB$$mach_absolute_time  (in libsystem_malloc.dylib) + 0  [0x18b236b0c]
+        +     ! : 8 _xzm_free  (in libsystem_malloc.dylib) + 852,20,...  [0x18b21f3c0,0x18b21f080,...]
+        +     ! : 2 _free  (in libsystem_malloc.dylib) + 0,104  [0x18b22ec4c,0x18b22ecb4]
+        +     ! : 1 DYLD-STUB$$operator delete(void*)  (in strata_search) + 4  [0x1043d20f0]
+        +     ! : 1 _xzm_free  (in libsystem_malloc.dylib) + 352  [0x18b21f1cc]
+        +     ! :   1 _platform_memset  (in libsystem_platform.dylib) + 180  [0x18b40b144]
+        +     ! 10 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1548  [0x1043d0458]
+        +     ! : 8 _xzm_free  (in libsystem_malloc.dylib) + 996,28,...  [0x18b21f450,0x18b21f088,...]
+        +     ! : 2 _free  (in libsystem_malloc.dylib) + 104  [0x18b22ecb4]
+        +     ! 3 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1156  [0x1043d02d0]
+        +     ! : 2 operator new(unsigned long)  (in libc++abi.dylib) + 52  [0x18b3b87e8]
+        +     ! : | 2 _xzm_xzone_malloc_tiny  (in libsystem_malloc.dylib) + 104,276  [0x18b223f3c,0x18b223fe8]
+        +     ! : 1 operator new(unsigned long)  (in libc++abi.dylib) + 52  [0x18b3b87e8]
+        +     ! 3 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 2608  [0x1043d087c]
+        +     ! : 2 _xzm_free  (in libsystem_malloc.dylib) + 1048  [0x18b21f484]
+        +     ! : | 2 mach_absolute_time  (in libsystem_kernel.dylib) + 108  [0x18b3be10c]
+        +     ! : 1 _free  (in libsystem_malloc.dylib) + 0  [0x18b22ec4c]
+        +     ! 2 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1488  [0x1043d041c]
+        +     ! : 2 operator new(unsigned long)  (in libc++abi.dylib) + 52  [0x18b3b87e8]
+        +     ! :   1 _xzm_xzone_malloc  (in libsystem_malloc.dylib) + 336  [0x18b21ea10]
+        +     ! :   1 _xzm_xzone_malloc_tiny  (in libsystem_malloc.dylib) + 472  [0x18b2240ac]
+        +     ! 1 _xzm_free  (in libsystem_malloc.dylib) + 1560  [0x18b21f684]
+        +     ! 1 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 328  [0x1043cff94]
+        +     ! : 1 std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor>>::push(strata::Neighbor const&)  (in strata_search) + 168  [0x1043d150c]
+        +     ! :   1 _platform_memmove  (in libsystem_platform.dylib) + 428  [0x18b40b50c]
+        +     ! 1 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 1528  [0x1043d0444]
+        +     ! : 1 DYLD-STUB$$memcpy  (in strata_search) + 4  [0x1043d21a4]
+        +     ! 1 strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search) + 2624  [0x1043d088c]
+        +     !   1 _xzm_free  (in libsystem_malloc.dylib) + 1048  [0x18b21f484]
+        +     !     1 mach_absolute_time  (in libsystem_kernel.dylib) + 112  [0x18b3be110]
+        +     143 strata::HnswIndex::search(std::span<float const, 18446744073709551615ul>, unsigned long, unsigned long) const  (in strata_search) + 160  [0x1043cfba8]
+        +     ! 125 strata::HnswIndex::greedy_search(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const  (in strata_search) + 188  [0x1043cfd58]
+        +     ! : 125 strata::neon::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)  (in strata_search) + 84,112,...  [0x1043c042c,0x1043c0448,...]
+        +     ! 18 strata::HnswIndex::greedy_search(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const  (in strata_search) + 244,80,...  [0x1043cfd90,0x1043cfcec,...]
+        +     1 strata::HnswIndex::search(std::span<float const, 18446744073709551615ul>, unsigned long, unsigned long) const  (in strata_search) + 176  [0x1043cfbb8]
+        34 main  (in strata_search) + 7728  [0x1043bac80]
+        + 29 strata::neon::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)  (in strata_search) + 84,112,...  [0x1043c042c,0x1043c0448,...]
+        + 5 main  (in strata_search) + 7728,7676,...  [0x1043bac80,0x1043bac4c,...]
+        5 main  (in strata_search) + 7868  [0x1043bad0c]
+        + 3 strata::recall_at_k(std::span<std::vector<strata::Neighbor> const, 18446744073709551615ul>, strata::Matrix<int> const&, unsigned long)  (in strata_search) + 648,644  [0x1043c15a8,0x1043c15a4]
+        + 2 strata::recall_at_k(std::span<std::vector<strata::Neighbor> const, 18446744073709551615ul>, strata::Matrix<int> const&, unsigned long)  (in strata_search) + 544  [0x1043c1540]
+        +   2 <deduplicated_symbol>  (in libc++.1.dylib) + 1156,1188  [0x18b31b038,0x18b31b058]
+        1 main  (in strata_search) + 8488  [0x1043baf78]
+          1 std::__put_character_sequence[abi:nqe210106]<char>(std::basic_ostream<char>&, char const*, unsigned long)  (in strata_search) + 200  [0x1043beee4]
+            1 std::__pad_and_output[abi:nqe210106]<char>(std::ostreambuf_iterator<char>, char const*, char const*, char const*, std::ios_base&, char)  (in strata_search) + 336  [0x1043bf0d8]
+              1 fwrite  (in libsystem_c.dylib) + 300  [0x18b2b0454]
+                1 __sfvwrite  (in libsystem_c.dylib) + 556  [0x18b294e08]
+                  1 _swrite  (in libsystem_c.dylib) + 108  [0x18b2a2264]
+                    1 __swrite  (in libsystem_c.dylib) + 24  [0x18b2c0bbc]
+                      1 __write_nocancel  (in libsystem_kernel.dylib) + 8  [0x18b3c1be4]
+
+Total number in stack (recursive counted multiple, when >=5):
+        8       _xzm_free  (in libsystem_malloc.dylib) + 0  [0x18b21f06c]
+        5       _xzm_free  (in libsystem_malloc.dylib) + 1048  [0x18b21f484]
+        5       mach_absolute_time  (in libsystem_kernel.dylib) + 0  [0x18b3be0a0]
+        5       strata::neon::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)  (in strata_search) + 0  [0x1043c03d8]
+
+Sort by top of stack, same collapsed (when >= 5):
+        strata::HnswIndex::search_layer(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor> const&, unsigned long, int) const  (in strata_search)        2176
+        strata::neon::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)  (in strata_search)        2060
+        std::__pop_heap[abi:nqe210106]<std::_ClassicAlgPolicy, std::greater<void>, std::__wrap_iter<strata::Neighbor*>>(std::__wrap_iter<strata::Neighbor*>, std::__wrap_iter<strata::Neighbor*>, std::greater<void>&, std::iterator_traits<std::__wrap_iter<strata::Neighbor*>>::difference_type)  (in strata_search)        210
+        _xzm_free  (in libsystem_malloc.dylib)        28
+        mach_absolute_time  (in libsystem_kernel.dylib)        26
+        strata::HnswIndex::greedy_search(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const  (in strata_search)        26
+        _platform_memset  (in libsystem_platform.dylib)        7
+        _free  (in libsystem_malloc.dylib)        5
+        main  (in strata_search)        5
+
+Binary Images:
+       0x1043b8000 -        0x1043d4abf +strata_search (0) <3777AC6A-3C9E-3D8A-955A-C580FFDA856E> /Users/*/strata_search
+       0x18af9c000 -        0x18afeeb4b  libobjc.A.dylib (951.7) <FF1D8AE4-ABEF-35F1-A30A-1183B9CB414F> /usr/lib/libobjc.A.dylib
+       0x18afef000 -        0x18b023d07  libdyld.dylib (1378) <B147D877-D0C2-388F-B38D-D3132E39905F> /usr/lib/system/libdyld.dylib
+       0x18b024000 -        0x18b0ca217  dyld (1.0.0 - 1378) <F924BDD3-4365-3466-9580-8B1B3FA8F857> /usr/lib/dyld
+       0x18b0cb000 -        0x18b0ce228  libsystem_blocks.dylib (96) <CC947089-488D-316B-A9C7-46DEC0F73145> /usr/lib/system/libsystem_blocks.dylib
+       0x18b0cf000 -        0x18b12355f  libxpc.dylib (3102.120.13) <C40FCAE8-7A17-3D82-87CB-3DA4802ADEF1> /usr/lib/system/libxpc.dylib
+       0x18b124000 -        0x18b1449ff  libsystem_trace.dylib (1861.120.4) <D0FABAB3-5AE7-3F10-8C62-60CBF5D70850> /usr/lib/system/libsystem_trace.dylib
+       0x18b145000 -        0x18b1f35f7  libcorecrypto.dylib (1922.121.1) <A01A158D-6FE7-3B1C-A2C4-6BCB90D7314A> /usr/lib/system/libcorecrypto.dylib
+       0x18b1f4000 -        0x18b2441d7  libsystem_malloc.dylib (812.100.31) <5FAE4807-4D2B-3A95-A63A-DD96D3DA11B4> /usr/lib/system/libsystem_malloc.dylib
+       0x18b245000 -        0x18b28c23f  libdispatch.dylib (1542.100.32) <F071EFE4-299F-3089-ACC4-0025B8FFB52A> /usr/lib/system/libdispatch.dylib
+       0x18b28d000 -        0x18b28fffb  libsystem_featureflags.dylib (103) <71FCFFBD-85F8-3365-AFE0-BECEA4369122> /usr/lib/system/libsystem_featureflags.dylib
+       0x18b290000 -        0x18b310d9f  libsystem_c.dylib (1752.120.2) <694B7881-1BF3-3D0F-8F19-B50AE4E8EF8A> /usr/lib/system/libsystem_c.dylib
+       0x18b311000 -        0x18b3a1ae7  libc++.1.dylib (2100.43) <5013C0F8-84A9-3B56-9FEB-C353816A750F> /usr/lib/libc++.1.dylib
+       0x18b3a2000 -        0x18b3bc75f  libc++abi.dylib (2100.43) <E482D257-E5A0-3816-BD97-7B39342958DA> /usr/lib/libc++abi.dylib
+       0x18b3bd000 -        0x18b3fa2af  libsystem_kernel.dylib (12377.121.10) <FCA53B98-3D6A-38B2-A0EC-DF0F7E05F171> /usr/lib/system/libsystem_kernel.dylib
+       0x18b3fb000 -        0x18b407b3b  libsystem_pthread.dylib (539.100.4) <4F33683C-18C8-39A1-800B-2E3BD43BCC13> /usr/lib/system/libsystem_pthread.dylib
+       0x18b408000 -        0x18b410963  libsystem_platform.dylib (375.120.2) <160FD864-8D15-36FC-9E97-9725388CFAFE> /usr/lib/system/libsystem_platform.dylib
+       0x18b411000 -        0x18b4406eb  libsystem_info.dylib (600) <3D62F2D9-F516-31BF-83C7-E203D872300B> /usr/lib/system/libsystem_info.dylib
+       0x18f3d8000 -        0x18f3e1e5f  libsystem_darwin.dylib (1752.120.2) <8858F025-745A-388E-9544-080781CC9A69> /usr/lib/system/libsystem_darwin.dylib
+       0x18f843000 -        0x18f8551b6  libsystem_notify.dylib (348.120.4) <64D76451-1E0C-369B-A631-54DA3140E083> /usr/lib/system/libsystem_notify.dylib
+       0x191b10000 -        0x191b2af7b  libsystem_networkextension.dylib (2226.121.1) <0331EE20-A1FB-3C0D-990A-F65939CFF505> /usr/lib/system/libsystem_networkextension.dylib
+       0x191bad000 -        0x191bc4fdf  libsystem_asl.dylib (406) <F40838DF-2F15-3F62-970F-DEE25706BF1B> /usr/lib/system/libsystem_asl.dylib
+       0x19376b000 -        0x193773387  libsystem_symptoms.dylib (2169.120.7) <F5029F5C-1BF3-31C7-892E-BC8606AC829E> /usr/lib/system/libsystem_symptoms.dylib
+       0x197a0f000 -        0x197a47257  libsystem_containermanager.dylib (725.120.2) <518BE44D-AA31-31E6-B44B-A37AD5E47040> /usr/lib/system/libsystem_containermanager.dylib
+       0x198e20000 -        0x198e245d7  libsystem_configuration.dylib (1405.120.5) <0F7BBC1C-3D50-3E59-A31F-E4672A80BCEB> /usr/lib/system/libsystem_configuration.dylib
+       0x198e25000 -        0x198e2b8cf  libsystem_sandbox.dylib (2680.120.12) <EC3A75EA-44C0-3A0B-9BF7-71C117B0A9C6> /usr/lib/system/libsystem_sandbox.dylib
+       0x19a47f000 -        0x19a4821fb  libquarantine.dylib (196.120.2) <5849009B-ACA3-3796-94C4-BBDF8D300EBA> /usr/lib/system/libquarantine.dylib
+       0x19ac1e000 -        0x19ac24d03  libsystem_coreservices.dylib (191.4.5) <9576143B-C303-35A3-BA63-1FD06EDA2BB1> /usr/lib/system/libsystem_coreservices.dylib
+       0x19b1a9000 -        0x19b1e6a77  libsystem_m.dylib (3312.100.1) <A7E0863C-101A-31A0-922B-ED9B02626151> /usr/lib/system/libsystem_m.dylib
+       0x19b1e8000 -        0x19b1eb527  libmacho.dylib (1378) <755441B4-C034-3E3A-8E3C-F424FBB28261> /usr/lib/system/libmacho.dylib
+       0x19b205000 -        0x19b2123a7  libcommonCrypto.dylib (600035) <CE357BB1-2D49-37CC-9FFE-D093936B1475> /usr/lib/system/libcommonCrypto.dylib
+       0x19b213000 -        0x19b21cca3  libunwind.dylib (2100.2) <FC8F0C4E-6FB0-3E27-ABEF-B0FA720CD5E4> /usr/lib/system/libunwind.dylib
+       0x19b225000 -        0x19b22f7ff  libcopyfile.dylib (240) <8ACFAC7A-88E9-3EF4-853F-A9140FF110E5> /usr/lib/system/libcopyfile.dylib
+       0x19b230000 -        0x19b233987  libcompiler_rt.dylib (103.3) <AA79151F-C19D-3C7C-92F8-B10F04D82C1C> /usr/lib/system/libcompiler_rt.dylib
+       0x19b234000 -        0x19b23878b  libsystem_collections.dylib (1752.120.2) <72DB5BE7-EF78-37D0-8AAD-53E37CFE4287> /usr/lib/system/libsystem_collections.dylib
+       0x19b239000 -        0x19b23c4cf  libsystem_secinit.dylib (168.100.7) <E525C566-CDA4-3D99-B12B-1615FD54A1F3> /usr/lib/system/libsystem_secinit.dylib
+       0x19b23d000 -        0x19b23fbf7  libremovefile.dylib (85.100.6) <635E661D-80A7-340D-A165-3F7D318FDFC9> /usr/lib/system/libremovefile.dylib
+       0x19b240000 -        0x19b240f27  libkeymgr.dylib (31) <8C08891A-DF1C-3DCC-AB64-4742FD6BE9BA> /usr/lib/system/libkeymgr.dylib
+       0x19b241000 -        0x19b249e37  libsystem_dnssd.dylib (2881.120.11) <6F45DF3F-233B-3BC3-BA8C-B43E7DA884BF> /usr/lib/system/libsystem_dnssd.dylib
+       0x19b24a000 -        0x19b24f09b  libcache.dylib (95) <189B576E-6176-3F82-8FA4-5914B0BEAEE7> /usr/lib/system/libcache.dylib
+       0x19b250000 -        0x19b251ce3  libSystem.B.dylib (1356) <BA6A669A-3BB9-3BC7-85E8-8F0C1E68351E> /usr/lib/libSystem.B.dylib
+       0x28e50c000 -        0x28e513349  libRosetta.dylib (367.9) <8651ED4F-6506-3788-B56B-32EE414A85CA> /usr/lib/libRosetta.dylib
+       0x290129000 -        0x29012ca4b  libsystem_darwindirectory.dylib (122) <CF277A2C-C818-3F16-8B3F-3C7B39FCD164> /usr/lib/system/libsystem_darwindirectory.dylib
+       0x29012d000 -        0x2901365d3  libsystem_eligibility.dylib (319.121.1) <DDAC0531-0262-3DDC-8EC8-80EB9438847A> /usr/lib/system/libsystem_eligibility.dylib
+       0x290137000 -        0x29013e88b  libsystem_sanitizers.dylib (26.1) <44C4234F-8B2D-38D3-A774-B4B3C75AF3A7> /usr/lib/system/libsystem_sanitizers.dylib
+       0x29013f000 -        0x29013fbb7  libsystem_trial.dylib (474.2.18.2) <68C583BA-AFF5-3916-86AE-6E38BFEF98D6> /usr/lib/system/libsystem_trial.dylib
