@@ -161,6 +161,37 @@ return W sorted ascending
   concurrent `const` searches race-free without locks. The cost is 4 bytes × (largest index
   searched) per thread, kept for the thread's lifetime. The `ConcurrentSearchesMatchSerial` test
   runs 4 threads under ThreadSanitizer.
+- **Prefetching: two passes per expansion.** Most of search time is spent waiting for memory.
+  Each neighbor's vector (512 bytes for SIFT) sits at a scattered address, so on a large index
+  almost every distance starts with a cache miss. A one-pass loop pays those misses one after
+  another. `search_layer` instead expands a node in two passes:
+  1. Walk the neighbor list, mark each unvisited neighbor, remember it, and issue
+     `__builtin_prefetch` for its whole vector (one hint per 64 bytes, which covers every line
+     on both x86's 64-byte and Apple's 128-byte cache lines). The loads now overlap instead of
+     queueing.
+  2. Compute distances and update C and W for those neighbors, in list order.
+
+  Before the passes, it also prefetches the neighbor list of the node most likely to be
+  expanded next (the new top of C).
+
+  **Why results cannot change.** A prefetch is only a hint about timing. And because a neighbor
+  list holds no duplicates, marking all of them visited before computing any distance selects
+  the same neighbors, in the same order, as the one-pass loop. The C++ reference outputs
+  (`strata_reference`: both selection modes, ef 16 and 64 on SIFT10K) were bit-identical before
+  and after, and the A/B runs below found identical recall and identical graphs.
+
+  **Measured** (`bench/run_ab_search.py`: 5 interleaved before/after pairs, 5 timed passes per
+  ef per run; M2, so QPS is indicative):
+  - `results/ab/prefetch-sift1m-200k.md` (200k SIFT vectors, ~100 MB, far larger than cache):
+    about **2× QPS** at every ef_search (mean 1.80–2.12×; the worst single pair was 1.34×,
+    against 1–6% run-to-run noise), and builds 0.63× the time, since insertion runs the same
+    search.
+  - `results/ab/prefetch-siftsmall.md` (SIFT10K, 5 MB, which fits in cache): **no measurable
+    difference** (mean 0.96–1.00×, every range straddles 1). When the data is already cached,
+    the hints are nearly free.
+
+  Apple's hardware prefetchers are aggressive, so the gain on x86 may differ. It is re-measured
+  on the Ryzen in Phase 9.
 - **Entry points are a set.** Search passes one node; insertion passes all of W from the layer
   above (see `insert`).
 - **Result order.** Draining a max-heap yields descending order, so we fill the output vector back
@@ -435,8 +466,10 @@ What the curves show:
     `bench/profile_hnsw_search.sh`), so removing it could not close a 10–30% gap. Search time
     splits roughly evenly between the distance kernel (~45%) and `search_layer`'s own loop
     (~48%: heap updates, visited checks, loading neighbor lists), which points at memory access
-    rather than allocation. FAISS prefetches upcoming neighbor vectors and computes distances
-    in batches of four. Those are the next candidates, each to be measured before it is kept.
+    rather than allocation. Prefetching neighbor vectors, as FAISS and hnswlib do, then
+    doubled QPS on a 200k subset (see `search_layer` above). The SIFT1M curves in this section
+    predate it and have not been re-run; that happens with the Phase 9 runs. Batched distances
+    are the next candidate.
 - **Build (indicative).** On SIFT1M, single-threaded, Strata took about 5 minutes, FAISS about
   7, and hnswlib about 10. Strata's build is not parallel yet (Phase 3).
 
@@ -470,6 +503,7 @@ with the final runs.
 | Ties | unspecified | by heap order | by (distance, id) | Deterministic; duplicates stay well-defined |
 | Level RNG | unspecified | `std::uniform_real_distribution` | hand-built U from mt19937_64 | Same graph on libc++ and libstdc++ |
 | Visited set | a set | pool of epoch arrays | `thread_local` epoch array | Lock-free concurrent search |
+| Neighbor vectors | loaded on demand | prefetch next neighbor | prefetch all unvisited, then compute | Overlaps memory loads; results unchanged |
 | Heuristic with <= m candidates | applied | skipped (keep all) | applied | Faithful to the paper |
 | Heuristic ties d(e,r) = d(e,b) | unspecified | keep | keep | Duplicates stay connected |
 | extendCandidates / keepPrunedConnections | optional flags | not implemented | not implemented | See section 4 |

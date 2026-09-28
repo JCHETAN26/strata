@@ -56,12 +56,34 @@ class VisitedSet {
   std::uint32_t epoch_ = 0;
 };
 
-// One buffer per thread: concurrent const searches never share scratch state, so they need no
-// lock. The buffer grows to the largest index the thread has searched (4 bytes per node) and is
-// reused across searches and across indexes.
-VisitedSet& thread_visited() {
-  thread_local VisitedSet visited;
-  return visited;
+// Per-thread scratch for search_layer: concurrent const searches never share it, so they need no
+// lock. The visited marks grow to the largest index the thread has searched (4 bytes per node);
+// `unvisited` holds one neighbor list's worth of ids. Both are reused across searches and
+// indexes, so a search allocates nothing here after the first.
+struct SearchScratch {
+  VisitedSet visited;
+  std::vector<VectorId> unvisited;
+};
+
+SearchScratch& thread_scratch() {
+  thread_local SearchScratch scratch;
+  return scratch;
+}
+
+// Asks the CPU to start loading [p, p + bytes) into cache without waiting for it. A hint only:
+// it cannot change any result, only when memory arrives. One hint per 64 bytes covers every cache
+// line on x86 (64-byte lines); on Apple silicon (128-byte lines) every other hint is redundant
+// but cheap.
+inline void prefetch(const void* p, std::size_t bytes) noexcept {
+#if defined(__GNUC__) || defined(__clang__)
+  const auto* bytes_ptr = static_cast<const char*>(p);
+  for (std::size_t offset = 0; offset < bytes; offset += 64) {
+    __builtin_prefetch(bytes_ptr + offset, /*rw=*/0, /*locality=*/3);
+  }
+#else
+  (void)p;
+  (void)bytes;
+#endif
 }
 
 }  // namespace
@@ -279,7 +301,8 @@ Neighbor HnswIndex::greedy_search(std::span<const float> query, Neighbor start, 
 std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
                                               const std::vector<Neighbor>& entry_points,
                                               std::size_t ef, int layer) const {
-  VisitedSet& visited = thread_visited();
+  SearchScratch& scratch = thread_scratch();
+  VisitedSet& visited = scratch.visited;
   visited.reset(size());
   MinHeap candidates;  // C: frontier still to expand, nearest first
   MaxHeap results;     // W: best ef found so far, furthest on top
@@ -300,10 +323,25 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
       break;
     }
     candidates.pop();
+    // The next node expanded is probably the new top of C: start loading its neighbor list now,
+    // so that load overlaps this expansion. If a closer node is pushed below, the hint is wasted,
+    // never wrong.
+    if (!candidates.empty()) {
+      prefetch(link_list(candidates.top().id, layer), (capacity(layer) + 1) * sizeof(VectorId));
+    }
+    // Pass 1: mark the unvisited neighbors and ask for all their vectors at once, so the memory
+    // loads (one scattered 4*dim-byte vector each, the dominant cost) are in flight together
+    // instead of one after another. Pass 2 then computes distances in the same order a single
+    // pass would; a neighbor list has no duplicates, so marking them all first changes nothing.
+    auto& unvisited = scratch.unvisited;
+    unvisited.clear();
     for (VectorId nbr : neighbors(nearest.id, layer)) {
-      if (!visited.insert(nbr)) {
-        continue;
+      if (visited.insert(nbr)) {
+        unvisited.push_back(nbr);
+        prefetch(vector(nbr).data(), dim_ * sizeof(float));
       }
+    }
+    for (VectorId nbr : unvisited) {
       const Neighbor next{.id = nbr, .distance = dist(query, nbr)};
       // Only nodes that would enter W are worth expanding later.
       if (results.size() < ef || next < results.top()) {

@@ -1109,3 +1109,59 @@ on this subset before it is kept:
 **Went wrong**
 - The hypothesis I stated in stage (c) (per-call allocation explains the FAISS gap) was wrong. It
   was labeled as a hypothesis, and the explainer now says it was tested and refuted.
+
+## 2026-09-28: Prefetching in search_layer: ~2x QPS on a 200k subset, results unchanged
+
+**Change** (`src/index/hnsw.cpp`, `search_layer`). Each expansion now makes two passes over the
+node's neighbor list. Pass 1 marks the unvisited neighbors, remembers them in a per-thread scratch
+list, and issues `__builtin_prefetch` for each one's whole vector (one hint per 64 bytes). Pass 2
+computes distances and updates the heaps in list order. Before either pass, it prefetches the
+neighbor list of the next likely node to expand (the new top of C). The idea is that the memory
+loads the profile pointed at overlap instead of queueing.
+
+**Results cannot change, and did not.** A prefetch only affects timing. Marking a whole
+(duplicate-free) neighbor list visited before computing distances selects the same neighbors in
+the same order. Checked three ways:
+1. All 19 `strata_reference` output files on SIFT10K (brute force, PQ, filtered, and HNSW in both
+   selection modes, including the graphs they build) are bit-identical before and after.
+2. Identical recall at every ef_search in all 20 A/B runs.
+3. Identical graph statistics in all A/B runs.
+
+**Measured** with `bench/run_ab_search.py`, a new script: the before binary (`7232d6e`) and the
+after binary (`7232d6e` + `results/ab/*/b.patch`) alternate, in 5 pairs whose order flips each
+pair. Each run is a fresh process with 5 timed passes per ef. M2, so QPS is indicative.
+
+`results/ab/prefetch-sift1m-200k.md` (200k vectors, ~100 MB, far larger than cache):
+
+| ef | recall (both) | before QPS | after QPS | after / before: mean (range) |
+|---:|---:|---:|---:|---:|
+| 10 | 0.7656 | 38,882 ± 4.9% | 82,165 ± 2.3% | 2.12 (1.99-2.36) |
+| 20 | 0.8846 | 24,073 ± 6.0% | 49,408 ± 1.6% | 2.06 (1.98-2.27) |
+| 40 | 0.9564 | 14,375 ± 3.2% | 28,619 ± 4.0% | 1.99 (1.86-2.17) |
+| 80 | 0.9882 | 8,190 ± 3.0% | 16,005 ± 6.1% | 1.96 (1.73-2.08) |
+| 160 | 0.9979 | 4,577 ± 3.2% | 8,723 ± 10.5% | 1.91 (1.56-2.05) |
+| 320 | 0.9995 | 2,591 ± 3.9% | 4,666 ± 14.1% | 1.80 (1.34-2.04) |
+
+(± is the stdev across the 5 runs. The table is copied from the generated file for the log;
+the file is the source.) The worst single pair (1.34x) is still far above the run-to-run
+noise. The wider after-spread at high ef comes from one slow run (3.5k QPS at ef 320). High ef is
+the last part of each sweep, so it is most likely throttling late in that run; it lowers the mean
+without changing the conclusion. Build: 40.4 s -> 25.3 s (0.63x), since insertion runs the same
+search.
+
+`results/ab/prefetch-siftsmall.md` (SIFT10K, 5 MB, cache-resident): no measurable difference
+(mean 0.96-1.00x, every range straddles 1; build 0.6 -> 0.7 s). A two-pair smoke test had
+suggested a 0.83-0.89x slowdown there; the full protocol shows that was noise. Lesson: don't read
+a result off two runs.
+
+**Caveat: Apple's hardware prefetchers.** The M2 has aggressive hardware prefetchers, and x86
+cores behave differently (smaller 64-byte lines, different prefetchers and miss handling).
+The gain may be smaller or larger on the Ryzen, so it is re-measured there in Phase 9 before it
+is quoted as a general result. The SIFT1M curves in `results/hnsw/` predate this change and were
+not re-run on the Mac.
+
+**Thermal safeguards** as before: one heavy job at a time, `pmset -g therm` checked before and
+after every run inside the script (it stops at the first warning), and 60 s cool-downs (20 s on
+SIFT10K, where each run takes seconds). No warning was recorded.
+
+**Decision: keep.** Next candidate: batched distance computation.

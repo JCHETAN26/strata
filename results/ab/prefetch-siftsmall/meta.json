@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-09-28T21:46:19.341716+00:00",
+  "git": {
+    "commit": "7232d6ec381ac6c73067d1f28eef35bb209874af",
+    "dirty": true
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      2.06,
+      2.26,
+      2.9
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": {
+      "torch": "2.14.0",
+      "torch_cuda": null,
+      "available": false,
+      "device_count": 0,
+      "device_name": null
+    },
+    "hosted": null
+  },
+  "a_commit": "7232d6e",
+  "b_commit": "7232d6ec38",
+  "b_dirty": true,
+  "args": {
+    "name": "prefetch-siftsmall",
+    "dataset": "siftsmall",
+    "a": "/private/tmp/claude-501/-Users-chetan-Strata/43d939e7-5c25-47b6-8aed-8a05803299f5/scratchpad/ab/strata_search_before",
+    "a_label": "before",
+    "a_commit": "7232d6e",
+    "b": "/Users/chetan/Strata/build/release/bench/strata_search",
+    "b_label": "after",
+    "pairs": 5,
+    "runs": 5,
+    "M": 16,
+    "ef_construction": 200,
+    "ef_search": "10,20,40,80,160,320",
+    "cooldown": 20,
+    "report_only": false
+  }
+}
