@@ -9,6 +9,7 @@ import platform
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -170,15 +171,29 @@ def busy_processes(threshold: float = 50.0) -> list[str]:
     return busy
 
 
-def preflight(what: str) -> None:
-    """Refuse to start a heavy benchmark step on a hot or busy machine. The M2 development
-    machine is fanless and has shut down under sustained load; contention also corrupts timings."""
-    if warning := thermal_warnings():
-        raise SystemExit(f"thermal warning before {what}; stopping:\n{warning}")
-    if busy := busy_processes():
-        raise SystemExit(
-            f"other heavy processes running before {what}; stopping:\n" + "\n".join(busy)
-        )
+def preflight(what: str, max_wait: float = 300, quiet_checks: int = 3, interval: float = 5) -> None:
+    """Wait for a cool, quiet machine before a heavy benchmark step. The M2 development machine
+    is fanless and has shut down under sustained load; contention also corrupts timings.
+
+    Stops at once on a thermal warning. Otherwise waits until no other process is busy on
+    `quiet_checks` consecutive checks `interval` seconds apart, so a brief UI spike does not abort
+    a run but a sustained job (e.g. another project's test suite) does, after `max_wait` seconds.
+    """
+    deadline = time.monotonic() + max_wait
+    quiet = 0
+    while True:
+        if warning := thermal_warnings():
+            raise SystemExit(f"thermal warning before {what}; stopping:\n{warning}")
+        busy = busy_processes()
+        quiet = 0 if busy else quiet + 1
+        if quiet >= quiet_checks:
+            return
+        if time.monotonic() > deadline:
+            raise SystemExit(
+                f"other heavy processes still running after {max_wait:.0f} s, before {what}; "
+                "stopping:\n" + "\n".join(busy)
+            )
+        time.sleep(interval)
 
 
 def hardware_note(hardware: dict[str, Any]) -> str:
