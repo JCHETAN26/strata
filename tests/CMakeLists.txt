@@ -4,6 +4,7 @@ include(GoogleTest)
 add_executable(strata_tests
   bm25_test.cpp
   brute_force_test.cpp
+  bytes_test.cpp
   crash_recovery_test.cpp
   dataset_test.cpp
   distance_test.cpp
@@ -20,6 +21,8 @@ if(STRATA_HAS_HNSW)
   target_sources(strata_tests PRIVATE hnsw_test.cpp hnsw_persistence_test.cpp)
 endif()
 target_link_libraries(strata_tests PRIVATE strata::strata strata_options GTest::gtest_main)
+# Tests may use internal headers (util/bytes.hpp) as well as the public ones.
+target_include_directories(strata_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
 # Tests that need downloaded datasets look here and skip if the files are absent.
 target_compile_definitions(strata_tests PRIVATE
   STRATA_DATA_DIR="${PROJECT_SOURCE_DIR}/data"

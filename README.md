@@ -30,13 +30,18 @@ ctest --preset debug
 | `asan`    | Debug      | AddressSanitizer + UndefinedBehaviorSanitizer; run before committing memory-handling changes |
 | `tsan`    | Debug      | ThreadSanitizer; run before committing concurrency changes   |
 | `rosetta-avx2` | Debug | macOS only: x86_64 + AVX2 build run under Rosetta 2, to test AVX2 kernels on a Mac (correctness only, never timing) |
+| `linux-debug`, `linux-release`, `linux-asan`, `linux-tsan` | as above | Linux only: the same builds with GCC 13 (`/usr/bin/g++-13`) |
 
 Build output goes to `build/<preset>/`.
 
 ## Python
 
 The bindings (nanobind, built by scikit-build-core) expose brute-force search, product
-quantization, filtered search, and the distance kernels. `VCPKG_ROOT` must be set.
+quantization, filtered search, and the distance kernels. `VCPKG_ROOT` must be set. On Linux the
+module is built with `/usr/bin/g++-13` when it is installed (matching the `linux-*` presets); to
+use another compiler, pass `-C cmake.define.CMAKE_CXX_COMPILER=...` to pip (`CXX` is not used,
+since build frontends always set it). An existing `build/python/` keeps the compiler recorded in
+its CMake cache; delete it to switch.
 
 ```sh
 python3.11 -m venv .venv && source .venv/bin/activate   # or: uv venv --python 3.11

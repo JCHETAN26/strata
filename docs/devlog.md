@@ -1326,3 +1326,46 @@ predates the HNSW core, so rebuilding and testing on Linux is the first step on 
 **Next (Stage B):** `Collection` backed by HNSW (index kind and HNSW parameters stored and
 checked on reopen, per your addition 3), WAL replay into HNSW, crash tests for HNSW, and a
 save/load vs. rebuild measurement on the 200k subset.
+
+## 2026-09-29 — First Linux build (Oracle ARM, GCC 13, branch `linux-arm-check`)
+
+Oracle machine: aarch64, 4 cores, 23 GB, Ubuntu 22.04, GCC 13.4, presets `linux-debug`,
+`linux-asan`, `linux-tsan` (no preset changes needed: AVX2 is off on aarch64, NEON is baseline).
+All 216 C++ tests pass under all three presets except the golden test, with no ASan, UBSan, or
+TSan reports. Python: 114 passed, 26 skipped (datasets and the API key absent).
+
+**What went wrong**
+- **Golden snapshot does not load on Linux ("bad generator state"). Not fixed; needs a decision.**
+  libc++ writes `std::mt19937_64`'s state as the standard's 312 words; libstdc++ writes its raw
+  312-word array plus its internal index (313 numbers) and requires that index when reading. So
+  snapshots do not cross between macOS and Linux in either direction, and the comment in
+  `include/strata/hnsw.hpp` that the standard makes this format portable is wrong in practice.
+  Everything else is portable: a scratch rebuild of the golden index with GCC gives byte-identical
+  levels, neighbor lists, vectors, and tombstones, and all 200 search results match the Mac's
+  ids and float bits. Only the generator text, its length fields, and the CRC differ.
+- **UBSan: `memcpy` with a null pointer in `SectionReader::read_all`** (empty span, e.g. an empty
+  index or a level-0 node's upper lists). Undefined even for zero bytes; glibc declares `memcpy`
+  nonnull, so UBSan reports it on Linux, and macOS's libc does not. Fixed with an empty-span guard
+  (the same guard `snapshot.cpp` already has). No behavior change.
+- GCC-only warnings (`-Wmissing-field-initializers` on designated initializers in `filter.cpp`,
+  `-Wsign-conversion` on `x += c ? 1 : 0`, `-Wcomment` on a `\` in two usage comments): benign,
+  left as they are.
+- The Python extension is built by the default compiler (GCC 11.4 here), not the presets' GCC 13.
+
+**Follow-up (same branch)**
+- **One byte-copy helper.** Every `memcpy` in src and tests now goes through
+  `util::copy_bytes` (`src/util/bytes.hpp`), which skips zero-length copies; there were no
+  `memmove` calls. Audit: 12 sites. The fixed-size ones (`sizeof(T)` into or out of a local) were
+  already safe, and the check folds away for a constant length. The ones that could see an empty
+  buffer were the two already guarded by hand (`snapshot.cpp`, `hnsw.cpp`), which now use the
+  helper, the WAL replay copy (safe today only because `dim > 0` is validated), and a test reading
+  a possibly empty file. `tests/bytes_test.cpp` covers the helper; with its guard removed, the
+  asan preset reports it. The test uses a runtime length because GCC deletes a `memcpy` whose
+  length is the constant 0 before UBSan sees it.
+- **Python extension built with GCC 13 on Linux.** `CMakeLists.txt` picks `/usr/bin/g++-13` for
+  `STRATA_BUILD_PYTHON` builds on Linux when it exists and no `CMAKE_CXX_COMPILER` was given, so
+  Kaggle (no GCC 13) keeps its default and macOS is untouched. `CXX` can't be the opt-out: uv's
+  build environment sets `CXX=c++` from Python's sysconfig, which made a first version (that
+  deferred to `CXX`) silently keep GCC 11. Verified: `strata.build_info()` reports GNU 13.4.0.
+  The only GCC 11 code left in the module is vcpkg's `libutf8proc.a` (a C library vcpkg builds
+  with the system compiler), the same as in the preset builds.

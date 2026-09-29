@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstring>
 #include <functional>
 #include <limits>
 #include <locale>
@@ -14,6 +13,8 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+
+#include "util/bytes.hpp"
 
 namespace strata {
 
@@ -445,7 +446,7 @@ class SectionReader {
     if (rest_.size() < sizeof(T)) {
       return false;
     }
-    std::memcpy(&value, rest_.data(), sizeof(T));
+    util::copy_bytes(&value, rest_.data(), sizeof(T));
     rest_ = rest_.subspan(sizeof(T));
     return true;
   }
@@ -455,7 +456,9 @@ class SectionReader {
     if (rest_.size() / sizeof(T) < out.size()) {
       return false;
     }
-    std::memcpy(out.data(), rest_.data(), out.size_bytes());
+    // An empty span (an empty index, a level-0 node's upper lists) may have a null data();
+    // copy_bytes makes that zero-length copy safe.
+    util::copy_bytes(out.data(), rest_.data(), out.size_bytes());
     rest_ = rest_.subspan(out.size_bytes());
     return true;
   }

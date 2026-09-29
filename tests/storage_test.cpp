@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -15,6 +14,7 @@
 #include "strata/snapshot.hpp"
 #include "strata/wal.hpp"
 #include "test_util.hpp"
+#include "util/bytes.hpp"
 
 namespace strata {
 namespace {
@@ -186,7 +186,7 @@ TEST_F(SnapshotTest, ReadsVersion1Files) {
   put(std::uint8_t{0b00100});  // id 2 deleted
   put(crc32c(buf));
   std::vector<char> raw(buf.size());
-  std::memcpy(raw.data(), buf.data(), buf.size());
+  util::copy_bytes(raw.data(), buf.data(), buf.size());
   write_file(dir_ / "v1.bin", raw);
 
   auto r = read_snapshot(dir_ / "v1.bin");
