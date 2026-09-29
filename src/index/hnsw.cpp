@@ -6,10 +6,13 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <functional>
 #include <limits>
+#include <locale>
 #include <queue>
 #include <ranges>
+#include <sstream>
 #include <string>
 
 namespace strata {
@@ -161,23 +164,49 @@ Expected<std::vector<Neighbor>> HnswIndex::search(std::span<const float> query, 
   if (query.size() != dim_) {
     return dimension_error(dim_, query.size());
   }
-  if (k == 0 || !entry_point_) {
+  // With no live nodes there is nothing to return; without this check the search below would
+  // walk the whole (all-deleted) graph looking for one.
+  if (k == 0 || live_size() == 0) {
     return std::vector<Neighbor>{};
   }
-  // Upper layers: one greedy walk per layer; the closest node found seeds the layer below.
+  // Upper layers: one greedy walk per layer; the closest node found seeds the layer below. Deleted
+  // nodes are fine to walk through: this phase only navigates.
   Neighbor entry{.id = *entry_point_, .distance = dist(query, *entry_point_)};
   for (int layer = max_level_; layer > 0; --layer) {
     entry = greedy_search(query, entry, layer);
   }
-  // Layer 0: beam search. The beam can never be narrower than k, or we could not return k.
-  auto results = search_layer(query, {entry}, std::max(ef_search, k), 0);
+  // Layer 0: beam search. The beam can never be narrower than k, or we could not return k. The
+  // tombstone-aware version is used only when there are tombstones, so an index without deletes
+  // pays nothing for them.
+  const std::size_t ef = std::max(ef_search, k);
+  auto results = num_deleted_ == 0 ? search_layer<false>(query, {entry}, ef, 0)
+                                   : search_layer<true>(query, {entry}, ef, 0);
   if (results.size() > k) {
     results.resize(k);
   }
   return results;
 }
 
+Expected<void> HnswIndex::remove(VectorId id) {
+  if (id >= size()) {
+    return make_error(ErrorCode::kNotFound, "no vector with id " + std::to_string(id));
+  }
+  if (deleted_[id] != 0) {
+    return make_error(ErrorCode::kNotFound, "vector " + std::to_string(id) + " already deleted");
+  }
+  // Only the tombstone: the node keeps its links and stays reachable for navigation.
+  deleted_[id] = 1;
+  ++num_deleted_;
+  return {};
+}
+
 std::size_t HnswIndex::size() const noexcept { return levels_.size(); }
+std::size_t HnswIndex::live_size() const noexcept { return size() - num_deleted_; }
+
+bool HnswIndex::is_deleted(VectorId id) const noexcept {
+  assert(id < size());
+  return deleted_[id] != 0;
+}
 std::size_t HnswIndex::dim() const noexcept { return dim_; }
 Metric HnswIndex::metric() const noexcept { return metric_; }
 const HnswParams& HnswIndex::params() const noexcept { return params_; }
@@ -209,6 +238,7 @@ VectorId HnswIndex::insert(std::span<const float> values) {
 
   data_.insert(data_.end(), values.begin(), values.end());
   levels_.push_back(static_cast<std::uint8_t>(level));
+  deleted_.push_back(0);
   links0_.resize(links0_.size() + (max_links0_ + 1), 0);
   upper_links_.emplace_back(static_cast<std::size_t>(level) * (params_.M + 1));
   const auto query = vector(id);
@@ -230,7 +260,9 @@ VectorId HnswIndex::insert(std::span<const float> values) {
   // seeds the next layer down, as in the paper (hnswlib passes only the closest one).
   std::vector<Neighbor> entry_points{entry};
   for (int layer = std::min(level, max_level_); layer >= 0; --layer) {
-    auto candidates = search_layer(query, entry_points, params_.ef_construction, layer);
+    // Deleted nodes are still candidates: they stay in the graph for navigation, and keeping
+    // them makes the graph independent of which deletes happened.
+    auto candidates = search_layer<false>(query, entry_points, params_.ef_construction, layer);
     auto selected = candidates;
     // M new links on every layer, including layer 0; layer 0's larger capacity (2M) leaves
     // room for the back-links later nodes add.
@@ -263,6 +295,7 @@ int HnswIndex::random_level() {
 void HnswIndex::reserve(std::size_t n) {
   data_.reserve(n * dim_);
   levels_.reserve(n);
+  deleted_.reserve(n);
   links0_.reserve(n * (max_links0_ + 1));
   upper_links_.reserve(n);
 }
@@ -297,7 +330,9 @@ Neighbor HnswIndex::greedy_search(std::span<const float> query, Neighbor start, 
   }
 }
 
-// Paper Algorithm 2 (SEARCH-LAYER).
+// Paper Algorithm 2 (SEARCH-LAYER). With kSkipDeleted, deleted nodes are expanded (they still
+// lead to live ones) but never enter W, so only live nodes are returned.
+template <bool kSkipDeleted>
 std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
                                               const std::vector<Neighbor>& entry_points,
                                               std::size_t ef, int layer) const {
@@ -306,21 +341,40 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
   visited.reset(size());
   MinHeap candidates;  // C: frontier still to expand, nearest first
   MaxHeap results;     // W: best ef found so far, furthest on top
-  for (const Neighbor& entry : entry_points) {
-    visited.insert(entry.id);
-    candidates.push(entry);
-    results.push(entry);
+  const auto keep = [&](const Neighbor& n) {
+    if constexpr (kSkipDeleted) {
+      if (deleted_[n.id] != 0) {
+        return;
+      }
+    }
+    results.push(n);
     if (results.size() > ef) {
       results.pop();
     }
+  };
+  for (const Neighbor& entry : entry_points) {
+    visited.insert(entry.id);
+    candidates.push(entry);
+    keep(entry);
   }
 
   while (!candidates.empty()) {
     const Neighbor nearest = candidates.top();
     // The nearest unexpanded node is further than everything we keep, and expanding only moves
     // outward from it, so nothing left in C can improve W.
-    if (results.top() < nearest) {
-      break;
+    if constexpr (kSkipDeleted) {
+      // With tombstones, deleted nodes sit in C but not in W, so W can be short of ef while C
+      // holds nodes beyond W's furthest. Stopping then would return fewer live results than
+      // exist nearby, so the rule applies only once W is full: until then the search keeps
+      // widening. (Without tombstones the two rules agree: while W is not full, every node in C is
+      // also in W, so C's nearest can never lie beyond W's furthest.)
+      if (results.size() >= ef && results.top() < nearest) {
+        break;
+      }
+    } else {
+      if (results.top() < nearest) {
+        break;
+      }
     }
     candidates.pop();
     // The next node expanded is probably the new top of C: start loading its neighbor list now,
@@ -343,13 +397,11 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
     }
     for (VectorId nbr : unvisited) {
       const Neighbor next{.id = nbr, .distance = dist(query, nbr)};
-      // Only nodes that would enter W are worth expanding later.
+      // Only nodes that would enter W are worth expanding later. (A deleted node that qualifies
+      // is expanded but not kept.)
       if (results.size() < ef || next < results.top()) {
         candidates.push(next);
-        results.push(next);
-        if (results.size() > ef) {
-          results.pop();
-        }
+        keep(next);
       }
     }
   }
@@ -361,6 +413,215 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
     results.pop();
   }
   return sorted;
+}
+
+// --- Persistence ---------------------------------------------------------------------------------
+
+namespace {
+
+constexpr std::uint32_t kGraphVersion = 1;
+constexpr std::uint32_t kNoEntryPoint = 0xFFFFFFFF;
+
+template <typename T>
+void put(std::vector<std::byte>& out, const T& value) {
+  const auto* p = reinterpret_cast<const std::byte*>(&value);
+  out.insert(out.end(), p, p + sizeof(T));
+}
+
+template <typename T>
+void put_all(std::vector<std::byte>& out, std::span<const T> values) {
+  const auto bytes = std::as_bytes(values);
+  out.insert(out.end(), bytes.begin(), bytes.end());
+}
+
+// Reads the index section front to back. Every read is bounds-checked against what is left, so a
+// truncated or lying section fails cleanly instead of reading past the buffer.
+class SectionReader {
+ public:
+  explicit SectionReader(std::span<const std::byte> bytes) : rest_(bytes) {}
+
+  template <typename T>
+  bool read(T& value) {
+    if (rest_.size() < sizeof(T)) {
+      return false;
+    }
+    std::memcpy(&value, rest_.data(), sizeof(T));
+    rest_ = rest_.subspan(sizeof(T));
+    return true;
+  }
+  // Fills `out` (already sized) from the section.
+  template <typename T>
+  bool read_all(std::span<T> out) {
+    if (rest_.size() / sizeof(T) < out.size()) {
+      return false;
+    }
+    std::memcpy(out.data(), rest_.data(), out.size_bytes());
+    rest_ = rest_.subspan(out.size_bytes());
+    return true;
+  }
+  [[nodiscard]] bool done() const noexcept { return rest_.empty(); }
+
+ private:
+  std::span<const std::byte> rest_;
+};
+
+tl::unexpected<Error> bad_graph(const std::string& what) {
+  return make_error(ErrorCode::kCorruptData, "HNSW snapshot: " + what);
+}
+
+}  // namespace
+
+Snapshot HnswIndex::to_snapshot(std::uint64_t last_lsn) const {
+  Snapshot snapshot;
+  snapshot.metric = metric_;
+  snapshot.index = IndexKind::kHnsw;
+  snapshot.last_lsn = last_lsn;
+  snapshot.vectors = Matrix<float>(size(), dim_, data_);
+  snapshot.deleted = deleted_;
+
+  auto& out = snapshot.index_data;
+  put(out, kGraphVersion);
+  put(out, params_.selection == NeighborSelection::kSimple ? std::uint32_t{0} : std::uint32_t{1});
+  put(out, static_cast<std::uint64_t>(params_.M));
+  put(out, static_cast<std::uint64_t>(params_.ef_construction));
+  put(out, params_.seed);
+  put(out, static_cast<std::int32_t>(max_level_));
+  put(out, entry_point_.value_or(kNoEntryPoint));
+  // The level generator's exact position, so the levels drawn after a load continue the same
+  // sequence. The text form is specified by the standard; the classic locale keeps it free of
+  // digit grouping whatever the process locale is.
+  std::ostringstream rng_text;
+  rng_text.imbue(std::locale::classic());
+  rng_text << rng_;
+  const std::string text = rng_text.str();
+  put(out, static_cast<std::uint32_t>(text.size()));
+  put_all(out, std::span(text));
+  put_all(out, std::span(levels_));
+  put_all(out, std::span(links0_));
+  for (std::size_t id = 0; id < size(); ++id) {
+    put_all(out, std::span(upper_links_[id]));
+  }
+  return snapshot;
+}
+
+Expected<HnswIndex> HnswIndex::from_snapshot(const Snapshot& snapshot) {
+  if (snapshot.index != IndexKind::kHnsw) {
+    return make_error(ErrorCode::kInvalidArgument, "not an HNSW snapshot");
+  }
+  const std::size_t count = snapshot.vectors.rows();
+  if (snapshot.deleted.size() != count || count > std::numeric_limits<VectorId>::max()) {
+    return bad_graph("bad node count");
+  }
+  SectionReader in(snapshot.index_data);
+  std::uint32_t version = 0;
+  std::uint32_t selection = 0;
+  std::uint64_t m = 0;
+  std::uint64_t ef_construction = 0;
+  std::uint64_t seed = 0;
+  std::int32_t max_level = 0;
+  std::uint32_t entry = 0;
+  std::uint32_t rng_bytes = 0;
+  if (!in.read(version) || !in.read(selection) || !in.read(m) || !in.read(ef_construction) ||
+      !in.read(seed) || !in.read(max_level) || !in.read(entry) || !in.read(rng_bytes)) {
+    return bad_graph("truncated header");
+  }
+  if (version != kGraphVersion) {
+    return bad_graph("unsupported graph version " + std::to_string(version));
+  }
+  if (selection > 1) {
+    return bad_graph("bad neighbor selection");
+  }
+  // create() applies the same parameter checks as for a new index.
+  auto index = create(
+      snapshot.vectors.cols(), snapshot.metric,
+      {.M = m,
+       .ef_construction = ef_construction,
+       .seed = seed,
+       .selection = selection == 0 ? NeighborSelection::kSimple : NeighborSelection::kHeuristic});
+  if (!index) {
+    return bad_graph("bad parameters: " + index.error().message);
+  }
+  HnswIndex& h = *index;
+
+  std::string text(rng_bytes, '\0');
+  if (!in.read_all(std::span(text))) {
+    return bad_graph("truncated generator state");
+  }
+  std::istringstream rng_text(text);
+  rng_text.imbue(std::locale::classic());
+  rng_text >> h.rng_;
+  if (rng_text.fail() || !(rng_text >> std::ws).eof()) {
+    return bad_graph("bad generator state");
+  }
+
+  h.levels_.resize(count);
+  if (!in.read_all(std::span(h.levels_))) {
+    return bad_graph("truncated levels");
+  }
+  // (2M + 1) is at most ~2^31 (create() capped M), so this only needs a guard against a huge count.
+  const std::size_t stride = h.max_links0_ + 1;
+  if (count != 0 && stride > std::numeric_limits<std::size_t>::max() / count) {
+    return bad_graph("layer-0 size overflows");
+  }
+  h.links0_.resize(count * stride);
+  if (!in.read_all(std::span(h.links0_))) {
+    return bad_graph("truncated layer-0 lists");
+  }
+  h.upper_links_.resize(count);
+  for (std::size_t id = 0; id < count; ++id) {
+    h.upper_links_[id].resize(static_cast<std::size_t>(h.levels_[id]) * (h.params_.M + 1));
+    if (!in.read_all(std::span(h.upper_links_[id]))) {
+      return bad_graph("truncated upper-layer lists");
+    }
+  }
+  if (!in.done()) {
+    return bad_graph("trailing bytes");
+  }
+
+  // Structure: enough to guarantee that search and insert only touch valid memory.
+  const int top = count == 0 ? -1 : *std::ranges::max_element(h.levels_);
+  if (max_level != top) {
+    return bad_graph("max level does not match node levels");
+  }
+  if (count == 0 ? entry != kNoEntryPoint
+                 : entry >= count || static_cast<int>(h.levels_[entry]) != max_level) {
+    return bad_graph("entry point is not a node on the top layer");
+  }
+  for (std::size_t id = 0; id < count; ++id) {
+    for (int layer = 0; layer <= h.levels_[id]; ++layer) {
+      const VectorId* list = h.link_list(static_cast<VectorId>(id), layer);
+      if (list[0] > h.capacity(layer)) {
+        return bad_graph("neighbor count over capacity at node " + std::to_string(id));
+      }
+      for (VectorId i = 1; i <= list[0]; ++i) {
+        if (list[i] >= count || h.levels_[list[i]] < layer) {
+          return bad_graph("neighbor not on its layer at node " + std::to_string(id));
+        }
+      }
+    }
+  }
+
+  const auto values = snapshot.vectors.data();
+  h.data_.assign(values.begin(), values.end());
+  h.deleted_ = snapshot.deleted;
+  h.num_deleted_ = static_cast<std::size_t>(std::ranges::count(h.deleted_, std::uint8_t{1}));
+  h.max_level_ = max_level;
+  if (count != 0) {
+    h.entry_point_ = entry;
+  }
+  return index;
+}
+
+Expected<void> HnswIndex::save(const std::filesystem::path& path) const {
+  return write_snapshot(path, to_snapshot());
+}
+
+Expected<HnswIndex> HnswIndex::load(const std::filesystem::path& path) {
+  auto snapshot = read_snapshot(path);
+  if (!snapshot) {
+    return tl::unexpected(snapshot.error());
+  }
+  return from_snapshot(*snapshot);
 }
 
 // --- Links ---------------------------------------------------------------------------------------

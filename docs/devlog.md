@@ -1276,3 +1276,53 @@ final ARM numbers on Oracle; then README, design doc, and going public. PQ-in-HN
 commit, and extra BEIR datasets are marked optional. One item was not placed and needs a
 decision: HotpotQA answer groundedness on the full 5.2M corpus. The Linux build (2026-09-25)
 predates the HNSW core, so rebuilding and testing on Linux is the first step on the Oracle machine.
+
+## 2026-09-28: HNSW Stage A: tombstone deletes and snapshot save/load
+
+**Done**
+- **Snapshot format version 2** (`include/strata/snapshot.hpp`): a byte-order mark
+  (`0x01020304`, checked on load; the opposite order is named in the error), an index-kind field,
+  and an index section, still under one CRC32C and one atomic write. Version 1 files still read, as
+  flat snapshots, and unknown versions are rejected. Host byte order and IEEE floats are
+  `static_assert`ed. Sizes read from the file are guarded against overflow.
+- **HNSW deletes** (`remove`, `is_deleted`, `live_size`): tombstones only. Deleted nodes are still
+  traversed, and inserts still link to them, so the graph depends only on the inserts. The
+  trade-offs (no memory reclaimed, searches slow under heavy deletion, rebuild as the remedy) are
+  documented in `hnsw.hpp` and in explainer section 9.
+- **Heavy deletion (your addition 1): the search widens automatically.** In the tombstone-aware
+  `search_layer`, deleted nodes are expanded but never enter W, and the stopping rule applies only
+  once W holds ef live nodes. With 95% deleted and ef = k = 10, every query still returns 10 live
+  results (recall at least 0.9 on the live set). With 7 live nodes, all 7 come back in brute-force
+  order. With everything deleted, a search returns immediately. Without deletes the plain
+  instantiation keeps the paper's rule exactly: all 19 `strata_reference` files are bit-identical
+  to `840f88b`.
+- **HNSW persistence** (`to_snapshot`/`from_snapshot`, `save`/`load`): parameters, levels, every
+  list, entry point, tombstones, and the level generator's state (the standard-specified text form
+  of `std::mt19937_64`, classic locale). Loading validates structure (bounds-checked reads;
+  parameters; max level and entry point; list counts within capacity; neighbor ids exist on their
+  layer), so a damaged file fails to load rather than crashing a later search.
+- **Python:** `HnswIndex.remove`, `is_deleted`, `live_count`, `save`, `HnswIndex.load` (str or
+  `pathlib.Path`).
+
+**Tests** (26 new C++, 4 new Python)
+- Save then load is bit-identical: graph and search results (ids and float bits) for L2, IP, and
+  cosine, and for both selection modes.
+- Save, load, then add equals never saving: same checks. A deliberate mutation (parsing but not
+  restoring the generator state) made all 4 cases fail, so the test catches the thing it is for.
+- Corrupt files: a flipped byte, an unknown snapshot version, the opposite byte order, an unknown
+  graph version, an entry point out of range, a neighbor id out of range, a count over capacity,
+  and a truncated or padded section. The structural cases recompute the CRC so they reach the
+  structural checks.
+- Deletes: errors and counts, never returned, recall on the live set at 30% deleted, a deleted
+  entry point, 95% deleted, fewer live nodes than k, everything deleted, and deletes not changing
+  the graph.
+- **Cross-machine (your addition 2):** `tests/golden/hnsw_v2.snap` (49 KB) and its expected results
+  were written on the Mac. `HnswGolden.LoadsBitIdenticallyOnThisMachine` must reproduce them bit for
+  bit on every machine, and rebuild the identical graph from the same vectors and seed. The
+  vectors are small integers, so all SIMD kernels give identical exact distances. Regenerate with
+  `STRATA_WRITE_GOLDEN=1` only after a deliberate format change. It runs on Linux for the first
+  time on the Oracle machine.
+
+**Next (Stage B):** `Collection` backed by HNSW (index kind and HNSW parameters stored and
+checked on reopen, per your addition 3), WAL replay into HNSW, crash tests for HNSW, and a
+save/load vs. rebuild measurement on the 200k subset.

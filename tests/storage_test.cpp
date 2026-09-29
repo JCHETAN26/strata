@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cstring>
 #include <filesystem>
@@ -159,6 +160,43 @@ TEST_F(SnapshotTest, EveryFlippedByteIsDetected) {
     ASSERT_FALSE(r) << "flip at byte " << i << " not detected";
     EXPECT_EQ(r.error().code, ErrorCode::kCorruptData);
   }
+}
+
+// Files written before format version 2 (48-byte header, no byte-order mark or index section)
+// still load, as flat snapshots.
+TEST_F(SnapshotTest, ReadsVersion1Files) {
+  const auto vectors = test::random_matrix(5, 3, 9);
+  std::vector<std::byte> buf;
+  const auto put = [&](const auto& value) {
+    const auto* p = reinterpret_cast<const std::byte*>(&value);
+    buf.insert(buf.end(), p, p + sizeof(value));
+  };
+  for (char c : {'S', 'T', 'R', 'S', 'N', 'P', '\0', '\1'}) {
+    put(c);
+  }
+  put(std::uint32_t{1});                                   // version
+  put(static_cast<std::uint32_t>(Metric::kInnerProduct));  // metric
+  put(std::uint32_t{3});                                   // dim
+  put(std::uint32_t{0});                                   // zero
+  put(std::uint64_t{5});                                   // count
+  put(std::uint64_t{42});                                  // last_lsn
+  put(std::uint64_t{1});                                   // num_deleted
+  const auto values = std::as_bytes(vectors.data());
+  buf.insert(buf.end(), values.begin(), values.end());
+  put(std::uint8_t{0b00100});  // id 2 deleted
+  put(crc32c(buf));
+  std::vector<char> raw(buf.size());
+  std::memcpy(raw.data(), buf.data(), buf.size());
+  write_file(dir_ / "v1.bin", raw);
+
+  auto r = read_snapshot(dir_ / "v1.bin");
+  ASSERT_TRUE(r) << r.error().message;
+  EXPECT_EQ(r->index, IndexKind::kFlat);
+  EXPECT_EQ(r->metric, Metric::kInnerProduct);
+  EXPECT_EQ(r->last_lsn, 42U);
+  EXPECT_TRUE(std::ranges::equal(r->vectors.data(), vectors.data()));
+  EXPECT_EQ(r->deleted, (std::vector<std::uint8_t>{0, 0, 1, 0, 0}));
+  EXPECT_TRUE(r->index_data.empty());
 }
 
 TEST_F(SnapshotTest, TruncationIsDetected) {

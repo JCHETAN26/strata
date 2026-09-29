@@ -17,12 +17,13 @@ add_executable(strata_tests
   text_test.cpp
   thread_pool_test.cpp)
 if(STRATA_HAS_HNSW)
-  target_sources(strata_tests PRIVATE hnsw_test.cpp)
+  target_sources(strata_tests PRIVATE hnsw_test.cpp hnsw_persistence_test.cpp)
 endif()
 target_link_libraries(strata_tests PRIVATE strata::strata strata_options GTest::gtest_main)
 # Tests that need downloaded datasets look here and skip if the files are absent.
 target_compile_definitions(strata_tests PRIVATE
-  STRATA_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
+  STRATA_DATA_DIR="${PROJECT_SOURCE_DIR}/data"
+  STRATA_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 gtest_discover_tests(strata_tests)
 
 # Writes C++ results for tests/python/test_bindings.py to compare the Python bindings against.

@@ -5,11 +5,11 @@ line by line. It follows Malkov & Yashunin, *Efficient and robust approximate ne
 search using Hierarchical Navigable Small World graphs* (TPAMI 2018). "Algorithm N" always means
 the paper's pseudocode.
 
-Status: **stage (c)**: levels, layer search, insertion, and the paper's neighbor-selection
-heuristic (the default), with closest-M selection kept as a switchable baseline. Bound in Python
-and measured against hnswlib and FAISS on SIFT10K and SIFT1M (section 6). The measurements are
-Mac development results: recall is final, speed is indicative until the Phase 9 runs on
-dedicated hardware.
+Status: levels, layer search, insertion, and the paper's neighbor-selection heuristic (the
+default), with closest-M selection kept as a switchable baseline; tombstone deletes and snapshot
+save/load (section 9). Bound in Python and measured against hnswlib and FAISS on SIFT10K, SIFT1M,
+and a 200k subset (section 6). The measurements are Mac development results: recall is final,
+speed is indicative until the Phase 9 runs on dedicated hardware.
 
 ---
 
@@ -192,6 +192,10 @@ return W sorted ascending
 
   Apple's hardware prefetchers are aggressive, so the gain on x86 may differ. It is re-measured
   on the Ryzen in Phase 9.
+- **Tombstones (`kSkipDeleted`).** `search_layer` is a template with two instantiations. The
+  plain one is used by inserts, and by searches when nothing is deleted. The tombstone-aware one
+  expands deleted nodes but never lets them into W, and applies the stopping rule only once W is
+  full (section 9 explains why). An index with no deletes pays nothing for the check.
 - **Entry points are a set.** Search passes one node; insertion passes all of W from the layer
   above (see `insert`).
 - **Result order.** Draining a max-heap yields descending order, so we fill the output vector back
@@ -487,10 +491,11 @@ with the final runs.
 
 - **Concurrent searches are safe.** `search` and every accessor are `const` and only read the
   index. Their only scratch state, the visited set, is `thread_local`.
-- **Inserts are single-writer.** `add`/`add_batch` need exclusive access: no other call,
+- **Writes are single-writer.** `add`/`add_batch`/`remove` need exclusive access: no other call,
   including searches, may run at the same time. A concurrent insert rewrites neighbor lists that a
   search may be reading, and it can reallocate `data_`, `links0_`, and `upper_links_`. The Python
-  bindings enforce this with a `shared_mutex`: searches take it shared, `add` takes it exclusive.
+  bindings enforce this with a `shared_mutex`: searches and `save` take it shared; `add` and
+  `remove` take it exclusive. `save` only reads, so it may run alongside searches.
 - **Why not concurrent inserts now?** It needs a lock per node (hnswlib's approach), a
   preallocated capacity so arrays never move, and care with the entry point. That is Phase 3
   (parallel build), after the single-threaded version is measured.
@@ -510,3 +515,110 @@ with the final runs.
 | Heuristic with <= m candidates | applied | skipped (keep all) | applied | Faithful to the paper |
 | Heuristic ties d(e,r) = d(e,b) | unspecified | keep | keep | Duplicates stay connected |
 | extendCandidates / keepPrunedConnections | optional flags | not implemented | not implemented | See section 4 |
+| Deletes | not covered | tombstones (`markDelete`) | tombstones | Same trade-off; section 9 |
+| Search under many deletes | not covered | W holds live nodes only | W holds live nodes; stop rule waits until W is full | Still returns k live results |
+
+---
+
+## 9. Deletes and persistence
+
+### Deletes are tombstones
+
+`remove(id)` sets one byte per node (`deleted_`) and bumps a counter. Nothing else changes: the
+node keeps its vector and all its links, other nodes keep their links to it, and later inserts
+may still pick it as a neighbor.
+
+- **Why keep it in the graph?** Removing a node properly means repairing every list that points
+  at it. Without that repair, the neighbors that relied on it could be cut off from the rest of the
+  graph (the connectivity problem of section 4). A tombstone keeps the graph as navigable as it
+  was. hnswlib's `markDelete` works the same way.
+- **Why let inserts link to deleted nodes?** Then the graph depends only on what was inserted,
+  never on which deletes happened (`DeletesDoNotChangeTheGraph`). That keeps save/load and
+  write-ahead-log replay simple: replaying the inserts rebuilds exactly the same graph.
+- **The trade-offs.** Memory is never reclaimed: a deleted node costs as much as a live one. And
+  a search pays to walk through deleted nodes. With a few percent deleted this is negligible. With
+  most of the index deleted, a search has to expand many dead nodes to find k live ones, up to a
+  scan of the whole graph when nearly everything is deleted. The remedy is a rebuild: add the live
+  vectors to a new index. Automatic compaction is not implemented.
+
+### Search with tombstones: why the stopping rule changes
+
+In `search_layer<true>`, a deleted node that qualifies is pushed into C (so the search can walk
+through it) but not into W (so it is never returned). The paper's stopping rule, "stop when C's
+nearest is further than W's furthest", assumes every node in C was also offered to W. With
+tombstones that no longer holds: W can hold only 3 live nodes while C holds deleted nodes beyond
+them, and stopping there would return 3 results when k = 10 live results exist a few hops away.
+So with tombstones the rule applies only once **W is full** (ef live nodes). Until then the
+search keeps widening.
+
+Without tombstones the two rules agree. While W is not full, every node ever pushed into C is
+also in W, so C's nearest can never be beyond W's furthest. The plain instantiation keeps the
+paper's rule exactly, and the C++ reference outputs stayed bit-identical.
+
+Results: a search returns min(k, live nodes reachable from the entry point). Deleted nodes are
+still traversed, so reachability does not shrink as nodes are deleted. Tests: with 95% deleted and
+ef_search = k = 10, every query still returns 10 live results (recall at least 0.9 against brute
+force over the live set). With 7 live nodes, all 7 come back in exact brute-force order. With
+everything deleted, a search returns immediately with nothing (`live_size() == 0`), instead of
+walking the whole dead graph.
+
+### Persistence: what is saved and why
+
+`save` writes a snapshot, format version 2 (`include/strata/snapshot.hpp`): header, vectors,
+tombstone bitmap, and an index section that holds the graph (format in `include/strata/hnsw.hpp`).
+It is one file with one CRC32C, written atomically (temp file, sync, rename, directory sync), so a
+crash during `save` leaves either the old file or the new one, never a mix.
+
+The index section holds **everything needed to keep building**, not only to search:
+
+| Saved | Why search needs it | Why further inserts need it |
+|---|---|---|
+| Parameters (M, ef_construction, seed, selection) | M sets list capacities | Same insert behavior |
+| Levels, layer-0 and upper-layer lists | The graph itself | Neighbors for new links, pruning |
+| Entry point, max level | Where search starts | Where inserts start |
+| **Level generator state** | Not needed | **The next node's level** |
+
+The last row is the subtle one. Levels come from `std::mt19937_64`. Seeded afresh after a load,
+node 1001 would get the level that node 1 got, the graph would diverge from never saving, and
+`SaveLoadThenAddEqualsNeverSaving` would fail. That test does fail when the state is dropped (a
+deliberate mutation during development broke all four cases). The state is stored in the engine's
+text form, which the C++ standard specifies exactly, so a snapshot written by libc++ (macOS)
+restores identically under libstdc++ (Linux). The classic locale is imposed on the stream so a
+process-wide locale with digit grouping cannot change the text.
+
+### Loading defensively
+
+A checksum catches accidental damage, but not a file written by a buggy version. And a bad
+neighbor id is not a wrong answer, it is an out-of-bounds read the next time a search follows it.
+`from_snapshot` therefore checks, before returning an index:
+- every read is bounds-checked (a truncated or padded section fails; sizes from the file are
+  guarded against overflow);
+- the parameters pass the same checks as `create()`;
+- `max_level` equals the largest node level, and the entry point is a node on that level;
+- every list's count is within its layer's capacity, and every neighbor id is a node that exists
+  on that layer.
+
+That is enough for search and insert to touch only valid memory. It does not re-verify every
+invariant (for example, duplicate links are harmless, since the visited set skips them), which
+keeps loading linear in the graph size.
+
+### Byte order and cross-machine files
+
+The format is little-endian with IEEE 754 floats. Both are `static_assert`ed at compile time
+(every supported host qualifies), and the header carries a byte-order mark, `0x01020304`,
+checked on load. A file from a big-endian writer reads as `0x04030201` and is rejected with that
+message instead of being misread.
+
+`tests/golden/hnsw_v2.snap` was written on the Mac and is committed. On every machine that runs the
+suite, `HnswGolden.LoadsBitIdenticallyOnThisMachine` loads it and must reproduce the stored results
+bit for bit. It also rebuilds the same graph from the same vectors and seed, which must equal the
+file, so it checks that level assignment and neighbor selection are platform-independent. The
+vectors are small integers, so NEON, AVX2, and scalar kernels all compute the same exact
+distances. The test passes on the Mac. It first runs on Linux in the first session on the Oracle
+machine.
+
+### Known limit
+
+Loading reads the whole file, then copies the vectors into the index, so peak memory is about
+twice the index size. That is fine up to SIFT1M on the Mac. The AWS machine for the 10M run has
+enough memory, so streaming loads are deferred.

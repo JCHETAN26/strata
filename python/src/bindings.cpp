@@ -15,14 +15,17 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 
 #include <cstdint>
+#include <filesystem>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -1253,6 +1256,57 @@ exclusive lock, so inserts are serialized.)doc")
             return id_range(first, rows.view.rows());
           },
           "vectors"_a, "Insert vectors; returns their ids. Exclusive lock: adds are serialized.")
+      .def(
+          "remove",
+          [](PyHnsw& self, std::int64_t id) {
+            if (id < 0 || id > std::numeric_limits<strata::VectorId>::max()) {
+              throw nb::key_error(("no vector with id " + std::to_string(id)).c_str());
+            }
+            nb::gil_scoped_release release;
+            const std::unique_lock lock(self.mutex);
+            unwrap(self.index.remove(static_cast<strata::VectorId>(id)));
+          },
+          "id"_a,
+          "Delete a vector (tombstone: it stays in the graph for navigation but never appears in "
+          "results, and its id is not reused). KeyError if absent or already deleted.")
+      .def(
+          "is_deleted",
+          [](const PyHnsw& self, std::int64_t id) {
+            return shared(self.mutex, [&] {
+              if (id < 0 || static_cast<std::size_t>(id) >= self.index.size()) {
+                throw nb::index_error("id out of range");
+              }
+              return self.index.is_deleted(static_cast<strata::VectorId>(id));
+            });
+          },
+          "id"_a)
+      .def_prop_ro("live_count",
+                   [](const PyHnsw& self) {
+                     return shared(self.mutex, [&] { return self.index.live_size(); });
+                   })
+      .def(
+          "save",
+          [](const PyHnsw& self, const std::filesystem::path& path) {
+            nb::gil_scoped_release release;
+            const std::shared_lock lock(self.mutex);
+            unwrap(self.index.save(path));
+          },
+          "path"_a,
+          "Write a snapshot (vectors, tombstones, and the full graph, atomically). Loading it and "
+          "adding more vectors builds the same graph as never saving.")
+      .def_static(
+          "load",
+          [](const std::filesystem::path& path) {
+            std::optional<strata::HnswIndex> index;
+            {
+              nb::gil_scoped_release release;
+              index.emplace(unwrap(strata::HnswIndex::load(path)));
+            }
+            return std::make_unique<PyHnsw>(std::move(*index));
+          },
+          "path"_a,
+          "Load a snapshot written by save(). RuntimeError if the file is damaged or not an HNSW "
+          "snapshot.")
       .def(
           "search",
           [](const PyHnsw& self, const FloatArray& queries, std::size_t k, std::size_t ef_search,

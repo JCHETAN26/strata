@@ -1,7 +1,8 @@
 """Tests for the Python bindings (strata._core).
 
 Two groups:
-- Behavior: conversions, padding, errors, locking, filters, PQ, HNSW. No dataset needed.
+- Behavior: conversions, padding, errors, locking, filters, PQ, HNSW (incl. deletes, save/load).
+  No dataset needed.
 - Agreement with C++ on SIFT10K: the C++ tool tests/strata_reference writes its results; the
   bindings must return the same ids and codes. Distances must be bit-identical when both builds
   compute floating point the same way (same kernel, compiler, FP flags, target; see
@@ -401,6 +402,77 @@ def test_hnsw_concurrent_adds_and_searches() -> None:
         all_ids = np.concatenate(list(added))
     assert len(index) == 100 + 20 * 50
     np.testing.assert_array_equal(np.sort(all_ids), np.arange(100, 1100))
+
+
+def test_hnsw_remove_excludes_and_counts() -> None:
+    base, queries = rng_matrix(1000, 16, 27), rng_matrix(30, 16, 28)
+    index = strata.HnswIndex(16, M=8, ef_construction=64)
+    index.add(base)
+    removed = set(range(0, 1000, 4))
+    for i in removed:
+        index.remove(i)
+    assert len(index) == 1000 and index.live_count == 750
+    assert index.is_deleted(0) and not index.is_deleted(1)
+    ids, _ = index.search(queries, K, ef_search=64)
+    assert (ids >= 0).all() and not set(ids.ravel().tolist()) & removed
+    with pytest.raises(KeyError):
+        index.remove(0)  # already deleted
+    with pytest.raises(KeyError):
+        index.remove(5000)
+    with pytest.raises(IndexError):
+        index.is_deleted(5000)
+
+
+def test_hnsw_save_load_is_bit_identical(tmp_path: Path) -> None:
+    base, queries = rng_matrix(1000, 16, 29), rng_matrix(30, 16, 30)
+    index = strata.HnswIndex(16, metric="cosine", M=8, ef_construction=64, selection="simple")
+    index.add(base)
+    index.remove(3)
+    index.save(tmp_path / "hnsw.snap")  # pathlib.Path
+    loaded = strata.HnswIndex.load(str(tmp_path / "hnsw.snap"))  # and str
+    assert (loaded.dim, loaded.M, loaded.ef_construction, loaded.selection) == (
+        16,
+        8,
+        64,
+        "simple",
+    )
+    assert len(loaded) == 1000 and loaded.live_count == 999 and loaded.is_deleted(3)
+    before = index.search(queries, K, ef_search=64)
+    after = loaded.search(queries, K, ef_search=64)
+    np.testing.assert_array_equal(after[0], before[0])
+    np.testing.assert_array_equal(after[1], before[1])  # exact float equality
+
+
+def test_hnsw_save_load_then_add_matches_never_saving(tmp_path: Path) -> None:
+    first, second, queries = rng_matrix(600, 8, 31), rng_matrix(600, 8, 32), rng_matrix(20, 8, 33)
+    saved = strata.HnswIndex(8, M=8, ef_construction=50)
+    saved.add(first)
+    saved.save(tmp_path / "hnsw.snap")
+    resumed = strata.HnswIndex.load(tmp_path / "hnsw.snap")
+    resumed.add(second)
+    straight = strata.HnswIndex(8, M=8, ef_construction=50)
+    straight.add(np.vstack([first, second]))
+    assert resumed.max_level == straight.max_level
+    assert resumed.entry_point == straight.entry_point
+    for node in range(0, 1200, 37):
+        assert resumed.level(node) == straight.level(node)
+        np.testing.assert_array_equal(resumed.neighbors(node, 0), straight.neighbors(node, 0))
+    np.testing.assert_array_equal(
+        resumed.search(queries, K, ef_search=40)[0], straight.search(queries, K, ef_search=40)[0]
+    )
+
+
+def test_hnsw_load_errors(tmp_path: Path) -> None:
+    with pytest.raises(RuntimeError):
+        strata.HnswIndex.load(tmp_path / "missing.snap")
+    index = strata.HnswIndex(4)
+    index.add(rng_matrix(50, 4, 34))
+    index.save(tmp_path / "hnsw.snap")
+    data = bytearray((tmp_path / "hnsw.snap").read_bytes())
+    data[100] ^= 0x01
+    (tmp_path / "hnsw.snap").write_bytes(bytes(data))
+    with pytest.raises(RuntimeError, match="checksum"):
+        strata.HnswIndex.load(tmp_path / "hnsw.snap")
 
 
 # --- Concurrency ----------
