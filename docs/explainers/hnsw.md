@@ -667,11 +667,14 @@ rejection is exercised on every platform.
 
 ### Measured: loading instead of rebuilding
 
-Source: `results/storage/hnsw_persist_sift1m-200k-q1000.md` (`bench/run_hnsw_persist_bench.py`,
-at `0f25f11`; 3 runs; M2, indicative). For 200k × 128-dimensional vectors, M = 16: build 23.5 s
-(single thread), save 0.51 s (durable and atomic, including fsyncs), load 0.36 s (read, checksum,
-validate). The snapshot is 124 MiB, and loading is about **66x faster** than rebuilding. Every run
-checked that the loaded index answers all 1000 queries identically.
+Source: `results/storage/hnsw_persist_sift1m-200k-q1000.md` (`bench/run_hnsw_persist_bench.py`, at
+`397bd38`, snapshot format version 3; 3 runs; M2, indicative). For 200k × 128-dimensional vectors,
+M = 16: build 25.6 s (single thread), save 0.53 s (durable and atomic, including fsyncs), load 0.39 s
+(read, checksum, validate, re-seed and discard the level generator). The snapshot is 124 MiB, and
+loading is about **65x faster** than rebuilding. Every run checked that the loaded index answers
+all 1000 queries identically. One of the three runs was 15–25% slower in every step, build
+included, so the spread reflects the machine, not the format. Format version 2 measured the same
+within noise (build 23.5 s, save 0.51 s, load 0.36 s, at `0f25f11`).
 
 ### Known limit
 

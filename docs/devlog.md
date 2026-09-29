@@ -1463,3 +1463,12 @@ HNSW core is unchanged since Stage A.)
 **Not done / next**
 - No rebuild or compaction operation exists (a rebuild assigns new ids; there is no mapping).
 - Python has no `Collection` binding (it had none before either).
+
+## 2026-09-29: Save/load re-measured with snapshot format version 3
+
+`bench/run_hnsw_persist_bench.py` at `397bd38` (200k subset, 3 runs, M2, no thermal warnings):
+build 25.63 ± 1.89 s, save 0.525 ± 0.107 s, load 0.393 ± 0.056 s, 124 MiB; loading ~65x faster
+than rebuilding, with identical answers in every run. Version 2 (`0f25f11`) measured build 23.48 s,
+save 0.513 s, load 0.357 s. The difference is within noise: run 2 was 15–25% slower in every step,
+including the build, which the format cannot affect, so it was the machine. The draw-count restore
+(re-seed and discard) has no visible cost. Explainer section 9 now quotes the version 3 numbers.
