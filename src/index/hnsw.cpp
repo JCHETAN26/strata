@@ -9,11 +9,14 @@
 #include <functional>
 #include <limits>
 #include <locale>
+#include <memory>
+#include <mutex>
 #include <queue>
 #include <ranges>
 #include <sstream>
 #include <string>
 
+#include "strata/thread_pool.hpp"
 #include "util/bytes.hpp"
 
 namespace strata {
@@ -62,11 +65,13 @@ class VisitedSet {
 
 // Per-thread scratch for search_layer: concurrent const searches never share it, so they need no
 // lock. The visited marks grow to the largest index the thread has searched (4 bytes per node);
-// `unvisited` holds one neighbor list's worth of ids. Both are reused across searches and
-// indexes, so a search allocates nothing here after the first.
+// `unvisited` and `links` each hold one neighbor list's worth of ids (`links` is the copy a
+// parallel build takes under a node's lock). All are reused across searches and indexes, so a
+// search allocates nothing here after the first.
 struct SearchScratch {
   VisitedSet visited;
   std::vector<VectorId> unvisited;
+  std::vector<VectorId> links;
 };
 
 SearchScratch& thread_scratch() {
@@ -133,15 +138,22 @@ Expected<VectorId> HnswIndex::add(std::span<const float> vector) {
   return insert(vector);
 }
 
-Expected<void> HnswIndex::add_batch(MatrixView<const float> vectors) {
-  if (vectors.empty()) {
-    return {};
-  }
+Expected<void> HnswIndex::check_batch(MatrixView<const float> vectors) const {
   if (vectors.cols() != dim_) {
     return dimension_error(dim_, vectors.cols());
   }
   if (size() + vectors.rows() > std::numeric_limits<VectorId>::max()) {
     return make_error(ErrorCode::kInvalidArgument, "batch would overflow the id space");
+  }
+  return {};
+}
+
+Expected<void> HnswIndex::add_batch(MatrixView<const float> vectors) {
+  if (vectors.empty()) {
+    return {};
+  }
+  if (auto ok = check_batch(vectors); !ok) {
+    return ok;
   }
   // A batch taken from this index's own storage is copied first: insert() appends to data_,
   // which may reallocate under the view.
@@ -156,6 +168,46 @@ Expected<void> HnswIndex::add_batch(MatrixView<const float> vectors) {
   for (std::size_t i = 0; i < vectors.rows(); ++i) {
     insert(vectors.row(i));
   }
+  return {};
+}
+
+Expected<void> HnswIndex::add_batch(MatrixView<const float> vectors, ThreadPool& pool) {
+  if (vectors.empty()) {
+    return {};
+  }
+  if (auto ok = check_batch(vectors); !ok) {
+    return ok;
+  }
+  // Appending below copies every row into data_, which may reallocate under a view of it.
+  Matrix<float> copy;
+  if (aliases_storage(vectors.data())) {
+    const auto values = vectors.data();
+    copy = Matrix<float>(vectors.rows(), vectors.cols(),
+                         std::vector<float>(values.begin(), values.end()));
+    vectors = copy;
+  }
+  // 1. Store every node first: vectors, levels (drawn in id order, exactly as the sequential
+  //    add_batch draws them), and empty lists of their final size. From here on no array is
+  //    resized, so every node's vector and list stay at a fixed address while threads run.
+  const std::size_t first = size();
+  reserve(first + vectors.rows());
+  for (std::size_t i = 0; i < vectors.rows(); ++i) {
+    append_node(vectors.row(i));
+  }
+  if (!locks_.stripes) {
+    locks_.stripes = std::make_unique<std::mutex[]>(kLockStripes);
+    locks_.top = std::make_unique<std::mutex>();
+  }
+  // 2. An empty index gets its first node linked alone: it becomes the entry point.
+  std::size_t next = first;
+  if (!entry_point_) {
+    link_node<false>(static_cast<VectorId>(next++));
+  }
+  // 3. Link the rest in parallel. Chunks of one id: threads take ids nearly in order, so the
+  //    graph grows much as it would sequentially (the order hnswlib's parallel add uses too).
+  pool.parallel_for(
+      first + vectors.rows() - next,
+      [&](std::size_t i) { link_node<true>(static_cast<VectorId>(next + i)); }, 1);
   return {};
 }
 
@@ -174,7 +226,7 @@ Expected<std::vector<Neighbor>> HnswIndex::search(std::span<const float> query, 
   // nodes are fine to walk through: this phase only navigates.
   Neighbor entry{.id = *entry_point_, .distance = dist(query, *entry_point_)};
   for (int layer = max_level_; layer > 0; --layer) {
-    entry = greedy_search(query, entry, layer);
+    entry = greedy_search<false>(query, entry, layer);
   }
   // Layer 0: beam search. The beam can never be narrower than k, or we could not return k. The
   // tombstone-aware version is used only when there are tombstones, so an index without deletes
@@ -232,55 +284,97 @@ std::span<const VectorId> HnswIndex::neighbors(VectorId id, int layer) const noe
 
 // --- Construction --------------------------------------------------------------------------------
 
-// Paper Algorithm 1 (INSERT).
 VectorId HnswIndex::insert(std::span<const float> values) {
+  const VectorId id = append_node(values);
+  link_node<false>(id);
+  return id;
+}
+
+VectorId HnswIndex::append_node(std::span<const float> values) {
   const auto id = static_cast<VectorId>(size());
   const int level = random_level();
-
   data_.insert(data_.end(), values.begin(), values.end());
   levels_.push_back(static_cast<std::uint8_t>(level));
   deleted_.push_back(0);
   links0_.resize(links0_.size() + (max_links0_ + 1), 0);
   upper_links_.emplace_back(static_cast<std::size_t>(level) * (params_.M + 1));
+  return id;
+}
+
+// Paper Algorithm 1 (INSERT), for a node append_node has stored.
+template <bool kConcurrent>
+void HnswIndex::link_node(VectorId id) {
+  const int level = levels_[id];
   const auto query = vector(id);
 
-  if (!entry_point_) {
+  // Where to start, and the top layer. In a parallel build these are read under the top lock. An
+  // insert that will raise the top level keeps holding it until it is done, so promotions happen
+  // one at a time and no insert starts from an entry point whose lists are still being written;
+  // every other insert releases it at once. Promotions are rare (probability 1/M per level).
+  std::unique_lock<std::mutex> top;
+  if constexpr (kConcurrent) {
+    top = std::unique_lock(*locks_.top);
+  }
+  const std::optional<VectorId> entry_point = entry_point_;
+  const int max_level = max_level_;
+  if constexpr (kConcurrent) {
+    if (level <= max_level) {
+      top.unlock();
+    }
+  }
+  if (!entry_point) {
     entry_point_ = id;
     max_level_ = level;
-    return id;
+    return;
   }
 
   // Phase 1: above the new node's top layer, only find a good starting point (greedy, ef = 1).
-  Neighbor entry{.id = *entry_point_, .distance = dist(query, *entry_point_)};
-  for (int layer = max_level_; layer > level; --layer) {
-    entry = greedy_search(query, entry, layer);
+  Neighbor entry{.id = *entry_point, .distance = dist(query, *entry_point)};
+  for (int layer = max_level; layer > level; --layer) {
+    entry = greedy_search<kConcurrent>(query, entry, layer);
   }
 
   // Phase 2: on every layer the node lives on, beam-search ef_construction candidates, select up
   // to M of them (select_neighbors), link to them, and link them back. The whole candidate set W
   // seeds the next layer down, as in the paper (hnswlib passes only the closest one).
   std::vector<Neighbor> entry_points{entry};
-  for (int layer = std::min(level, max_level_); layer >= 0; --layer) {
+  for (int layer = std::min(level, max_level); layer >= 0; --layer) {
     // Deleted nodes are still candidates: they stay in the graph for navigation, and keeping
     // them makes the graph independent of which deletes happened.
-    auto candidates = search_layer<false>(query, entry_points, params_.ef_construction, layer);
+    auto candidates =
+        search_layer<false, kConcurrent>(query, entry_points, params_.ef_construction, layer);
+    if constexpr (kConcurrent) {
+      // In a parallel build this node can already be reachable on this layer (another thread
+      // linked to it after finding it on a layer above), so the search may return the node itself.
+      // It must not become its own neighbor. (Sequentially a node is unreachable until linked.)
+      std::erase_if(candidates, [id](const Neighbor& n) { return n.id == id; });
+    }
     auto selected = candidates;
     // M new links on every layer, including layer 0; layer 0's larger capacity (2M) leaves
     // room for the back-links later nodes add.
     select_neighbors(selected, params_.M);
-    set_links(id, layer, selected);
+    if constexpr (kConcurrent) {
+      // Other threads may already have linked back to this node on this layer (it becomes
+      // reachable on the layers above first), so its list may hold their back-links. Overwriting
+      // them could leave those nodes with no way in; merge them instead, exactly as if they had
+      // arrived after this write (see merge_links). Sequentially the list is always empty here.
+      const std::lock_guard lock(link_lock(id));
+      merge_links(id, layer, selected);
+    } else {
+      set_links(id, layer, selected);
+    }
     for (const Neighbor& nbr : selected) {
       // Every metric here is symmetric, so d(new, nbr) is also d(nbr, new).
-      add_link(nbr.id, Neighbor{.id = id, .distance = nbr.distance}, layer);
+      add_link<kConcurrent>(nbr.id, Neighbor{.id = id, .distance = nbr.distance}, layer);
     }
     entry_points = std::move(candidates);
   }
 
-  if (level > max_level_) {
+  // A parallel insert reaching here with a higher level still holds the top lock.
+  if (level > max_level) {
     entry_point_ = id;
     max_level_ = level;
   }
-  return id;
 }
 
 int HnswIndex::random_level() {
@@ -318,14 +412,16 @@ bool HnswIndex::aliases_storage(std::span<const float> values) const noexcept {
 
 // --- Graph traversal -----------------------------------------------------------------------------
 
+template <bool kConcurrent>
 Neighbor HnswIndex::greedy_search(std::span<const float> query, Neighbor start, int layer) const {
   // Equivalent to SEARCH-LAYER with ef = 1, minus the heaps and the visited set: the current
   // node strictly improves in (distance, id) order each step, so the walk cannot revisit a node
   // and must terminate.
+  auto& buffer = thread_scratch().links;
   Neighbor current = start;
   while (true) {
     Neighbor best = current;
-    for (VectorId nbr : neighbors(current.id, layer)) {
+    for (VectorId nbr : read_links<kConcurrent>(current.id, layer, buffer)) {
       const Neighbor candidate{.id = nbr, .distance = dist(query, nbr)};
       if (candidate < best) {
         best = candidate;
@@ -340,7 +436,7 @@ Neighbor HnswIndex::greedy_search(std::span<const float> query, Neighbor start, 
 
 // Paper Algorithm 2 (SEARCH-LAYER). With kSkipDeleted, deleted nodes are expanded (they still
 // lead to live ones) but never enter W, so only live nodes are returned.
-template <bool kSkipDeleted>
+template <bool kSkipDeleted, bool kConcurrent>
 std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
                                               const std::vector<Neighbor>& entry_points,
                                               std::size_t ef, int layer) const {
@@ -387,7 +483,7 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
     candidates.pop();
     // The next node expanded is probably the new top of C: start loading its neighbor list now,
     // so that load overlaps this expansion. If a closer node is pushed below, the hint is wasted,
-    // never wrong.
+    // never wrong. (A prefetch is not a read, so it needs no lock even during a parallel build.)
     if (!candidates.empty()) {
       prefetch(link_list(candidates.top().id, layer), (capacity(layer) + 1) * sizeof(VectorId));
     }
@@ -397,7 +493,7 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
     // pass would; a neighbor list has no duplicates, so marking them all first changes nothing.
     auto& unvisited = scratch.unvisited;
     unvisited.clear();
-    for (VectorId nbr : neighbors(nearest.id, layer)) {
+    for (VectorId nbr : read_links<kConcurrent>(nearest.id, layer, scratch.links)) {
       if (visited.insert(nbr)) {
         unvisited.push_back(nbr);
         prefetch(vector(nbr).data(), dim_ * sizeof(float));
@@ -721,9 +817,49 @@ void HnswIndex::set_links(VectorId id, int layer, std::span<const Neighbor> link
   }
 }
 
+void HnswIndex::merge_links(VectorId id, int layer, std::vector<Neighbor>& selected) {
+  VectorId* list = link_list(id, layer);
+  const std::size_t count = list[0];
+  if (count == 0) {
+    set_links(id, layer, selected);
+    return;
+  }
+  // Back-links other threads added before this node wrote its own list. They are distinct from
+  // each other; drop any that are also in `selected`, then keep everything if it fits (as appending
+  // them afterwards would), else re-select from this node's point of view (as an overflowing
+  // append would).
+  const auto base = vector(id);
+  for (std::size_t i = 0; i < count; ++i) {
+    const VectorId other = list[1 + i];
+    if (std::ranges::none_of(selected, [&](const Neighbor& n) { return n.id == other; })) {
+      selected.push_back({.id = other, .distance = dist(base, other)});
+    }
+  }
+  std::ranges::sort(selected);
+  if (selected.size() > capacity(layer)) {
+    select_neighbors(selected, capacity(layer));
+  }
+  set_links(id, layer, selected);
+}
+
+template <bool kConcurrent>
 void HnswIndex::add_link(VectorId from, Neighbor to, int layer) {
+  // In a parallel build, from's lists change only under from's lock. The re-selection below also
+  // runs under it: it reads vectors, which never change during a build, so it needs no other lock.
+  std::unique_lock<std::mutex> lock;
+  if constexpr (kConcurrent) {
+    lock = std::unique_lock(link_lock(from));
+  }
   VectorId* list = link_list(from, layer);
   const std::size_t count = list[0];
+  if constexpr (kConcurrent) {
+    // Two nodes inserted at the same time can select each other: `from` may already have linked to
+    // `to` itself, so the back-link would be a duplicate. (Sequentially this cannot happen: an
+    // earlier node never selects a later one.)
+    if (std::find(list + 1, list + 1 + count, to.id) != list + 1 + count) {
+      return;
+    }
+  }
   if (count < capacity(layer)) {
     list[1 + count] = to.id;
     list[0] = static_cast<VectorId>(count + 1);
@@ -741,6 +877,24 @@ void HnswIndex::add_link(VectorId from, Neighbor to, int layer) {
   std::ranges::sort(candidates);
   select_neighbors(candidates, capacity(layer));
   set_links(from, layer, candidates);
+}
+
+template <bool kConcurrent>
+std::span<const VectorId> HnswIndex::read_links(VectorId id, int layer,
+                                                std::vector<VectorId>& buffer) const {
+  if constexpr (kConcurrent) {
+    const std::lock_guard lock(link_lock(id));
+    const auto list = neighbors(id, layer);
+    buffer.assign(list.begin(), list.end());
+    return buffer;
+  } else {
+    (void)buffer;
+    return neighbors(id, layer);
+  }
+}
+
+std::mutex& HnswIndex::link_lock(VectorId id) const noexcept {
+  return locks_.stripes[id % kLockStripes];
 }
 
 VectorId* HnswIndex::link_list(VectorId id, int layer) noexcept {

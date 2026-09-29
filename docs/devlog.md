@@ -1472,3 +1472,39 @@ than rebuilding, with identical answers in every run. Version 2 (`0f25f11`) meas
 save 0.513 s, load 0.357 s. The difference is within noise: run 2 was 15–25% slower in every step,
 including the build, which the format cannot affect, so it was the machine. The draw-count restore
 (re-seed and discard) has no visible cost. Explainer section 9 now quotes the version 3 numbers.
+
+## 2026-09-29: Parallel HNSW build
+
+**Design (approved):** `HnswIndex::add_batch(vectors, ThreadPool&)`; the sequential build stays the
+deterministic default; Python `HnswIndex.add(vectors, threads=1)` releases the GIL.
+- **Prepare first:** store all vectors, draw all levels in id order (the same draws as sequential),
+  and allocate every list at its final size. No array moves during the parallel phase.
+- **Link in parallel,** one id at a time (`parallel_for`, chunk 1).
+- **Locks:** a striped table of 65,536 `std::mutex` for neighbor lists (option A; about 4 MiB,
+  fixed) and one `top` mutex for the entry point and max level. A promoting insert holds `top`
+  until done. No thread holds two node locks at once, so there is no deadlock.
+- **Zero cost when sequential:** locking is behind `if constexpr`. The C++ reference outputs are
+  bit-identical, and a one-thread pool builds exactly the sequential graph.
+- **`Collection` stays sequential:** WAL replay must reproduce the graph.
+
+**Went wrong, and fixed (found by the new tests)**
+1. **Lost back-links.** A back-link added to a node before it wrote its own list was overwritten.
+   Layer-0 reachability on random 6000 x 32: 1.0 sequential vs 0.997 (4 threads) and 0.994 (8).
+   Fixed with `merge_links` (keep the early back-links; re-select only on overflow): 0.9993-1.0
+   over repeated runs.
+2. **Duplicate links** (two concurrent nodes selecting each other). Fixed by skipping existing
+   back-links in concurrent mode.
+3. **Self-loops** (a node reachable on a layer before it is linked there found itself). Fixed by
+   removing the node from its own candidates in concurrent mode.
+- **The stress test's reachability bar was wrong,** not the code. Its data (5 tight clusters,
+  M = 4) gave 0.2-1.0 reachability over 20 *sequential* builds in shuffled orders, so it cannot
+  separate a bug from insertion order. The stress test now checks structure and races only;
+  reachability is checked on random data and SIFT10K.
+
+**Tests** (`tests/hnsw_parallel_test.cpp`, 6 C++ tests plus 1 Python): one thread equals sequential
+exactly; quality vs sequential at 4 threads on random data and SIFT10K (well-formed, same levels,
+reachability >= 0.999, degree within 5%, recall within 0.01 at ef 10/40/160); high-contention
+stress (M = 4, 8 threads, 3 rounds); save/load after a parallel build then sequential adds are
+deterministic; a parallel batch over tombstones plus errors. They passed 10-15 repeats in debug,
+3 repeats under TSan with no race reports, and under ASan. The SIFT10K quality test skips itself
+under TSan (too slow there); it runs in debug and asan.

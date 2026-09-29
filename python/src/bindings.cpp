@@ -1244,18 +1244,30 @@ exclusive lock, so inserts are serialized.)doc")
           R"doc(selection: "heuristic" (the paper's Algorithm 4, default) or "simple" (closest M).)doc")
       .def(
           "add",
-          [](PyHnsw& self, const FloatArray& vectors) {
+          [](PyHnsw& self, const FloatArray& vectors, std::optional<std::size_t> threads) {
+            if (threads && *threads == 0) {
+              throw nb::value_error("threads must be positive (or None for all cores)");
+            }
             const Rows rows = as_rows(vectors, "vectors");
             std::size_t first = 0;
             {
               nb::gil_scoped_release release;
               const std::unique_lock lock(self.mutex);
               first = self.index.size();
-              unwrap(self.index.add_batch(rows.view));
+              if (threads == std::size_t{1}) {
+                unwrap(self.index.add_batch(rows.view));
+              } else {
+                strata::ThreadPool pool(threads.value_or(0));
+                unwrap(self.index.add_batch(rows.view, pool));
+              }
             }
             return id_range(first, rows.view.rows());
           },
-          "vectors"_a, "Insert vectors; returns their ids. Exclusive lock: adds are serialized.")
+          "vectors"_a, "threads"_a = 1,
+          "Insert vectors; returns their ids (in row order). threads=1 (the default) builds "
+          "sequentially and deterministically; more threads (None = all cores) build in parallel, "
+          "which is faster but makes the graph depend on thread timing. The GIL is released and "
+          "the index is locked exclusively for the whole call.")
       .def(
           "remove",
           [](PyHnsw& self, std::int64_t id) {

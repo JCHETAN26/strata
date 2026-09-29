@@ -60,6 +60,9 @@ struct Options {
   std::size_t m = 16;
   std::size_t ef_construction = 200;
   std::string selection = "heuristic";  // "heuristic" (paper Algorithm 4) or "simple" (closest M)
+  // Threads for building the HNSW graph. 1 = the sequential, deterministic build; more = the
+  // parallel add_batch. (--threads is for searching.)
+  std::size_t build_threads = 1;
   std::vector<std::size_t> ef_search{10, 20, 40, 80, 160, 320};
   // PQ
   std::size_t pq_m = 16;
@@ -80,6 +83,7 @@ struct Options {
       << "                     [--max-queries N] [--warmup 1] [--kernel best|scalar]\n"
       << "                     [--threads 1]\n"
       << "       hnsw only:    [--M 16] [--ef-construction 200] [--selection heuristic|simple]\n"
+      << "                     [--build-threads 1]\n"
       << "                     [--ef-search 10,20,40,80,160,320]\n"
       << "       pq only:      [--pq-m 16] [--rerank 0,10,20,50,100,200,500]\n"
       << "       hnsw deletes: [--delete-fractions 0,0.25,0.5,0.9] [--compare-rebuild 1]\n";
@@ -145,6 +149,11 @@ Options parse_args(int argc, char** argv) {
       opt.m = parse_size(flag, value);
     } else if (flag == "--ef-construction") {
       opt.ef_construction = parse_size(flag, value);
+    } else if (flag == "--build-threads") {
+      opt.build_threads = parse_size(flag, value);
+      if (opt.build_threads == 0) {
+        usage("--build-threads must be positive");
+      }
     } else if (flag == "--selection") {
       if (value != "heuristic" && value != "simple") {
         usage("--selection must be heuristic or simple");
@@ -520,15 +529,27 @@ int main(int argc, char** argv) {
       std::cerr << "error: " << index.error().message << "\n";
       return 1;
     }
-    if (auto added = index->add_batch(dataset->base); !added) {
+    std::optional<strata::ThreadPool> build_pool;
+    if (opt.build_threads > 1) {
+      build_pool.emplace(opt.build_threads);
+    }
+    auto added =
+        build_pool ? index->add_batch(dataset->base, *build_pool) : index->add_batch(dataset->base);
+    if (!added) {
       std::cerr << "error: " << added.error().message << "\n";
       return 1;
     }
     hnsw.emplace(std::move(*index));
     graph_json = hnsw_graph_json(*hnsw);
-    build_params_json = "{\"M\": " + std::to_string(opt.m) +
-                        ", \"ef_construction\": " + std::to_string(opt.ef_construction) +
-                        ", \"selection\": \"" + opt.selection + "\"}";
+    // build_threads is recorded only for parallel builds, so sequential records keep matching
+    // earlier ones.
+    build_params_json =
+        "{\"M\": " + std::to_string(opt.m) +
+        ", \"ef_construction\": " + std::to_string(opt.ef_construction) + ", \"selection\": \"" +
+        opt.selection + "\"" +
+        (opt.build_threads > 1 ? ", \"build_threads\": " + std::to_string(opt.build_threads)
+                               : std::string()) +
+        "}";
     for (std::size_t ef : opt.ef_search) {
       sweep.push_back(
           {"{\"ef_search\": " + std::to_string(ef) + "}",

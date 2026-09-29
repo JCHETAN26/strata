@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <random>
 #include <span>
@@ -15,6 +17,8 @@
 #include "strata/types.hpp"
 
 namespace strata {
+
+class ThreadPool;
 
 // How a node's neighbors are chosen from its candidates (on insert, and when a full neighbor list
 // is re-selected).
@@ -77,10 +81,17 @@ struct HnswParams {
 // within capacity, entry point on the top layer), so a damaged file fails to load instead of
 // crashing a later search.
 //
+// Parallel build: add_batch(vectors, pool) links the batch on the pool's threads. Its levels are
+// drawn in id order before any thread starts, so ids, levels, and the level generator's position
+// are exactly those of the sequential add_batch; the neighbor lists depend on thread timing, so the
+// graph is not deterministic (the sequential add_batch stays the deterministic default). During
+// the build, a node's neighbor lists are read and written only under its lock (a striped table of
+// mutexes), and the entry point and top level under one more; see docs/explainers/hnsw.md.
+//
 // Thread safety: concurrent calls to const methods (search, save, and the accessors) are safe;
-// each thread uses its own visited-set scratch buffer. add, add_batch, and remove are
+// each thread uses its own visited-set scratch buffer. add, add_batch (both forms), and remove are
 // single-writer: they require exclusive access, so no other call (including search) may run
-// concurrently with them.
+// concurrently with them. The parallel add_batch's concurrency is internal to that one call.
 class HnswIndex {
  public:
   // Fails if dim == 0, M < 2, or ef_construction == 0.
@@ -91,6 +102,9 @@ class HnswIndex {
   Expected<VectorId> add(std::span<const float> vector);
   // Inserts every row in order. Fails (adding nothing) on dimension mismatch.
   Expected<void> add_batch(MatrixView<const float> vectors);
+  // Inserts every row using `pool`'s threads (see "Parallel build" above). Ids are assigned in row
+  // order, as above. With a pool of one thread the graph is exactly the sequential one.
+  Expected<void> add_batch(MatrixView<const float> vectors, ThreadPool& pool);
 
   // Marks id deleted (a tombstone; see above). Fails with kNotFound if id is out of range or
   // already deleted.
@@ -132,9 +146,18 @@ class HnswIndex {
  private:
   HnswIndex(std::size_t dim, Metric metric, HnswParams params);
 
-  // Insertion (paper Algorithm 1). Precondition: values.size() == dim(), values does not alias
-  // this index's storage, and the id space has room.
+  // Checks a batch before anything is added: dimension and id space.
+  [[nodiscard]] Expected<void> check_batch(MatrixView<const float> vectors) const;
+  // Insertion: append_node then link_node. Precondition: values.size() == dim(), values does not
+  // alias this index's storage, and the id space has room.
   VectorId insert(std::span<const float> values);
+  // Stores a node: its vector, a freshly drawn level, and empty neighbor lists. Not yet reachable.
+  VectorId append_node(std::span<const float> values);
+  // Links an appended node into the graph (paper Algorithm 1). With kConcurrent, other threads are
+  // linking other nodes at the same time (parallel add_batch): neighbor lists are then read and
+  // written only under their node's lock, and the entry point under the top lock.
+  template <bool kConcurrent>
+  void link_node(VectorId id);
   // floor(-ln(U) * mL), U uniform in (0, 1].
   int random_level();
   // One call of the level generator, counted in rng_draws_.
@@ -146,22 +169,34 @@ class HnswIndex {
     return distance_(query, vector(id));
   }
   // Greedy walk on one layer: move to the closest neighbor until none is closer (ef = 1).
+  template <bool kConcurrent>
   [[nodiscard]] Neighbor greedy_search(std::span<const float> query, Neighbor start,
                                        int layer) const;
   // Beam search on one layer (paper Algorithm 2). Returns up to ef nodes, sorted ascending. With
   // kSkipDeleted, deleted nodes are expanded but not returned (see search_layer in the .cpp).
-  template <bool kSkipDeleted>
+  // kConcurrent: during a parallel build (see link_node).
+  template <bool kSkipDeleted, bool kConcurrent = false>
   [[nodiscard]] std::vector<Neighbor> search_layer(std::span<const float> query,
                                                    const std::vector<Neighbor>& entry_points,
                                                    std::size_t ef, int layer) const;
   // Shrinks candidates (sorted by distance to a base node, which they must not contain) to at
   // most m neighbors of that node, per params_.selection.
   void select_neighbors(std::vector<Neighbor>& candidates, std::size_t m) const;
+  // Parallel build: writes a new node's own links, keeping any back-links other threads added to
+  // its (initially empty) list first. Call with id's lock held. `selected` is sorted and consumed.
+  void merge_links(VectorId id, int layer, std::vector<Neighbor>& selected);
   // Replaces id's out-links on a layer. Precondition: links.size() <= capacity(layer).
   void set_links(VectorId id, int layer, std::span<const Neighbor> links);
   // Adds the edge from -> to.id, re-selecting from's neighbors if the list overflows.
-  // to.distance must be the distance between the two nodes.
+  // to.distance must be the distance between the two nodes. kConcurrent: under from's lock.
+  template <bool kConcurrent>
   void add_link(VectorId from, Neighbor to, int layer);
+  // A node's neighbor list on a layer, to traverse. During a parallel build (kConcurrent) another
+  // thread may be writing it, so it is copied into `buffer` under the node's lock.
+  template <bool kConcurrent>
+  [[nodiscard]] std::span<const VectorId> read_links(VectorId id, int layer,
+                                                     std::vector<VectorId>& buffer) const;
+  [[nodiscard]] std::mutex& link_lock(VectorId id) const noexcept;
   [[nodiscard]] std::size_t capacity(int layer) const noexcept {
     return layer == 0 ? max_links0_ : params_.M;
   }
@@ -191,6 +226,23 @@ class HnswIndex {
   std::size_t num_deleted_ = 0;
   std::optional<VectorId> entry_point_;
   int max_level_ = -1;
+
+  // Locks for the parallel add_batch, created on its first use. Node id i uses stripe
+  // i % kLockStripes, so two nodes occasionally share a lock; no thread ever holds two node locks
+  // at once, so sharing cannot deadlock. Copying an index copies no locks (none is held between
+  // calls, and a copy creates its own when it needs them).
+  static constexpr std::size_t kLockStripes = std::size_t{1} << 16;
+  struct BuildLocks {
+    std::unique_ptr<std::mutex[]> stripes;  // one mutex per stripe of node ids
+    std::unique_ptr<std::mutex> top;        // entry point and max level
+    BuildLocks() = default;
+    BuildLocks(const BuildLocks& /*other*/) {}
+    BuildLocks& operator=(const BuildLocks& /*other*/) { return *this; }
+    BuildLocks(BuildLocks&&) noexcept = default;
+    BuildLocks& operator=(BuildLocks&&) noexcept = default;
+    ~BuildLocks() = default;
+  };
+  BuildLocks locks_;
 };
 
 }  // namespace strata

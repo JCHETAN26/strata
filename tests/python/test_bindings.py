@@ -462,6 +462,34 @@ def test_hnsw_save_load_then_add_matches_never_saving(tmp_path: Path) -> None:
     )
 
 
+def test_hnsw_parallel_add() -> None:
+    base, queries = rng_matrix(3000, 16, 35), rng_matrix(50, 16, 36)
+    exact = strata.BruteForceIndex(16)
+    exact.add(base)
+    truth = exact.search_batch(queries, K)[0]
+    sequential = strata.HnswIndex(16, M=16, ef_construction=64)
+    np.testing.assert_array_equal(sequential.add(base), np.arange(3000))
+    parallel = strata.HnswIndex(16, M=16, ef_construction=64)
+    np.testing.assert_array_equal(parallel.add(base, threads=4), np.arange(3000))
+    # Same levels (drawn in id order before the threads start); graph quality within tolerance.
+    assert all(parallel.level(i) == sequential.level(i) for i in range(0, 3000, 13))
+    seq_recall = id_recall(sequential.search(queries, K, ef_search=64)[0], truth)
+    par_recall = id_recall(parallel.search(queries, K, ef_search=64)[0], truth)
+    assert par_recall >= seq_recall - 0.01
+    # One thread goes through the sequential path: identical results.
+    one = strata.HnswIndex(16, M=16, ef_construction=64)
+    one.add(base, threads=1)
+    np.testing.assert_array_equal(
+        one.search(queries, K, ef_search=64)[0], sequential.search(queries, K, ef_search=64)[0]
+    )
+    all_cores = strata.HnswIndex(16, M=16, ef_construction=64)
+    all_cores.add(base, threads=None)
+    assert len(all_cores) == 3000
+    with pytest.raises(ValueError, match="threads"):
+        all_cores.add(base, threads=0)
+    assert len(all_cores) == 3000
+
+
 def test_hnsw_load_errors(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError):
         strata.HnswIndex.load(tmp_path / "missing.snap")

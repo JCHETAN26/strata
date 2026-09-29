@@ -496,9 +496,9 @@ with the final runs.
   search may be reading, and it can reallocate `data_`, `links0_`, and `upper_links_`. The Python
   bindings enforce this with a `shared_mutex`: searches and `save` take it shared; `add` and
   `remove` take it exclusive. `save` only reads, so it may run alongside searches.
-- **Why not concurrent inserts now?** It needs a lock per node (hnswlib's approach), a
-  preallocated capacity so arrays never move, and care with the entry point. That is Phase 3
-  (parallel build), after the single-threaded version is measured.
+- **Parallel build:** `add_batch(vectors, pool)` inserts one batch on several threads. It is still
+  a write, so it still needs exclusive access: the concurrency is internal to that one call. See
+  section 10.
 
 ---
 
@@ -681,3 +681,105 @@ within noise (build 23.5 s, save 0.51 s, load 0.36 s, at `0f25f11`).
 Loading reads the whole file, then copies the vectors into the index, so peak memory is about
 twice the index size. That is fine up to SIFT1M on the Mac. The AWS machine for the 10M run has
 enough memory, so streaming loads are deferred.
+
+---
+
+## 10. Parallel build
+
+`add_batch(vectors, pool)` links a batch of vectors on a `ThreadPool`. The sequential `add` and
+`add_batch` stay the default, because they are deterministic. Python: `HnswIndex.add(vectors,
+threads=...)`, default 1.
+
+### Why the graph is not deterministic, but the levels are
+
+Each insert searches the graph as it stands at that moment. With several threads, what a node
+finds depends on which neighbors other threads have linked so far, so the neighbor lists depend on
+timing. The **levels** do not: the parallel `add_batch` draws every node's level in id order before
+any thread starts, exactly the draws a sequential build would make. So ids, levels, max level, and
+the level generator's position match the sequential build. That keeps snapshots consistent: a
+parallel-built index can be saved, loaded, and extended sequentially, deterministically from then
+on. `Collection` never uses the parallel build, because its crash recovery relies on WAL replay
+reproducing the graph exactly.
+
+### Three steps
+
+1. **Store everything first.** Every vector is copied in, every level drawn, and every node's
+   neighbor lists allocated at their final size (empty). After this no array is resized, so
+   every vector and list stays at a fixed address while threads run. Vectors and levels are never
+   written again during the build, so they need no locks.
+2. **The first node alone.** If the index is empty, the first node is linked on its own: it becomes
+   the entry point.
+3. **Link the rest in parallel**, with `parallel_for` handing out one id at a time. Threads then take
+   ids nearly in order, so the graph grows much as it would sequentially. hnswlib's parallel add
+   uses the same order.
+
+### Locking
+
+| Shared state | Protected by | Rule |
+|---|---|---|
+| A node's neighbor lists (all layers) | its lock: stripe `id % 65536` of a table of `std::mutex` | Read: lock, copy the list (at most 2M + 1 ids) into per-thread scratch, unlock, then traverse the copy. Write: only while holding it. |
+| Entry point, max level | one `top` mutex | Every insert reads them under it. An insert whose level is above the current max holds it until done, then promotes itself; every other insert releases it at once. |
+| Vectors, levels | nothing | Written in step 1, read-only after. |
+| Visited set, scratch lists | nothing | Per thread (`thread_local`). |
+
+- **No deadlock:** a thread never holds two node locks at once. It locks a node, copies or writes,
+  and unlocks before touching another. The top lock is taken first, before any node lock. So
+  striping, where two nodes can share a lock, cannot deadlock either.
+- **Why striped:** one mutex per node costs 64 bytes each on macOS (640 MB at 10M nodes). A fixed
+  table of 65,536 costs 4 MiB whatever the size, and two nodes sharing a lock only causes
+  occasional contention. The table is created on the first parallel build; copying an index does
+  not copy it.
+- **Why the top lock is held through a promotion:** a node raising the top level becomes the new
+  entry point. Holding the lock until it is fully linked means no other insert can start from an
+  entry point whose lists are still empty. Promotions are rare (probability 1/M per level), so
+  serializing them costs nothing measurable. hnswlib does the same.
+- **Prefetching needs no lock:** a prefetch hint is not a memory access in the C++ model.
+- **Sequential cost is zero:** every locking step is behind `if constexpr (kConcurrent)`, and the
+  sequential instantiations contain no locks. The C++ reference outputs stayed bit-identical, and a
+  pool of one thread builds exactly the sequential graph (`OneThreadEqualsSequentialExactly`).
+
+### Three races the tests found
+
+A sequential build never sees a node before it is linked. A parallel one does: a node becomes
+reachable on its upper layers, through its own back-links, while it is still being linked on
+lower ones. The first version missed three consequences. The tests caught each one.
+
+1. **Overwritten back-links (reachability).** Another thread could add a back-link to node X on
+   layer L before X wrote its own list on L. X's write then replaced it, and if that link was the
+   other node's only way in, the other node became unreachable. Measured on random data, layer-0
+   reachability fell from 1.0 (sequential) to 0.997 at 4 threads and 0.994 at 8. **Fix:** X
+   *merges* its list (`merge_links`). Its lists start empty, so anything present must be back-links
+   from other threads. They are kept, and re-selected only if they overflow, exactly as if they
+   had arrived after X's write. After the fix: 0.9993-1.0 over repeated runs.
+2. **Duplicate links.** Two nodes inserted at the same time can select each other. X linked to Y
+   itself, then Y's back-link added Y to X's list again. **Fix:** in concurrent mode a back-link
+   that already exists is skipped.
+3. **Self-loops.** Once another thread has linked to X on layer L, X's own search on L can reach X.
+   X then selected itself as a neighbor. **Fix:** in concurrent mode a node is removed from its own
+   candidates.
+
+Fixes 2 and 3 are checked only in concurrent mode: sequentially those cases cannot occur, so the
+sequential path is unchanged.
+
+### How it is tested
+
+A parallel graph cannot be compared for equality, so the tests compare **quality** with the
+sequential build of the same data (`tests/hnsw_parallel_test.cpp`, 4 threads, random 6000 × 32
+and SIFT10K):
+- well-formed (degree bounds, no self-loops or duplicates, neighbors on their layer, entry point
+  on the top layer);
+- identical levels and max level;
+- layer-0 reachability at least 0.999;
+- mean layer-0 degree within 5%;
+- recall@10 against brute force within 0.01 at ef 10, 40, and 160.
+
+Plus: one thread equals sequential exactly; save, load, then sequential add is deterministic; a
+parallel batch on top of tombstones; and a **high-contention stress test** (M = 4, near-duplicate
+clusters, 8 threads, repeated) run under ThreadSanitizer. TSan reported no races. The tests also
+ran repeatedly to catch timing-dependent failures.
+
+**What the stress test does not check:** reachability. Its data (5 tight clusters, M = 4) is
+pathological for HNSW: 20 sequential builds in shuffled insertion orders gave layer-0
+reachability anywhere from 0.2 to 1.0, and parallel builds fall inside that range. On such data
+reachability measures insertion order, not correctness.
+
