@@ -1236,3 +1236,43 @@ order:
    low risk.
 3. Then choose between the item that step 1 shows is largest and batched distances, each
    measured with `bench/run_ab_search.py` as before.
+
+## 2026-09-28: Prefetching in greedy_search: no measurable gain, not kept; search_layer work deferred
+
+**Tried:** prefetching every neighbor's vector at the start of each step of `greedy_search`, the
+upper-layer walk, before computing any distance (the same idea as in `search_layer`). The profile
+had put ~12% of search time in this walk, most of it in its distance calls.
+
+**Results unchanged, as required.** All 19 `strata_reference` files were bit-identical to HEAD
+(`840f88b`), and recall and graph statistics were identical in all 10 A/B runs.
+
+**Measured** with `bench/run_ab_search.py` on `sift1m-200k-q1000` (5 interleaved pairs, 5 timed
+passes per ef; M2, so QPS is indicative; no thermal warnings;
+`results/ab/prefetch-greedy-sift1m-200k.md`): mean after/before ratios 1.14, 1.06, 1.05, 1.03,
+0.99, 1.05 at ef 10-320. Every range straddles 1 except ef 320 (1.01-1.09). Run-to-run spread was
+4-11%. Build time was unchanged (1.003x).
+
+**Decision: not kept.** The gain is not distinguishable from the noise, which is the bar
+prefetching in `search_layer` cleared easily (worst pair 1.34x). That fits the setting: upper
+layers hold ~1/M of the nodes, and every query walks down from the same entry region, so those
+vectors are probably already cached. At most ~12% of search time is in this walk, so even a real
+gain would be a few percent. The core stays at `840f88b`. The exact patch is saved in
+`results/ab/prefetch-greedy-sift1m-200k/b.patch`, to re-test on x86, where the hardware
+prefetchers differ.
+
+**Deferred to Phase 9 (AWS session, x86, `perf`):** the `search_layer` investigation. That covers
+line-level attribution of its ~60% self time, the visited-mark loads, heap operations, and the
+prefetch hints (8 per vector, half redundant on the M2's 128-byte lines). `sample` on the Mac
+cannot attribute inlined code without a debug-info build, and `perf` with hardware counters on
+x86 can show cache misses and stalls directly. Batched distances are also set aside for now: the
+distance kernel is ~33% of search time and mostly finds its vectors cached, so the expected gain
+is small.
+
+**Housekeeping in the same commit:** `buildplan.md` and `docs/checklist.md` reconciled with the
+repo (status dated 2026-09-28). They adopt the finish order: HNSW persistence and deletes;
+parallel build; filtered HNSW with automatic strategy selection; gRPC and sharding on the Oracle
+ARM machine; one AWS session for the x86 finals, the 10M run, and thread and multi-machine scaling;
+final ARM numbers on Oracle; then README, design doc, and going public. PQ-in-HNSW, WAL group
+commit, and extra BEIR datasets are marked optional. One item was not placed and needs a
+decision: HotpotQA answer groundedness on the full 5.2M corpus. The Linux build (2026-09-25)
+predates the HNSW core, so rebuilding and testing on Linux is the first step on the Oracle machine.

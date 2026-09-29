@@ -7,6 +7,34 @@ questions from documents with cited sources.
 **What it proves:** algorithms (from-scratch HNSW), systems depth (SIMD, concurrency, persistence,
 sharding), and applied AI (hybrid retrieval, reranking, RAG), benchmarked against FAISS and hnswlib.
 
+**Status (2026-09-28):** Phases 0–2 done; Phases 3–6 and 8 done except the items in the finish
+order below; Phase 7 not started. The HNSW core is AI-implemented at my request in reviewed stages
+(see `CLAUDE.md`), with prefetching in place. Every number so far is a Mac development result: recall
+is final, speed is indicative. Tests: 188 C++ (debug, asan, tsan) and 135 Python, passing on the Mac.
+`docs/checklist.md` has the item-by-item status.
+
+---
+
+## Finish order (adopted 2026-09-28)
+
+Heavy work runs one job at a time, with the thermal and busy-machine checks in `bench/`
+(`benchmeta.preflight`).
+
+1. **HNSW persistence and deletes:** save/load the graph in snapshots; tombstone deletes in HNSW
+   search (Phase 4).
+2. **Parallel index build** on the thread pool (Phase 3).
+3. **Filtered HNSW search:** filter during graph traversal, plus automatic strategy selection from
+   the measured crossover (Phase 6).
+4. **gRPC server and sharding**, built on the Oracle ARM machine, not the Mac (Phase 7).
+5. **One AWS session (x86):** final benchmarks (SIFT1M, GloVe-100, recall-QPS vs. FAISS and
+   hnswlib), the 10M-vector run, thread scaling, multi-machine sharding scaling, and `perf`
+   profiling (Phase 9).
+6. **Final ARM numbers on the Oracle machine** (Phase 9).
+7. **README, design doc, and making the repo public** (Phase 9).
+
+**Optional** (only if time allows, never blocking the above): PQ inside HNSW, WAL group commit,
+extra BEIR datasets (FiQA, NFCorpus, and full-corpus hybrid + rerank).
+
 ---
 
 ## Ground rules
@@ -18,7 +46,9 @@ sharding), and applied AI (hybrid retrieval, reranking, RAG), benchmarked agains
 - **AI handles scaffolding:** build files, harnesses, bindings, tests, scripts.
 - **Every result comes from a script** that saves raw data and generates its table or chart.
 - **Always compare against a baseline** (brute force, hnswlib, FAISS, scalar vs. SIMD, with vs. without).
-- **Long benchmarks run on the IdeaPad only.** The MacBook Air is fanless and throttles under sustained load.
+- **Long benchmarks run on AWS (x86) or the Oracle machine (ARM).** The MacBook Air is fanless,
+  throttles, and has shut down under sustained load; on it, heavy jobs run one at a time behind
+  the thermal checks, on subsets (e.g. 200k SIFT vectors) rather than full SIFT1M.
 - **Commit after every working step.**
 
 ---
@@ -27,12 +57,13 @@ sharding), and applied AI (hybrid retrieval, reranking, RAG), benchmarked agains
 
 | Machine | Specs | Role |
 |---|---|---|
-| MacBook Air | M2 (ARM), 8 GB | Phases 0–6 development, small datasets, ARM NEON SIMD, ARM benchmark results |
-| IdeaPad | Ryzen 7 5800H (8C/16T, AVX2), ~19 GiB usable RAM, RTX 3050 4 GB, Ubuntu 22.04 | Docker, gRPC server, embeddings on GPU, x86 AVX2 SIMD, all final large-scale benchmarks |
-| Cloud VMs (brief) | 3–5 small instances, a few hours | Multi-machine sharding scaling numbers |
+| MacBook Air | M2 (ARM), 8 GB, fanless | Development, small datasets and subsets, NEON; development results only |
+| Oracle ARM machine | (record specs in the first session there) | gRPC server and sharding (Phase 7); final ARM numbers |
+| AWS (one session) | x86 with AVX2; instance type to be chosen and recorded | Final x86 benchmarks, 10M run, thread scaling, multi-machine scaling, `perf` |
+| Kaggle (GPU notebook) | T4 | Embeddings and reranking for the RAG layer (done; see `kaggle/`) |
+| IdeaPad | Ryzen 7 5800H, Ubuntu 22.04 | Linux bring-up on 2026-09-25 (`docs/reports/linux-bringup.md`); not used in the finish order (disk full) |
 
-Code moves between machines via GitHub: push from the Mac, pull on the IdeaPad.
-Note for results: the IdeaPad's RAM is mixed 8 GB + 16 GB (partly single-channel). State this in hardware notes.
+Code moves between machines via GitHub.
 
 ---
 
@@ -41,9 +72,9 @@ Note for results: the IdeaPad's RAM is mixed 8 GB + 16 GB (partly single-channel
 | Dataset | Size | Used for |
 |---|---|---|
 | SIFT10K (siftsmall) | 10K × 128-d | Fast iteration and correctness tests (Mac) |
-| SIFT1M | 1M × 128-d, ~500 MB | Main benchmark (Mac for dev, IdeaPad for results) |
+| SIFT1M | 1M × 128-d, ~500 MB | Main benchmark (Mac subsets for dev, AWS/Oracle for results) |
 | GloVe-100 | ~1.2M × 100-d | Harder benchmark, angular distance |
-| 10M-vector set (e.g., BIGANN/SIFT subset) | ~5 GB raw | Large-scale run on IdeaPad (use PQ if memory is tight) |
+| 10M-vector set (e.g., BIGANN/SIFT subset) | ~5 GB raw | Large-scale run in the AWS session (use PQ if memory is tight) |
 | BEIR: SciFact, FiQA, NFCorpus | Small corpora with relevance labels | Retrieval quality (nDCG@10) |
 | HotpotQA (subset) | QA pairs with supporting docs | Answer quality and groundedness |
 
@@ -110,14 +141,17 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 
 ---
 
-## Phase 3 — Performance (1–2 weeks, Mac → IdeaPad)
+## Phase 3 — Performance (Mac; final numbers on AWS)
 
-- [x] SIMD distance kernels: NEON (Mac), AVX2 (IdeaPad), scalar fallback
+- [x] SIMD distance kernels: NEON (Mac), AVX2 (verified on the IdeaPad), scalar fallback
 - [x] Test: all kernels return identical results to scalar
-- [ ] Contiguous vector storage, compact neighbor lists, prefetching
-- [x] Thread pool: parallel batch queries (parallel index build waits for HNSW)
-- [ ] Profile hotspots (Instruments on Mac, `perf` on Linux)
-- [ ] Record the effect of each optimization separately
+- [x] Contiguous vector storage, compact neighbor lists, prefetching in `search_layer` (~2x on the 200k subset)
+- [x] Prefetching in the upper-layer walk: tried, no gain distinguishable from noise on the M2, not kept; re-test on x86
+- [x] Thread pool: parallel batch queries
+- [ ] Parallel index build — finish order 2
+- [x] Profile hotspots on the Mac (`sample`; `results/profiles/`)
+- [ ] Profile on Linux with `perf`, including `search_layer`'s own loop — deferred to the AWS session
+- [x] Record the effect of each optimization separately (`results/ab/`, SIMD and thread results)
 
 **Measure:** SIMD speedup vs. scalar; QPS scaling across cores; updated recall-QPS curve.
 
@@ -125,9 +159,12 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 
 ## Phase 4 — Persistence & crash recovery (≈1 week, Mac)
 
-- [x] Save and load index to/from disk (snapshot of vectors + tombstones; HNSW graph pending)
+- [x] Save and load index to/from disk (snapshot of vectors + tombstones)
+- [ ] Save and load the HNSW graph in snapshots — finish order 1
 - [x] Write-ahead log: log every insert before applying it
-- [x] Deletes via tombstones (brute force; HNSW pending)
+- [x] Deletes via tombstones (brute force)
+- [ ] HNSW deletes (tombstones skipped during search) — finish order 1
+- [ ] *Optional:* WAL group commit (durable inserts are capped at ~330/s by one fsync each)
 - [x] Crash tests: kill mid-insert, restart, verify no acknowledged write is lost or corrupted
 
 **Measure:** save/load time; recovery correctness across repeated crash tests.
@@ -139,7 +176,7 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 - [x] Split vectors into sub-vectors; k-means codebook per sub-space
 - [x] Asymmetric distance computation with precomputed lookup tables
 - [x] Re-rank top candidates with full-precision vectors
-- [ ] Combine PQ with HNSW (waits for HNSW)
+- [ ] *Optional:* combine PQ with HNSW
 
 **Measure:** memory reduction and recall at several compression levels (memory vs. recall chart).
 
@@ -149,33 +186,35 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 
 - [x] Metadata attributes per vector (e.g., year, category)
 - [x] Strategy A: pre-filter + brute force (best for very selective filters)
-- [ ] Strategy B: filter during graph traversal (best for broad filters) — waits for HNSW
-- [ ] Automatic strategy selection based on estimated selectivity — needs the measured crossover; `estimate_selectivity` exists
+- [ ] Strategy B: filter during graph traversal (best for broad filters) — finish order 3
+- [ ] Automatic strategy selection based on estimated selectivity (`estimate_selectivity` exists) — finish order 3
 
 **Measure:** recall and QPS at 1%, 10%, 50% filter selectivity for each strategy (crossover chart).
 
 ---
 
-## Phase 7 — Server & sharding (1–2 weeks, IdeaPad)
+## Phase 7 — Server & sharding (1–2 weeks, Oracle ARM machine; scaling on AWS)
 
 - [ ] gRPC API: insert, search, delete
 - [ ] Sharding: vectors partitioned across shards
 - [ ] Coordinator: parallel scatter to all shards, gather and merge top-k
-- [ ] Docker Compose running multiple shards on the IdeaPad
-- [ ] Brief cloud run on 3–5 VMs for real multi-machine scaling
+- [ ] Docker Compose running multiple shards on the Oracle machine
+- [ ] Multi-machine scaling run in the AWS session
 
 **Measure:** end-to-end gRPC query latency; throughput scaling from 1 to N machines.
 
 ---
 
-## Phase 8 — Python bindings & RAG layer (1–2 weeks, IdeaPad)
+## Phase 8 — Python bindings & RAG layer (Mac + Kaggle GPU)
 
 - [x] Python bindings (nanobind or pybind11) — nanobind; HNSW bound, including `selection`
 - [x] BM25 inverted index in C++ (Lucene/Anserini-exact; SciFact nDCG@10 0.6789 = published)
 - [x] Hybrid retrieval with reciprocal rank fusion
-- [ ] Cross-encoder reranking
-- [x] Cited answer generation with Claude Haiku (live run pending API key)
-- [ ] Generate embeddings for BEIR corpora on the IdeaPad GPU
+- [x] Cross-encoder reranking (HotpotQA BEIR subset; SciFact on Kaggle: no gain; `docs/rag-results.md`)
+- [x] Cited answer generation with Claude Haiku (live runs done; `docs/rag-results.md`)
+- [x] Embeddings on GPU for SciFact and full BEIR HotpotQA (5.2M passages, Kaggle T4)
+- [ ] *Optional:* extra BEIR datasets (FiQA, NFCorpus) and full-corpus hybrid + rerank
+- [ ] Not in the finish order yet: HotpotQA answer groundedness on the full 5.2M corpus (Kaggle stage2b, behind a cost estimate)
 - [x] Evaluation scripts for BEIR and HotpotQA
 
 **Measure:** nDCG@10 for keyword-only, vector-only, hybrid, hybrid + rerank (ablation table);
@@ -183,11 +222,14 @@ answer groundedness on HotpotQA.
 
 ---
 
-## Phase 9 — Final results & polish (≈1 week, IdeaPad)
+## Phase 9 — Final results & polish (AWS session, then the Oracle machine)
 
-- [ ] Full runs on SIFT1M and GloVe-100, averaged over multiple runs
-- [ ] 10M-vector run
-- [ ] x86 AVX2 results (IdeaPad) + ARM NEON results (Mac, 1M scale)
+- [x] Linux build and tests on GCC 13, AVX2 verified natively (IdeaPad, 2026-09-25; predates HNSW)
+- [ ] Rebuild and test on Linux with HNSW and everything since (first thing on the Oracle machine)
+- [ ] Full runs on SIFT1M and GloVe-100, averaged over multiple runs — AWS
+- [ ] 10M-vector run — AWS
+- [ ] Thread scaling 1 → N cores, and multi-machine sharding scaling — AWS
+- [ ] x86 AVX2 results (AWS) + final ARM NEON results (Oracle machine)
 - [ ] README: one-line summary, recall-QPS chart vs. FAISS/hnswlib at the top, architecture diagram,
       results tables with hardware noted
 - [ ] Design doc: graph parameters, compression, filtering strategies, sharding trade-offs

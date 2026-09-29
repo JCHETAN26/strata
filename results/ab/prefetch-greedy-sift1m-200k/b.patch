@@ -1,0 +1,19 @@
+diff --git a/src/index/hnsw.cpp b/src/index/hnsw.cpp
+index bdf8753..c2991d2 100644
+--- a/src/index/hnsw.cpp
++++ b/src/index/hnsw.cpp
+@@ -284,7 +284,13 @@ Neighbor HnswIndex::greedy_search(std::span<const float> query, Neighbor start,
+   Neighbor current = start;
+   while (true) {
+     Neighbor best = current;
+-    for (VectorId nbr : neighbors(current.id, layer)) {
++    const auto nbrs = neighbors(current.id, layer);
++    // Ask for every neighbor's vector before computing any distance, so the scattered loads
++    // overlap (as in search_layer). Only timing changes: the scan below is the same.
++    for (VectorId nbr : nbrs) {
++      prefetch(vector(nbr).data(), dim_ * sizeof(float));
++    }
++    for (VectorId nbr : nbrs) {
+       const Neighbor candidate{.id = nbr, .distance = dist(query, nbr)};
+       if (candidate < best) {
+         best = candidate;
