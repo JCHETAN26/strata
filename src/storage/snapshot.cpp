@@ -19,7 +19,10 @@ static_assert(std::numeric_limits<float>::is_iec559, "the snapshot format stores
 namespace {
 
 constexpr std::array<char, 8> kMagic{'S', 'T', 'R', 'S', 'N', 'P', '\0', '\1'};
-constexpr std::uint32_t kVersion = 2;
+// Version written. 3 and 2 share the header layout; they differ only in the HNSW index section,
+// which the index interprets (its section carries its own version).
+constexpr std::uint32_t kVersion = 3;
+constexpr std::uint32_t kVersionTextRng = 2;
 constexpr std::uint32_t kByteOrderMark = 0x01020304;
 constexpr std::uint32_t kByteOrderMarkSwapped = 0x04030201;  // as read on the other byte order
 constexpr std::size_t kHeaderSize = 64;
@@ -70,7 +73,7 @@ Expected<Header> parse_header(const std::filesystem::path& path, std::span<const
     h.num_deleted = get<std::uint64_t>(bytes, 40);
     return h;
   }
-  if (version != kVersion) {
+  if (version != kVersion && version != kVersionTextRng) {
     return corrupt(path, "unsupported version " + std::to_string(version));
   }
   if (bytes.size() < kHeaderSize + 4) {

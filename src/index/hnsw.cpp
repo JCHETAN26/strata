@@ -289,8 +289,15 @@ int HnswIndex::random_level() {
   // output sequence is fixed by the standard but the distributions are not: libc++ (macOS) and
   // libstdc++ (Linux) would otherwise build different graphs from the same seed.
   // Largest possible level: -ln(2^-53) / ln(2) = 53 (at M = 2), so it fits levels_'s uint8_t.
-  const double u = static_cast<double>((rng_() >> 11) + 1) * 0x1.0p-53;
+  const double u = static_cast<double>((draw() >> 11) + 1) * 0x1.0p-53;
   return static_cast<int>(std::floor(-std::log(u) * level_mult_));
+}
+
+std::uint64_t HnswIndex::draw() {
+  // Every use of the level generator goes through here, so rng_draws_ is exactly the number of
+  // engine calls: a snapshot restores the generator by re-seeding and discarding that many.
+  ++rng_draws_;
+  return rng_();
 }
 
 void HnswIndex::reserve(std::size_t n) {
@@ -420,7 +427,11 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
 
 namespace {
 
-constexpr std::uint32_t kGraphVersion = 1;
+// Index section versions. 2 (snapshot format version 3) stores the generator as a draw count.
+// 1 (snapshot format version 2) stored the generator's stream text, which is not portable (see
+// from_snapshot); it is still read, on the standard library that wrote it.
+constexpr std::uint32_t kGraphVersion = 2;
+constexpr std::uint32_t kGraphVersionTextRng = 1;
 constexpr std::uint32_t kNoEntryPoint = 0xFFFFFFFF;
 
 template <typename T>
@@ -472,6 +483,43 @@ tl::unexpected<Error> bad_graph(const std::string& what) {
   return make_error(ErrorCode::kCorruptData, "HNSW snapshot: " + what);
 }
 
+// Index section version 1 (snapshot format version 2) saved the generator as its stream text. The
+// standard fixes that format, but the libraries disagree in practice: libc++ writes the 312 state
+// words, libstdc++ writes 313 numbers (its state array plus an internal index), and each rejects
+// the other's. So such a file loads only on the standard library that wrote it. Once it is parsed,
+// the draw count is recovered by re-seeding and checking that `count` draws (one per node, the only
+// way that format was ever written) reproduce the saved state, so the next save is portable.
+// Returns the draw count and sets `rng` to the saved state.
+Expected<std::uint64_t> read_text_rng(SectionReader& in, std::uint64_t seed, std::size_t count,
+                                      std::mt19937_64& rng) {
+  std::uint32_t bytes = 0;
+  if (!in.read(bytes)) {
+    return bad_graph("truncated generator state");
+  }
+  std::string text(bytes, '\0');
+  if (!in.read_all(std::span(text))) {
+    return bad_graph("truncated generator state");
+  }
+  std::istringstream rng_text(text);
+  rng_text.imbue(std::locale::classic());
+  std::mt19937_64 saved;
+  rng_text >> saved;
+  if (rng_text.fail() || !(rng_text >> std::ws).eof()) {
+    return bad_graph(
+        "snapshot format version 2 stores the level generator in a form that depends on the C++ "
+        "standard library, and this file was written by a different one (libc++ on macOS vs. "
+        "libstdc++ on Linux). Load it on the kind of machine that wrote it and save it again to "
+        "upgrade it to the portable format (version 3)");
+  }
+  std::mt19937_64 probe(seed);
+  probe.discard(count);
+  if (probe != saved) {
+    return bad_graph("generator state does not match the saved seed and node count");
+  }
+  rng = saved;
+  return static_cast<std::uint64_t>(count);
+}
+
 }  // namespace
 
 Snapshot HnswIndex::to_snapshot(std::uint64_t last_lsn) const {
@@ -490,15 +538,10 @@ Snapshot HnswIndex::to_snapshot(std::uint64_t last_lsn) const {
   put(out, params_.seed);
   put(out, static_cast<std::int32_t>(max_level_));
   put(out, entry_point_.value_or(kNoEntryPoint));
-  // The level generator's exact position, so the levels drawn after a load continue the same
-  // sequence. The text form is specified by the standard; the classic locale keeps it free of
-  // digit grouping whatever the process locale is.
-  std::ostringstream rng_text;
-  rng_text.imbue(std::locale::classic());
-  rng_text << rng_;
-  const std::string text = rng_text.str();
-  put(out, static_cast<std::uint32_t>(text.size()));
-  put_all(out, std::span(text));
+  // The level generator's position, as the number of engine calls since seeding: loading
+  // re-seeds and discards that many, which the standard defines identically for every library.
+  // (Its stream text is not portable: libc++ and libstdc++ write different formats.)
+  put(out, rng_draws_);
   put_all(out, std::span(levels_));
   put_all(out, std::span(links0_));
   for (std::size_t id = 0; id < size(); ++id) {
@@ -523,12 +566,11 @@ Expected<HnswIndex> HnswIndex::from_snapshot(const Snapshot& snapshot) {
   std::uint64_t seed = 0;
   std::int32_t max_level = 0;
   std::uint32_t entry = 0;
-  std::uint32_t rng_bytes = 0;
   if (!in.read(version) || !in.read(selection) || !in.read(m) || !in.read(ef_construction) ||
-      !in.read(seed) || !in.read(max_level) || !in.read(entry) || !in.read(rng_bytes)) {
+      !in.read(seed) || !in.read(max_level) || !in.read(entry)) {
     return bad_graph("truncated header");
   }
-  if (version != kGraphVersion) {
+  if (version != kGraphVersion && version != kGraphVersionTextRng) {
     return bad_graph("unsupported graph version " + std::to_string(version));
   }
   if (selection > 1) {
@@ -546,15 +588,20 @@ Expected<HnswIndex> HnswIndex::from_snapshot(const Snapshot& snapshot) {
   }
   HnswIndex& h = *index;
 
-  std::string text(rng_bytes, '\0');
-  if (!in.read_all(std::span(text))) {
-    return bad_graph("truncated generator state");
-  }
-  std::istringstream rng_text(text);
-  rng_text.imbue(std::locale::classic());
-  rng_text >> h.rng_;
-  if (rng_text.fail() || !(rng_text >> std::ws).eof()) {
-    return bad_graph("bad generator state");
+  // create() seeded the generator from `seed`; move it to where the saved index left it.
+  if (version == kGraphVersion) {
+    std::uint64_t draws = 0;
+    if (!in.read(draws)) {
+      return bad_graph("truncated generator state");
+    }
+    h.rng_.discard(draws);
+    h.rng_draws_ = draws;
+  } else {
+    auto draws = read_text_rng(in, seed, count, h.rng_);
+    if (!draws) {
+      return tl::unexpected(draws.error());
+    }
+    h.rng_draws_ = *draws;
   }
 
   h.levels_.resize(count);

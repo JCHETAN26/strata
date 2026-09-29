@@ -564,7 +564,7 @@ walking the whole dead graph.
 
 ### Persistence: what is saved and why
 
-`save` writes a snapshot, format version 2 (`include/strata/snapshot.hpp`): header, vectors,
+`save` writes a snapshot, format version 3 (`include/strata/snapshot.hpp`): header, vectors,
 tombstone bitmap, and an index section that holds the graph (format in `include/strata/hnsw.hpp`).
 It is one file with one CRC32C, written atomically (temp file, sync, rename, directory sync), so a
 crash during `save` leaves either the old file or the new one, never a mix.
@@ -576,15 +576,32 @@ The index section holds **everything needed to keep building**, not only to sear
 | Parameters (M, ef_construction, seed, selection) | M sets list capacities | Same insert behavior |
 | Levels, layer-0 and upper-layer lists | The graph itself | Neighbors for new links, pruning |
 | Entry point, max level | Where search starts | Where inserts start |
-| **Level generator state** | Not needed | **The next node's level** |
+| **Level generator position** | Not needed | **The next node's level** |
 
 The last row is the subtle one. Levels come from `std::mt19937_64`. Seeded afresh after a load,
 node 1001 would get the level that node 1 got, the graph would diverge from never saving, and
-`SaveLoadThenAddEqualsNeverSaving` would fail. That test does fail when the state is dropped (a
-deliberate mutation during development broke all four cases). The state is stored in the engine's
-text form, which the C++ standard specifies exactly, so a snapshot written by libc++ (macOS)
-restores identically under libstdc++ (Linux). The classic locale is imposed on the stream so a
-process-wide locale with digit grouping cannot change the text.
+`SaveLoadThenAddEqualsNeverSaving` would fail. That test does fail when the position is dropped
+(deliberate mutations during development broke every case that adds after a load).
+
+**How the position is saved: a draw count, not the engine's state.** Every call of the engine
+goes through one function, `draw()`, which counts calls in `rng_draws_`. The snapshot stores that
+count (a u64). Loading re-seeds with the saved seed and calls `discard(count)`, which advances the
+engine exactly that many steps. `discard` and the engine's output sequence are defined by the
+standard and computed identically everywhere, so the position restores identically on libc++
+(macOS) and libstdc++ (Linux). Discarding costs one engine step per saved draw, linear in the
+number of nodes like the rest of loading (not yet measured separately). The count is of generator calls,
+not of inserts: today they are equal (one draw per insert), but anything that ever draws more
+often stays correct.
+
+**What went wrong first (snapshot format version 2).** Version 2 saved the engine's stream text
+(`operator<<`), which the standard specifies as the 312 state words. libc++ writes exactly that.
+libstdc++ writes 313 numbers (its state array plus an internal index) and requires the extra
+number when reading. So a Mac-written snapshot failed to load on Linux, and the reverse fails
+too. The first Linux run found it, the golden test failed with "bad generator state", while every
+other byte of the index was identical. Version 2 files still load on the standard library that
+wrote them. The draw count is then recovered by re-seeding and checking that one draw per node
+reproduces the saved state, so saving again writes version 3. Under the other library they fail
+with an error that names the mismatch and says to re-save on the machine that wrote the file.
 
 ### Loading defensively
 
@@ -609,13 +626,19 @@ The format is little-endian with IEEE 754 floats. Both are `static_assert`ed at 
 checked on load. A file from a big-endian writer reads as `0x04030201` and is rejected with that
 message instead of being misread.
 
-`tests/golden/hnsw_v2.snap` was written on the Mac and is committed. On every machine that runs the
+`tests/golden/hnsw_v3.snap` was written on the Mac and is committed. On every machine that runs the
 suite, `HnswGolden.LoadsBitIdenticallyOnThisMachine` loads it and must reproduce the stored results
 bit for bit. It also rebuilds the same graph from the same vectors and seed, which must equal the
-file, so it checks that level assignment and neighbor selection are platform-independent. The
-vectors are small integers, so NEON, AVX2, and scalar kernels all compute the same exact
-distances. The test passes on the Mac. It first runs on Linux in the first session on the Oracle
-machine.
+file, so it checks that level assignment and neighbor selection are platform-independent. It then
+adds more vectors to both, which must stay identical, so it checks the restored generator position
+too. The vectors are small integers, so NEON, AVX2, and scalar kernels all compute the same exact
+distances. The first Linux run (Oracle, GCC 13) showed everything except the old generator text is
+portable. Version 3 is written to close that gap and is next confirmed on Linux.
+
+`tests/golden/hnsw_v2_libcxx.snap` is the same index in format version 2, written on the Mac. It
+must load under libc++ (and upgrade to version 3 on save) and be rejected with the explanation
+under libstdc++. A second test rewrites its generator text into the other library's shape, so the
+rejection is exercised on every platform.
 
 ### Known limit
 

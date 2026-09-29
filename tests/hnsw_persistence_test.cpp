@@ -11,6 +11,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <version>  // _LIBCPP_VERSION: which standard library this is
 
 #include "strata/brute_force.hpp"
 #include "strata/crc32c.hpp"
@@ -336,7 +337,7 @@ class HnswSnapshotCorruption : public TempDir {
  protected:
   static constexpr std::size_t kCount = 300;
   static constexpr std::size_t kDim = 8;
-  static constexpr std::size_t kHeader = 64;  // snapshot format version 2
+  static constexpr std::size_t kHeader = 64;  // snapshot format versions 2 and 3
 
   void SetUp() override {
     TempDir::SetUp();
@@ -368,16 +369,12 @@ class HnswSnapshotCorruption : public TempDir {
     util::copy_bytes(copy.data() + offset, &value, sizeof(T));
     write_fixed(copy);
   }
-  // Start of the HNSW index section, and of its layer-0 lists (after the fixed fields, the
-  // generator state, and one level byte per node).
+  // Start of the HNSW index section, and of its layer-0 lists (after 48 bytes of fixed fields,
+  // ending with the u64 generator draw count, then one level byte per node).
   [[nodiscard]] static std::size_t graph_start() {
     return kHeader + (kCount * kDim * 4) + ((kCount + 7) / 8);
   }
-  [[nodiscard]] std::size_t layer0_start() const {
-    std::uint32_t rng_bytes = 0;
-    util::copy_bytes(&rng_bytes, bytes_.data() + graph_start() + 40, 4);
-    return graph_start() + 44 + rng_bytes + kCount;
-  }
+  [[nodiscard]] static std::size_t layer0_start() { return graph_start() + 48 + kCount; }
   void expect_corrupt(const std::string& fragment) const {
     auto loaded = HnswIndex::load(path());
     ASSERT_FALSE(loaded) << "loaded a damaged snapshot";
@@ -402,7 +399,7 @@ TEST_F(HnswSnapshotCorruption, FlippedByteFailsTheChecksum) {
 }
 
 TEST_F(HnswSnapshotCorruption, UnsupportedSnapshotVersion) {
-  patch<std::uint32_t>(8, 3);
+  patch<std::uint32_t>(8, 4);
   expect_corrupt("unsupported version");
 }
 
@@ -412,7 +409,7 @@ TEST_F(HnswSnapshotCorruption, OppositeByteOrderIsRejected) {
 }
 
 TEST_F(HnswSnapshotCorruption, UnsupportedGraphVersion) {
-  patch<std::uint32_t>(graph_start(), 2);
+  patch<std::uint32_t>(graph_start(), 3);
   expect_corrupt("unsupported graph version");
 }
 
@@ -446,13 +443,18 @@ TEST_F(HnswSnapshotCorruption, TruncatedOrPaddedIndexSection) {
   EXPECT_NE(r2.error().message.find("trailing"), std::string::npos) << r2.error().message;
 }
 
-// --- Cross-machine golden snapshot ---------------------------------------------------------------
+// --- Cross-machine golden snapshots ----------------------------------------------------------
 //
-// tests/golden/hnsw_v2.snap was written on the Mac (M2, NEON) and is committed. Every machine that
-// runs this suite (Linux/ARM, Linux/x86 with AVX2) must load it and reproduce the stored search
-// results bit for bit, and rebuilding the same graph from its vectors must give the same graph.
-// The vectors are small integers, so every SIMD kernel computes exact, identical distances.
-// Regenerate (after a deliberate format change) with STRATA_WRITE_GOLDEN=1.
+// tests/golden/hnsw_v3.snap (snapshot format version 3) was written on the Mac (M2, NEON) and is
+// committed. Every machine that runs this suite (Linux/ARM, Linux/x86 with AVX2) must load it and
+// reproduce the stored search results bit for bit, and rebuilding the same graph from its vectors
+// must give the same graph. The vectors are small integers, so every SIMD kernel computes exact,
+// identical distances. Regenerate (after a deliberate format change) with STRATA_WRITE_GOLDEN=1.
+//
+// tests/golden/hnsw_v2_libcxx.snap is the same index in format version 2, also written on the Mac.
+// Version 2 stored the level generator as stream text, which libc++ and libstdc++ format
+// differently, so it must load under libc++ (and upgrade to version 3 on save) and must be
+// rejected with a clear error under libstdc++.
 
 const fs::path kGoldenDir = fs::path(STRATA_TEST_SOURCE_DIR) / "golden";
 constexpr std::size_t kGoldenCount = 400;
@@ -474,23 +476,22 @@ Matrix<float> golden_matrix(std::size_t rows, std::uint32_t seed) {
 
 bool golden_deleted(VectorId id) { return id % 9 == 4; }
 
-TEST(HnswGolden, WriteFixture) {
-  const char* flag = std::getenv("STRATA_WRITE_GOLDEN");
-  if (flag == nullptr || std::string(flag) != "1") {
-    GTEST_SKIP() << "set STRATA_WRITE_GOLDEN=1 to regenerate tests/golden/";
-  }
+// The golden index, built from scratch on this machine.
+HnswIndex golden_index() {
   auto index = make_index(kGoldenDim, kGoldenParams);
-  ASSERT_TRUE(index.add_batch(golden_matrix(kGoldenCount, 1)));
+  EXPECT_TRUE(index.add_batch(golden_matrix(kGoldenCount, 1)));
   for (VectorId id = 0; id < kGoldenCount; ++id) {
     if (golden_deleted(id)) {
-      ASSERT_TRUE(index.remove(id));
+      EXPECT_TRUE(index.remove(id));
     }
   }
-  fs::create_directories(kGoldenDir);
-  ASSERT_TRUE(index.save(kGoldenDir / "hnsw_v2.snap"));
-  // Expected results: u32 nq, u32 k, then nq * k pairs of (u32 id, f32 distance), little-endian.
+  return index;
+}
+
+// Expected results file: u32 nq, u32 k, then nq * k pairs of (u32 id, f32 distance), little-endian.
+void write_expected_results(const HnswIndex& index, const fs::path& path) {
   const auto queries = golden_matrix(20, 2);
-  std::ofstream out(kGoldenDir / "hnsw_v2_expected.bin", std::ios::binary | std::ios::trunc);
+  std::ofstream out(path, std::ios::binary | std::ios::trunc);
   const auto nq = static_cast<std::uint32_t>(queries.rows());
   const auto k = static_cast<std::uint32_t>(kGoldenK);
   out.write(reinterpret_cast<const char*>(&nq), 4);
@@ -506,20 +507,17 @@ TEST(HnswGolden, WriteFixture) {
   }
 }
 
-TEST(HnswGolden, LoadsBitIdenticallyOnThisMachine) {
-  auto loaded = HnswIndex::load(kGoldenDir / "hnsw_v2.snap");
-  ASSERT_TRUE(loaded) << loaded.error().message;
-  ASSERT_EQ(loaded->size(), kGoldenCount);
-
-  std::ifstream in(kGoldenDir / "hnsw_v2_expected.bin", std::ios::binary);
-  ASSERT_TRUE(in) << "missing golden results";
+// Search results must match the stored ones: ids, and distances bit for bit.
+void expect_expected_results(const HnswIndex& index, const fs::path& path) {
+  std::ifstream in(path, std::ios::binary);
+  ASSERT_TRUE(in) << "missing " << path;
   std::uint32_t nq = 0;
   std::uint32_t k = 0;
   in.read(reinterpret_cast<char*>(&nq), 4);
   in.read(reinterpret_cast<char*>(&k), 4);
   const auto queries = golden_matrix(nq, 2);
   for (std::size_t q = 0; q < nq; ++q) {
-    auto found = loaded->search(queries.row(q), k, kGoldenEf);
+    auto found = index.search(queries.row(q), k, kGoldenEf);
     ASSERT_TRUE(found);
     ASSERT_EQ(found->size(), k);
     for (const auto& n : *found) {
@@ -527,23 +525,103 @@ TEST(HnswGolden, LoadsBitIdenticallyOnThisMachine) {
       float distance = 0;
       in.read(reinterpret_cast<char*>(&id), 4);
       in.read(reinterpret_cast<char*>(&distance), 4);
-      ASSERT_TRUE(in) << "golden results too short";
+      ASSERT_TRUE(in) << "expected results too short";
       EXPECT_EQ(n.id, id) << "query " << q;
       EXPECT_EQ(std::bit_cast<std::uint32_t>(n.distance), std::bit_cast<std::uint32_t>(distance))
           << "query " << q << ": " << n.distance << " vs " << distance;
     }
   }
+}
 
+TEST(HnswGolden, WriteFixture) {
+  const char* flag = std::getenv("STRATA_WRITE_GOLDEN");
+  if (flag == nullptr || std::string(flag) != "1") {
+    GTEST_SKIP() << "set STRATA_WRITE_GOLDEN=1 to regenerate tests/golden/hnsw_v3*";
+  }
+  const auto index = golden_index();
+  fs::create_directories(kGoldenDir);
+  ASSERT_TRUE(index.save(kGoldenDir / "hnsw_v3.snap"));
+  write_expected_results(index, kGoldenDir / "hnsw_v3_expected.bin");
+}
+
+TEST(HnswGolden, LoadsBitIdenticallyOnThisMachine) {
+  auto loaded = HnswIndex::load(kGoldenDir / "hnsw_v3.snap");
+  ASSERT_TRUE(loaded) << loaded.error().message;
+  ASSERT_EQ(loaded->size(), kGoldenCount);
+  expect_expected_results(*loaded, kGoldenDir / "hnsw_v3_expected.bin");
   // Building the same graph here, from the same vectors, seed, and order, must reproduce the file:
   // this checks that level assignment and neighbor selection are platform-independent.
-  auto rebuilt = make_index(kGoldenDim, kGoldenParams);
-  ASSERT_TRUE(rebuilt.add_batch(golden_matrix(kGoldenCount, 1)));
-  for (VectorId id = 0; id < kGoldenCount; ++id) {
-    if (golden_deleted(id)) {
-      ASSERT_TRUE(rebuilt.remove(id));
-    }
-  }
+  expect_same_graph(golden_index(), *loaded);
+  // And the generator position must restore too: more inserts must keep the two identical.
+  auto rebuilt = golden_index();
+  const auto more = golden_matrix(100, 3);
+  ASSERT_TRUE(loaded->add_batch(more));
+  ASSERT_TRUE(rebuilt.add_batch(more));
   expect_same_graph(rebuilt, *loaded);
+}
+
+class HnswGoldenLegacy : public TempDir {};
+
+TEST_F(HnswGoldenLegacy, Version2LoadsOnlyOnTheLibraryThatWroteIt) {
+  auto loaded = HnswIndex::load(kGoldenDir / "hnsw_v2_libcxx.snap");
+#if defined(_LIBCPP_VERSION)
+  ASSERT_TRUE(loaded) << loaded.error().message;
+  expect_expected_results(*loaded, kGoldenDir / "hnsw_v2_libcxx_expected.bin");
+  expect_same_graph(golden_index(), *loaded);
+  // Saving upgrades it to version 3, and the upgraded file keeps building exactly like a fresh
+  // index, so the draw count recovered from the old text state is right.
+  ASSERT_TRUE(loaded->save(dir_ / "upgraded.snap"));
+  std::ifstream header(dir_ / "upgraded.snap", std::ios::binary);
+  std::uint32_t version = 0;
+  header.seekg(8);
+  header.read(reinterpret_cast<char*>(&version), 4);
+  EXPECT_EQ(version, 3U);
+  auto upgraded = HnswIndex::load(dir_ / "upgraded.snap");
+  ASSERT_TRUE(upgraded) << upgraded.error().message;
+  auto rebuilt = golden_index();
+  const auto more = golden_matrix(100, 3);
+  ASSERT_TRUE(upgraded->add_batch(more));
+  ASSERT_TRUE(rebuilt.add_batch(more));
+  expect_same_graph(rebuilt, *upgraded);
+#else
+  ASSERT_FALSE(loaded) << "a libc++-written version 2 snapshot loaded under another library";
+  EXPECT_EQ(loaded.error().code, ErrorCode::kCorruptData);
+  EXPECT_NE(loaded.error().message.find("written by a different one"), std::string::npos)
+      << loaded.error().message;
+#endif
+}
+
+// The cross-library failure, reproduced on whichever library runs the test: rewrite the version 2
+// generator text into the other library's shape (libc++ writes 312 numbers, libstdc++ 313) and
+// check that it is rejected with the explanation, not misread.
+TEST_F(HnswGoldenLegacy, OtherLibrarysGeneratorTextIsRejectedClearly) {
+  auto snapshot = read_snapshot(kGoldenDir / "hnsw_v2_libcxx.snap");
+  ASSERT_TRUE(snapshot) << snapshot.error().message;
+  auto& section = snapshot->index_data;
+  constexpr std::size_t kTextLength = 40;  // offset of the u32 text length in section version 1
+  std::uint32_t length = 0;
+  util::copy_bytes(&length, section.data() + kTextLength, 4);
+  std::string text(length, '\0');
+  util::copy_bytes(text.data(), section.data() + kTextLength + 4, length);
+#if defined(_LIBCPP_VERSION)
+  const std::string foreign = text + " 312";  // libstdc++ appends its internal index
+#else
+  const std::string foreign = text.substr(0, text.rfind(' '));  // libc++ writes one fewer number
+#endif
+  std::vector<std::byte> rewritten(section.begin(), section.begin() + kTextLength);
+  const auto new_length = static_cast<std::uint32_t>(foreign.size());
+  const auto* length_bytes = reinterpret_cast<const std::byte*>(&new_length);
+  rewritten.insert(rewritten.end(), length_bytes, length_bytes + 4);
+  const auto* text_bytes = reinterpret_cast<const std::byte*>(foreign.data());
+  rewritten.insert(rewritten.end(), text_bytes, text_bytes + foreign.size());
+  rewritten.insert(rewritten.end(), section.begin() + kTextLength + 4 + length, section.end());
+  section = std::move(rewritten);
+
+  auto loaded = HnswIndex::from_snapshot(*snapshot);
+  ASSERT_FALSE(loaded) << "generator text in the other library's format was accepted";
+  EXPECT_EQ(loaded.error().code, ErrorCode::kCorruptData);
+  EXPECT_NE(loaded.error().message.find("written by a different one"), std::string::npos)
+      << loaded.error().message;
 }
 
 }  // namespace

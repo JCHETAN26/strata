@@ -59,11 +59,14 @@ struct HnswParams {
 //
 // Snapshot index section (IndexKind::kHnsw), little-endian, after the vectors and tombstones that
 // the snapshot layer stores (see include/strata/snapshot.hpp):
-//   u32 section version (1), u32 selection (0 simple, 1 heuristic)
+//   u32 section version (2), u32 selection (0 simple, 1 heuristic)
 //   u64 M, u64 ef_construction, u64 seed
 //   i32 max_level (-1 if empty), u32 entry point (0xFFFFFFFF if empty)
-//   u32 n, then n bytes: the level generator's state as text (std::mt19937_64's stream format,
-//       which the C++ standard fixes, so it restores identically on every standard library)
+//   u64 number of level-generator draws since seeding. Loading re-seeds std::mt19937_64 with the
+//       seed and calls discard(draws), which every standard library implements identically. (The
+//       generator's stream text is not portable in practice: libc++ and libstdc++ write different
+//       formats. Section version 1, in snapshot format version 2, stored that text and loads only
+//       on the standard library that wrote it.)
 //   count x u8: each node's level
 //   count x (2M + 1) u32: layer-0 lists (count, then 2M slots)
 //   for each node with level > 0, in id order: level x (M + 1) u32 upper-layer lists
@@ -132,6 +135,8 @@ class HnswIndex {
   VectorId insert(std::span<const float> values);
   // floor(-ln(U) * mL), U uniform in (0, 1].
   int random_level();
+  // One call of the level generator, counted in rng_draws_.
+  std::uint64_t draw();
   void reserve(std::size_t n);
   [[nodiscard]] bool aliases_storage(std::span<const float> values) const noexcept;
 
@@ -165,10 +170,11 @@ class HnswIndex {
   std::size_t dim_;
   Metric metric_;
   HnswParams params_;
-  DistanceFn distance_;     // best SIMD kernel for the metric, looked up once
-  std::size_t max_links0_;  // M_max0 = 2 * M
-  double level_mult_;       // mL = 1 / ln(M)
-  std::mt19937_64 rng_;     // level generator, seeded from params.seed
+  DistanceFn distance_;          // best SIMD kernel for the metric, looked up once
+  std::size_t max_links0_;       // M_max0 = 2 * M
+  double level_mult_;            // mL = 1 / ln(M)
+  std::mt19937_64 rng_;          // level generator, seeded from params.seed
+  std::uint64_t rng_draws_ = 0;  // calls of rng_ since seeding (what a snapshot saves)
 
   // Node id is the index into every array below.
   std::vector<float> data_;           // size() * dim floats, row-major

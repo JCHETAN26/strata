@@ -22,13 +22,13 @@ enum class IndexKind : std::uint32_t {
 // record it includes, and an index-specific section (the HNSW graph) that the snapshot layer
 // stores and checksums without interpreting.
 //
-// On-disk format, version 2. All integers and floats are little-endian (IEEE 754 binary32 for
+// On-disk format, version 3. All integers and floats are little-endian (IEEE 754 binary32 for
 // floats); hosts must be little-endian, which is checked at compile time, and the byte-order
 // field below is checked on load, so a file from a big-endian writer is rejected, not misread.
 //
 //   offset  field
 //        0  char[8] magic "STRSNP\0\1"
-//        8  u32 version (2)
+//        8  u32 version (3)
 //       12  u32 byte-order mark 0x01020304 (reads as 0x04030201 if the byte order differs)
 //       16  u32 metric
 //       20  u32 dim
@@ -43,6 +43,11 @@ enum class IndexKind : std::uint32_t {
 //           index section
 //           u32 crc32c of everything before it
 //
+// Version 2 has the same layout. Its HNSW index section stored the level generator's state as
+// stream text, which libc++ and libstdc++ format differently, so a version 2 HNSW snapshot loads
+// only on the standard library that wrote it (see include/strata/hnsw.hpp); version 3 stores a
+// portable draw count instead. The snapshot layer reads both; bumping the version makes older
+// readers reject version 3 files cleanly instead of misreading their index section.
 // Version 1 (48-byte header: magic, version, metric, dim, zero, count, last_lsn, num_deleted; no
 // byte-order mark or index section) is still read, as an IndexKind::kFlat snapshot. Other
 // versions are rejected.

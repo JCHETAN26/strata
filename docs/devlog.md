@@ -1369,3 +1369,37 @@ TSan reports. Python: 114 passed, 26 skipped (datasets and the API key absent).
   deferred to `CXX`) silently keep GCC 11. Verified: `strata.build_info()` reports GNU 13.4.0.
   The only GCC 11 code left in the module is vcpkg's `libutf8proc.a` (a C library vcpkg builds
   with the system compiler), the same as in the preset builds.
+
+## 2026-09-29: Merge of linux-arm-check; snapshot format version 3 (portable generator position)
+
+**Merged** `origin/linux-arm-check` (`d2faf40`, `f00405f`): `util::copy_bytes` for every byte copy
+(zero-length copies with null pointers are undefined, and glibc's UBSan reports them), and GCC 13
+for the Python extension on Linux. First built on the Mac here: clang-format made no changes, no
+raw `memcpy` remains outside `src/util/bytes.hpp`, and all 218 C++ tests pass under debug, asan,
+and tsan, with 140 Python tests (the live API test ran and passed; the usage cap has reset).
+
+**Fixed: HNSW snapshots did not cross between macOS and Linux.** The first Linux run found it
+(entry above): format version 2 saved `std::mt19937_64` as stream text, and libc++ writes 312 words
+while libstdc++ writes 313 (its state plus an internal index) and requires the extra one. Everything
+else in the file was already portable.
+- **Format version 3:** the index section (now section version 2) stores the number of generator
+  draws since seeding instead of the text. Every engine call goes through `HnswIndex::draw()`,
+  which counts calls, not adds. Loading re-seeds and calls `discard(count)`, which the standard
+  defines identically for every library.
+- **Version 2 files** load only on the standard library that wrote them. There the draw count is
+  recovered (re-seed and check that one draw per node reproduces the saved state), so the next
+  save writes version 3. Elsewhere they fail with an error naming the libc++/libstdc++ mismatch and
+  saying to re-save on the machine that wrote them. The snapshot file version bump also makes
+  pre-version-3 readers reject new files cleanly.
+- **Fixtures:** `tests/golden/hnsw_v3.snap` (new, written on the Mac) is the cross-machine test,
+  now also checking that inserts after the load stay identical to a fresh build. The old fixture
+  is kept as `hnsw_v2_libcxx.snap`: it must load and upgrade under libc++ and be rejected clearly
+  under libstdc++. A new test rewrites its generator text into the other library's shape, so the
+  rejection runs on the Mac too. Both fixtures give byte-identical expected results.
+- **Mutation check:** without the `discard`, 6 tests fail (both golden tests and all 4 save, load,
+  then add cases).
+- The `hnsw.hpp` and `snapshot.hpp` format comments and explainer section 9 are corrected. They
+  had said the standard's text format made the state portable.
+
+**Not yet confirmed:** the version 3 fixture on Linux. The next Oracle run should show the golden
+test passing, and the version 2 fixture rejected with the new message.
