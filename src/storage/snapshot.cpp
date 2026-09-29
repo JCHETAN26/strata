@@ -8,6 +8,7 @@
 
 #include "file.hpp"
 #include "strata/crc32c.hpp"
+#include "util/bytes.hpp"
 
 namespace strata {
 
@@ -33,7 +34,7 @@ void put(std::vector<std::byte>& buf, const T& value) {
 template <typename T>
 T get(std::span<const std::byte> buf, std::size_t offset) {
   T value;
-  std::memcpy(&value, buf.data() + offset, sizeof(T));
+  util::copy_bytes(&value, buf.data() + offset, sizeof(T));
   return value;
 }
 
@@ -182,11 +183,8 @@ Expected<Snapshot> read_snapshot(const std::filesystem::path& path) {
   snapshot.index = static_cast<IndexKind>(h.index);
   snapshot.last_lsn = h.last_lsn;
   snapshot.vectors = Matrix<float>(h.count, h.dim);
-  // An empty snapshot (count == 0) has a null vectors.data(); memcpy with a null
-  // pointer is undefined even for a zero byte count, so guard the copy.
-  if (vector_bytes != 0) {
-    std::memcpy(snapshot.vectors.data().data(), bytes.data() + h.header_size, vector_bytes);
-  }
+  // An empty snapshot (count == 0) has a null vectors.data(); copy_bytes makes that safe.
+  util::copy_bytes(snapshot.vectors.data().data(), bytes.data() + h.header_size, vector_bytes);
   const std::size_t bitmap_offset = h.header_size + vector_bytes;
   snapshot.deleted.resize(h.count);
   std::uint64_t deleted = 0;

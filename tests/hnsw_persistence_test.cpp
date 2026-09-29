@@ -6,7 +6,6 @@
 #include <bit>
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -19,6 +18,7 @@
 #include "strata/recall.hpp"
 #include "strata/snapshot.hpp"
 #include "test_util.hpp"
+#include "util/bytes.hpp"
 
 namespace strata {
 namespace {
@@ -351,13 +351,13 @@ class HnswSnapshotCorruption : public TempDir {
     std::ifstream in(path(), std::ios::binary);
     std::vector<char> raw((std::istreambuf_iterator<char>(in)), {});
     std::vector<std::byte> out(raw.size());
-    std::memcpy(out.data(), raw.data(), raw.size());
+    util::copy_bytes(out.data(), raw.data(), raw.size());
     return out;
   }
   // Writes `bytes` back with a fresh CRC.
   void write_fixed(std::vector<std::byte> bytes) const {
     const std::uint32_t crc = crc32c(std::span(bytes).first(bytes.size() - 4));
-    std::memcpy(bytes.data() + bytes.size() - 4, &crc, 4);
+    util::copy_bytes(bytes.data() + bytes.size() - 4, &crc, 4);
     std::ofstream out(path(), std::ios::binary | std::ios::trunc);
     out.write(reinterpret_cast<const char*>(bytes.data()),
               static_cast<std::streamsize>(bytes.size()));
@@ -365,7 +365,7 @@ class HnswSnapshotCorruption : public TempDir {
   template <typename T>
   void patch(std::size_t offset, T value) {
     auto copy = bytes_;
-    std::memcpy(copy.data() + offset, &value, sizeof(T));
+    util::copy_bytes(copy.data() + offset, &value, sizeof(T));
     write_fixed(copy);
   }
   // Start of the HNSW index section, and of its layer-0 lists (after the fixed fields, the
@@ -375,7 +375,7 @@ class HnswSnapshotCorruption : public TempDir {
   }
   [[nodiscard]] std::size_t layer0_start() const {
     std::uint32_t rng_bytes = 0;
-    std::memcpy(&rng_bytes, bytes_.data() + graph_start() + 40, 4);
+    util::copy_bytes(&rng_bytes, bytes_.data() + graph_start() + 40, 4);
     return graph_start() + 44 + rng_bytes + kCount;
   }
   void expect_corrupt(const std::string& fragment) const {

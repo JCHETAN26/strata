@@ -7,6 +7,7 @@
 
 #include "file.hpp"
 #include "strata/crc32c.hpp"
+#include "util/bytes.hpp"
 
 namespace strata {
 
@@ -27,7 +28,7 @@ void put(std::vector<std::byte>& buf, const T& value) {
 template <typename T>
 T get(std::span<const std::byte> buf, std::size_t offset) {
   T value;
-  std::memcpy(&value, buf.data() + offset, sizeof(T));
+  util::copy_bytes(&value, buf.data() + offset, sizeof(T));
   return value;
 }
 
@@ -65,7 +66,7 @@ std::vector<std::byte> encode_record(WalRecordType type, std::uint64_t lsn, Vect
   const auto bytes = std::as_bytes(vector);
   buf.insert(buf.end(), bytes.begin(), bytes.end());
   const std::uint32_t crc = crc32c(std::span(buf).subspan(sizeof(std::uint32_t)));
-  std::memcpy(buf.data(), &crc, sizeof(crc));
+  util::copy_bytes(buf.data(), &crc, sizeof(crc));
   return buf;
 }
 
@@ -185,7 +186,8 @@ Expected<std::pair<WriteAheadLog, WalReplayStats>> WriteAheadLog::open(
     const auto id = get<VectorId>(bytes, payload);
     WalRecord record{.type = type, .lsn = lsn, .id = id, .vector = {}};
     if (type == WalRecordType::kInsert) {
-      std::memcpy(vector.data(), bytes.data() + payload + sizeof(VectorId), dim * sizeof(float));
+      util::copy_bytes(vector.data(), bytes.data() + payload + sizeof(VectorId),
+                       dim * sizeof(float));
       record.vector = vector;
     }
     if (auto r = apply(record); !r) {

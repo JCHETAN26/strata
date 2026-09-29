@@ -5,6 +5,17 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND DEFINED ENV{VCPKG_ROOT})
   set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "")
 endif()
 
+# Python builds on Linux (pip / uv / scikit-build-core) use GCC 13 when it is installed, the same
+# compiler as the linux-* presets, so the extension and the C++ tests come from one compiler.
+# A machine without /usr/bin/g++-13 (e.g. Kaggle) keeps its default; macOS is unaffected. The CXX
+# environment variable is not honored here: build frontends set it from Python's sysconfig
+# ("c++"), so it does not mean the user chose a compiler. To choose one, pass
+# -C cmake.define.CMAKE_CXX_COMPILER=... (pip) or --config-settings (uv).
+if(STRATA_BUILD_PYTHON AND CMAKE_HOST_LINUX AND NOT DEFINED CMAKE_CXX_COMPILER
+   AND EXISTS "/usr/bin/g++-13")
+  set(CMAKE_CXX_COMPILER "/usr/bin/g++-13")
+endif()
+
 project(strata VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -89,6 +100,8 @@ else()
 endif()
 target_include_directories(strata PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+# Internal headers shared across src/ subdirectories (e.g. util/bytes.hpp); not exported.
+target_include_directories(strata PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(strata PUBLIC cxx_std_20)
 find_package(Threads REQUIRED)
 target_link_libraries(strata
