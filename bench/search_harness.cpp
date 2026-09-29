@@ -64,6 +64,12 @@ struct Options {
   // PQ
   std::size_t pq_m = 16;
   std::vector<std::size_t> rerank{0, 10, 20, 50, 100, 200, 500};
+  // HNSW only: after building, delete these cumulative fractions of the ids in turn and sweep
+  // ef_search at each, with ground truth recomputed over the live vectors. Empty = no deletes.
+  std::vector<double> delete_fractions;
+  // With --delete-fractions: at each fraction above 0, also build a fresh index over only the live
+  // vectors and sweep it, to show what a rebuild would buy.
+  bool compare_rebuild = false;
 };
 
 [[noreturn]] void usage(std::string_view error) {
@@ -75,7 +81,8 @@ struct Options {
       << "                     [--threads 1]\n"
       << "       hnsw only:    [--M 16] [--ef-construction 200] [--selection heuristic|simple]\n"
       << "                     [--ef-search 10,20,40,80,160,320]\n"
-      << "       pq only:      [--pq-m 16] [--rerank 0,10,20,50,100,200,500]\n";
+      << "       pq only:      [--pq-m 16] [--rerank 0,10,20,50,100,200,500]\n"
+      << "       hnsw deletes: [--delete-fractions 0,0.25,0.5,0.9] [--compare-rebuild 1]\n";
   std::exit(2);
 }
 
@@ -147,6 +154,20 @@ Options parse_args(int argc, char** argv) {
       opt.ef_search = parse_list(flag, value);
     } else if (flag == "--pq-m") {
       opt.pq_m = parse_size(flag, value);
+    } else if (flag == "--compare-rebuild") {
+      opt.compare_rebuild = value == "1" || value == "true";
+    } else if (flag == "--delete-fractions") {
+      opt.delete_fractions.clear();
+      std::stringstream list(value);
+      for (std::string item; std::getline(list, item, ',');) {
+        char* end = nullptr;
+        const double f = std::strtod(item.c_str(), &end);
+        if (end == item.c_str() || *end != '\0' || f < 0 || f >= 1 ||
+            (!opt.delete_fractions.empty() && f < opt.delete_fractions.back())) {
+          usage("--delete-fractions must be ascending values in [0, 1)");
+        }
+        opt.delete_fractions.push_back(f);
+      }
     } else if (flag == "--rerank") {
       opt.rerank = parse_list(flag, value);
     } else {
@@ -318,6 +339,44 @@ std::string hnsw_graph_json(const strata::HnswIndex& index) {
       << ", \"layer0_reachable_fraction\": "
       << static_cast<double>(reached) / static_cast<double>(n) << "}";
   return out.str();
+}
+#endif
+
+#ifdef STRATA_HAS_HNSW
+// Which ids a delete sweep removes: those whose hash falls below the fraction, so the sets are
+// nested (everything deleted at 25% is also deleted at 50%) and spread evenly over the ids.
+std::uint64_t splitmix64(std::uint64_t x) {
+  x += 0x9E3779B97F4A7C15ULL;
+  x = (x ^ (x >> 30U)) * 0xBF58476D1CE4E5B9ULL;
+  x = (x ^ (x >> 27U)) * 0x94D049BB133111EBULL;
+  return x ^ (x >> 31U);
+}
+bool deleted_at(std::size_t id, double fraction) {
+  return static_cast<double>(splitmix64(id) % 1'000'000) < fraction * 1'000'000;
+}
+
+// Exact top-k over the live vectors, as ground truth ids and k-th distances for recall.
+struct LiveTruth {
+  strata::Matrix<std::int32_t> ids;
+  std::vector<float> kth;
+};
+strata::Expected<LiveTruth> live_truth(const strata::BruteForceIndex& exact,
+                                       const strata::Matrix<float>& queries, std::size_t k) {
+  LiveTruth truth{strata::Matrix<std::int32_t>(queries.rows(), k), {}};
+  for (std::size_t q = 0; q < queries.rows(); ++q) {
+    auto found = exact.search(queries.row(q), k);
+    if (!found) {
+      return tl::unexpected(found.error());
+    }
+    if (found->size() < k) {
+      return strata::make_error(strata::ErrorCode::kInvalidArgument, "fewer live vectors than k");
+    }
+    for (std::size_t i = 0; i < k; ++i) {
+      truth.ids.row(q)[i] = static_cast<std::int32_t>((*found)[i].id);
+    }
+    truth.kth.push_back(found->back().distance);
+  }
+  return truth;
 }
 #endif
 
@@ -504,14 +563,110 @@ int main(int argc, char** argv) {
   std::cerr << opt.index << ": built in " << build_seconds << " s\n";
 
   std::vector<Point> points;
-  for (const auto& point : sweep) {
-    auto result = run_point(point, dataset->base, strata::distance_function(*metric, kernels),
-                            queries, groundtruth, *kth_distances, opt, pool);
-    if (!result) {
-      std::cerr << "error: " << result.error().message << "\n";
+  if (opt.delete_fractions.empty()) {
+    for (const auto& point : sweep) {
+      auto result = run_point(point, dataset->base, strata::distance_function(*metric, kernels),
+                              queries, groundtruth, *kth_distances, opt, pool);
+      if (!result) {
+        std::cerr << "error: " << result.error().message << "\n";
+        return 1;
+      }
+      points.push_back(std::move(*result));
+    }
+  } else {
+#ifdef STRATA_HAS_HNSW
+    if (!hnsw) {
+      usage("--delete-fractions needs --index hnsw");
+    }
+    // The same tombstones in an exact index give the live ground truth at each fraction.
+    auto exact = strata::BruteForceIndex::create(dim, *metric, kernels);
+    if (!exact || !exact->add_batch(dataset->base)) {
+      std::cerr << "error: failed to build the exact index\n";
       return 1;
     }
-    points.push_back(std::move(*result));
+    for (double fraction : opt.delete_fractions) {
+      for (std::size_t id = 0; id < hnsw->size(); ++id) {
+        const auto vid = static_cast<strata::VectorId>(id);
+        if (deleted_at(id, fraction) && !hnsw->is_deleted(vid)) {
+          (void)hnsw->remove(vid);
+          (void)exact->remove(vid);
+        }
+      }
+      auto truth = live_truth(*exact, queries, opt.k);
+      if (!truth) {
+        std::cerr << "error: " << truth.error().message << "\n";
+        return 1;
+      }
+      const double live =
+          static_cast<double>(hnsw->live_size()) / static_cast<double>(hnsw->size());
+      std::cerr << "deleted fraction " << fraction << ": " << hnsw->live_size() << " live\n";
+      for (const auto& point : sweep) {
+        std::string params = point.search_params_json;
+        params.pop_back();  // the closing brace
+        params += ", \"deleted_fraction\": " + std::to_string(fraction) +
+                  ", \"live_fraction\": " + std::to_string(live) + "}";
+        const SweepPoint labeled{params, point.search};
+        auto result = run_point(labeled, dataset->base, strata::distance_function(*metric, kernels),
+                                queries, truth->ids, truth->kth, opt, pool);
+        if (!result) {
+          std::cerr << "error: " << result.error().message << "\n";
+          return 1;
+        }
+        points.push_back(std::move(*result));
+      }
+      if (!opt.compare_rebuild || fraction == 0) {
+        continue;
+      }
+      // The alternative to living with tombstones: a new index over the live vectors (in id
+      // order, same parameters). Its ids are positions in `live_ids`; they are mapped back so
+      // recall is measured against the same ground truth.
+      std::vector<strata::VectorId> live_ids;
+      for (std::size_t id = 0; id < hnsw->size(); ++id) {
+        if (!hnsw->is_deleted(static_cast<strata::VectorId>(id))) {
+          live_ids.push_back(static_cast<strata::VectorId>(id));
+        }
+      }
+      auto rebuilt = strata::HnswIndex::create(dim, *metric, hnsw->params());
+      const auto rebuild_start = Clock::now();
+      for (strata::VectorId id : live_ids) {
+        if (!rebuilt || !rebuilt->add(dataset->base.row(id))) {
+          std::cerr << "error: rebuild failed\n";
+          return 1;
+        }
+      }
+      const double rebuild_seconds = seconds_since(rebuild_start);
+      std::cerr << "  rebuilt " << live_ids.size() << " live vectors in " << rebuild_seconds
+                << " s\n";
+      for (std::size_t ef : opt.ef_search) {
+        const std::string params =
+            "{\"ef_search\": " + std::to_string(ef) +
+            ", \"deleted_fraction\": " + std::to_string(fraction) +
+            ", \"live_fraction\": " + std::to_string(live) +
+            ", \"rebuilt\": true, \"rebuild_seconds\": " + std::to_string(rebuild_seconds) + "}";
+        const SweepPoint point{
+            params,
+            [&, ef](std::span<const float> q,
+                    std::size_t k) -> strata::Expected<std::vector<strata::Neighbor>> {
+              auto found = rebuilt->search(q, k, ef);
+              if (found) {
+                for (auto& n : *found) {
+                  n.id = live_ids[n.id];
+                }
+              }
+              return found;
+            }};
+        auto result = run_point(point, dataset->base, strata::distance_function(*metric, kernels),
+                                queries, truth->ids, truth->kth, opt, pool);
+        if (!result) {
+          std::cerr << "error: " << result.error().message << "\n";
+          return 1;
+        }
+        points.push_back(std::move(*result));
+      }
+    }
+#else
+    usage("--delete-fractions needs HNSW");
+#endif
   }
 
   const RunInfo info{.opt = opt,

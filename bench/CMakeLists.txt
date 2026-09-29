@@ -21,3 +21,8 @@ add_executable(strata_filter_bench
   filter_bench.cpp)
 target_link_libraries(strata_filter_bench PRIVATE strata::strata strata_options)
 target_compile_definitions(strata_filter_bench PRIVATE STRATA_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
+
+# HNSW persistence: build time versus snapshot save and load time.
+add_executable(strata_hnsw_persist_bench
+  hnsw_persist_bench.cpp)
+target_link_libraries(strata_hnsw_persist_bench PRIVATE strata::strata strata_options)
