@@ -125,9 +125,6 @@ Machines:
 - [ ] PQ inside HNSW
 - [ ] WAL group commit (durable inserts are capped at ~330/s by one fsync each)
 - [ ] Extra BEIR datasets (FiQA, NFCorpus) and full-corpus hybrid + rerank
-
-## Not placed yet (needs a decision)
-
 - [ ] HotpotQA answer groundedness on the full 5.2M-passage corpus (Kaggle stage2b, behind a cost
       estimate and `--enable-api`)
 

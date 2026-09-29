@@ -49,13 +49,14 @@ strata/
 
 ## Machines
 
-- **Development (now):** MacBook Air M2, 8 GB RAM, ARM, macOS. Fanless: it throttles under
-  sustained load. Keep dev datasets small (SIFT10K; SIFT1M only when needed). Never run long
-  benchmarks here except the final ARM results run.
-- **Results and server work (later):** Ubuntu 22.04, Ryzen 7 5800H (8C/16T, AVX2),
-  ~19 GiB usable RAM (mixed 8+16 GB, partly single-channel), RTX 3050 4 GB. Docker, gRPC shards,
-  embeddings, and all final benchmarks run there.
-- Code must build and pass tests on both macOS/ARM and Linux/x86.
+- **Development: MacBook Air M2**, 8 GB RAM, ARM, macOS. Fanless: it throttles under sustained
+  load and has shut down once. Keep dev datasets small (SIFT10K, the 200k SIFT subset; SIFT1M only
+  when needed). Run heavy jobs one at a time behind the checks in `bench/benchmeta.py`
+  (`preflight`). Numbers from it are development results: recall is final, speed is indicative.
+- **Oracle ARM machine** (Linux, ARM): gRPC server, sharding, Docker, and the final ARM numbers.
+- **One AWS session** (Linux, x86 with AVX2): final x86 benchmarks, the 10M-vector run, thread
+  scaling, multi-machine scaling, and `perf` profiling. Record the instance type with the results.
+- Code must build and pass tests on macOS/ARM, Linux/ARM, and Linux/x86.
 
 ## Build
 

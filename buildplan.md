@@ -33,7 +33,8 @@ Heavy work runs one job at a time, with the thermal and busy-machine checks in `
 7. **README, design doc, and making the repo public** (Phase 9).
 
 **Optional** (only if time allows, never blocking the above): PQ inside HNSW, WAL group commit,
-extra BEIR datasets (FiQA, NFCorpus, and full-corpus hybrid + rerank).
+extra BEIR datasets (FiQA, NFCorpus, and full-corpus hybrid + rerank), full-corpus HotpotQA
+answer groundedness.
 
 ---
 
@@ -214,7 +215,7 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 - [x] Cited answer generation with Claude Haiku (live runs done; `docs/rag-results.md`)
 - [x] Embeddings on GPU for SciFact and full BEIR HotpotQA (5.2M passages, Kaggle T4)
 - [ ] *Optional:* extra BEIR datasets (FiQA, NFCorpus) and full-corpus hybrid + rerank
-- [ ] Not in the finish order yet: HotpotQA answer groundedness on the full 5.2M corpus (Kaggle stage2b, behind a cost estimate)
+- [ ] *Optional:* HotpotQA answer groundedness on the full 5.2M corpus (Kaggle stage2b, behind a cost estimate)
 - [x] Evaluation scripts for BEIR and HotpotQA
 
 **Measure:** nDCG@10 for keyword-only, vector-only, hybrid, hybrid + rerank (ablation table);
