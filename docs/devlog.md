@@ -1403,3 +1403,63 @@ else in the file was already portable.
 
 **Not yet confirmed:** the version 3 fixture on Linux. The next Oracle run should show the golden
 test passing, and the version 2 fixture rejected with the new message.
+
+## 2026-09-29: HNSW Stage B: Collection on HNSW, WAL replay, crash tests, measurements
+
+**Done**
+- **`Collection` backed by either index.** `CollectionOptions{.index = kFlat | kHnsw,
+  .hnsw = HnswParams}` is held internally as a `std::variant` (no virtual calls in search).
+  `search` gains `ef_search`, plus `index_kind()` and `hnsw()` for introspection.
+- **Settings are fixed at creation (your addition 3).** Reopening with a different index kind, M,
+  ef_construction, selection, or seed fails with `kInvalidArgument`, naming each field with both
+  values (e.g. "M: on disk 8, requested 16"). **A new collection writes an initial empty
+  snapshot before its WAL,** so the settings are on disk from the start and are checked even
+  before the first checkpoint. Directories from before this rule (a WAL, no snapshot) can only be
+  flat and open as flat.
+- **WAL replay into HNSW:** inserts and deletes after the snapshot's LSN replay in order, and the
+  recovered graph is exactly the uninterrupted one. `Collection::open` was split into helpers
+  (`load_or_create`, `apply_record`) to keep clang-tidy's complexity limit.
+- **HNSW is unconditional in CMake** (`Collection` depends on it). `STRATA_HAS_HNSW` stays
+  defined for existing `#ifdef`s.
+
+**Tests**
+- `HnswCollectionTest`: recovery rebuilds the same graph, from WAL only and from checkpoint + WAL
+  (compared with an index that never touched disk). Reopening with each different setting fails
+  with the right message. Settings are checked before the first checkpoint. Flat collections,
+  including pre-rule WAL-only directories, refuse HNSW.
+- **Crash tests extended to HNSW:** 4 new modes (WAL only, frequent and rare checkpoints, fsync),
+  forked writer SIGKILLed at random points. After every round the recovered graph must equal the
+  graph the recovered writes build without a crash, and no search may return a deleted id. All
+  pass, alongside the 4 flat modes.
+- The shared graph comparison (`tests/hnsw_test_util.hpp`) has a test showing it can fail
+  (different seeds, an extra tombstone).
+
+**Measured** (Mac development results; recall final, speed indicative; one heavy job at a time
+behind `preflight`, cool-downs, no thermal warnings; recorded at `0f25f11`, the committed bench
+tooling, with the uncommitted `Collection` work stashed so the records are clean. The measured
+HNSW core is unchanged since Stage A.)
+- **Save/load vs. rebuild**, 200k subset (`results/storage/hnsw_persist_sift1m-200k-q1000.md`):
+  build 23.5 s, save 0.51 s, load 0.36 s, 124 MiB. Loading is ~66x faster than rebuilding, with
+  identical answers in every run.
+- **Search under deletion** (`results/hnsw_deletes/deletes_sift1m-200k-q1000.md`): QPS at matched
+  recall, tombstoned vs. rebuilt over the live vectors: 25% deleted 0.83x / 0.79x (recall 0.95 /
+  0.99), 50% 0.69x / 0.64x, 90% >= 0.23x / 0.24x. Rebuild times: 17.3 / 10.1 / 1.5 s. Recall rises
+  with deletes (the search widens); speed is what suffers. **Guideline** (explainer section 9):
+  rebuild once a quarter to a half of the index is deleted, if search speed matters.
+- The sweep compares at matched recall, not matched ef_search: under deletion the same ef gives
+  higher recall, so matching ef would flatter tombstones. Where even ef = k already exceeds the
+  target recall, the report marks the value as a lower bound and omits ratios it would make
+  meaningless.
+
+**Went wrong along the way**
+- The first version of the delete report printed a ratio of two lower bounds as if it were
+  exact (0.17x). Now a lower bound in the denominator gives "—".
+- **Provenance after the version 3 change:** these measurements were taken at `0f25f11`, before
+  snapshot format version 3. Search code is unaffected. Save and load now write and read a draw
+  count instead of the generator text, and loading re-seeds and discards, so the load time may
+  shift slightly; it has not been re-measured. Stage B was rebased onto the merge and version 3
+  by stash and pop; the only conflict was this devlog.
+
+**Not done / next**
+- No rebuild or compaction operation exists (a rebuild assigns new ids; there is no mapping).
+- Python has no `Collection` binding (it had none before either).

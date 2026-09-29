@@ -1,7 +1,9 @@
 // Crash-recovery tests: a child process writes to a Collection as fast as it can and reports each
 // acknowledged write through a pipe; the parent SIGKILLs it at a random moment (possibly inside a
 // WAL append, between append and ack, or mid-checkpoint), then reopens the collection and checks
-// that every acknowledged write is present and every recovered vector is intact.
+// that every acknowledged write is present and every recovered vector is intact. For HNSW
+// collections it also checks that the recovered graph is exactly the graph the same writes build
+// without a crash, and that searches never return a deleted id.
 //
 // SIGKILL leaves the OS page cache intact, so this tests the software protocol (record framing,
 // torn-tail handling, checkpoint ordering), including with SyncMode::kNone. Power-loss durability
@@ -21,7 +23,9 @@
 #include <string>
 #include <vector>
 
+#include "hnsw_test_util.hpp"
 #include "strata/collection.hpp"
+#include "strata/hnsw.hpp"
 #include "test_util.hpp"
 
 namespace strata {
@@ -31,6 +35,11 @@ namespace fs = std::filesystem;
 
 constexpr std::size_t kDim = 8;
 constexpr std::uint32_t kDeleteFlag = 0x80000000U;
+const HnswParams kHnswParams{.M = 8, .ef_construction = 32, .seed = 5};
+
+CollectionOptions options_for(SyncMode sync, IndexKind index) {
+  return {.sync = sync, .index = index, .hnsw = kHnswParams};
+}
 
 std::vector<float> vector_for(std::size_t i) {
   std::vector<float> v(kDim);
@@ -42,9 +51,9 @@ std::vector<float> vector_for(std::size_t i) {
 
 // Child process body. Never returns. Reports each acknowledged write as a u32 on `ack_fd`:
 // the id for an insert, id | kDeleteFlag for a delete.
-[[noreturn]] void writer(const fs::path& dir, SyncMode sync, std::size_t checkpoint_every,
-                         int ack_fd) {
-  auto collection = Collection::open(dir, kDim, Metric::kL2, {.sync = sync});
+[[noreturn]] void writer(const fs::path& dir, SyncMode sync, IndexKind index,
+                         std::size_t checkpoint_every, int ack_fd) {
+  auto collection = Collection::open(dir, kDim, Metric::kL2, options_for(sync, index));
   if (!collection) {
     _exit(2);
   }
@@ -82,14 +91,14 @@ struct Acks {
 
 // Runs one writer, kills it after at least `min_acks` acknowledgments, and returns every ack it
 // managed to send (including ones that arrived after the kill decision).
-Acks run_and_kill(const fs::path& dir, SyncMode sync, std::size_t checkpoint_every,
+Acks run_and_kill(const fs::path& dir, SyncMode sync, IndexKind index, std::size_t checkpoint_every,
                   std::size_t min_acks) {
   std::array<int, 2> fds{};
   EXPECT_EQ(::pipe(fds.data()), 0);
   const pid_t pid = ::fork();
   if (pid == 0) {
     ::close(fds[0]);
-    writer(dir, sync, checkpoint_every, fds[1]);
+    writer(dir, sync, index, checkpoint_every, fds[1]);
   }
   ::close(fds[1]);
 
@@ -123,6 +132,7 @@ Acks run_and_kill(const fs::path& dir, SyncMode sync, std::size_t checkpoint_eve
 struct CrashCase {
   std::string name;
   SyncMode sync;
+  IndexKind index;
   std::size_t checkpoint_every;  // 0 = never
   int rounds;
 };
@@ -141,6 +151,30 @@ class CrashRecovery : public ::testing::TestWithParam<CrashCase> {
   fs::path dir_;
 };
 
+// The recovered HNSW graph must be exactly what the recovered writes build without any crash:
+// the same vectors inserted in id order, then the same ids deleted (deletes do not change the
+// graph, so their order does not matter). Searches must never return a deleted id.
+void expect_graph_matches_writes(const Collection& c) {
+  ASSERT_NE(c.hnsw(), nullptr);
+  auto reference = *HnswIndex::create(kDim, Metric::kL2, kHnswParams);
+  for (std::size_t id = 0; id < c.size(); ++id) {
+    ASSERT_TRUE(reference.add(vector_for(id)));
+  }
+  for (VectorId id = 0; id < c.size(); ++id) {
+    if (!c.get(id).has_value()) {
+      ASSERT_TRUE(reference.remove(id));
+    }
+  }
+  EXPECT_TRUE(test::same_hnsw_graph(*c.hnsw(), reference));
+  for (std::size_t q = 0; q < 5 && q < c.size(); ++q) {
+    auto found = c.search(vector_for(q * 7), 10, 32);
+    ASSERT_TRUE(found);
+    for (const auto& n : *found) {
+      EXPECT_TRUE(c.get(n.id).has_value()) << "deleted id " << n.id << " returned";
+    }
+  }
+}
+
 TEST_P(CrashRecovery, NoAcknowledgedWriteIsLost) {
   const auto& param = GetParam();
   std::mt19937 rng(20260925);
@@ -148,11 +182,12 @@ TEST_P(CrashRecovery, NoAcknowledgedWriteIsLost) {
   Acks all;  // accumulated across rounds: each round reopens and continues the same collection
 
   for (int round = 0; round < param.rounds; ++round) {
-    const Acks acks = run_and_kill(dir_, param.sync, param.checkpoint_every, kill_after(rng));
+    const Acks acks =
+        run_and_kill(dir_, param.sync, param.index, param.checkpoint_every, kill_after(rng));
     all.inserted.insert(acks.inserted.begin(), acks.inserted.end());
     all.deleted.insert(acks.deleted.begin(), acks.deleted.end());
 
-    auto c = Collection::open(dir_, kDim, Metric::kL2, {.sync = param.sync});
+    auto c = Collection::open(dir_, kDim, Metric::kL2, options_for(param.sync, param.index));
     ASSERT_TRUE(c) << "round " << round << ": recovery failed: " << c.error().message;
     SCOPED_TRACE("round " + std::to_string(round));
 
@@ -178,16 +213,24 @@ TEST_P(CrashRecovery, NoAcknowledgedWriteIsLost) {
         EXPECT_EQ(*stored, vector_for(id)) << "unacknowledged vector " << id << " corrupted";
       }
     }
+    if (param.index == IndexKind::kHnsw) {
+      expect_graph_matches_writes(*c);
+    }
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(Modes, CrashRecovery,
-                         ::testing::Values(CrashCase{"wal_only", SyncMode::kNone, 0, 15},
-                                           CrashCase{"frequent_checkpoints", SyncMode::kNone, 7,
-                                                     15},
-                                           CrashCase{"rare_checkpoints", SyncMode::kNone, 97, 15},
-                                           CrashCase{"fsync", SyncMode::kFsync, 13, 4}),
-                         test::PrintedName{});
+INSTANTIATE_TEST_SUITE_P(
+    Modes, CrashRecovery,
+    ::testing::Values(CrashCase{"wal_only", SyncMode::kNone, IndexKind::kFlat, 0, 15},
+                      CrashCase{"frequent_checkpoints", SyncMode::kNone, IndexKind::kFlat, 7, 15},
+                      CrashCase{"rare_checkpoints", SyncMode::kNone, IndexKind::kFlat, 97, 15},
+                      CrashCase{"fsync", SyncMode::kFsync, IndexKind::kFlat, 13, 4},
+                      CrashCase{"hnsw_wal_only", SyncMode::kNone, IndexKind::kHnsw, 0, 12},
+                      CrashCase{"hnsw_frequent_checkpoints", SyncMode::kNone, IndexKind::kHnsw, 7,
+                                12},
+                      CrashCase{"hnsw_rare_checkpoints", SyncMode::kNone, IndexKind::kHnsw, 97, 12},
+                      CrashCase{"hnsw_fsync", SyncMode::kFsync, IndexKind::kHnsw, 13, 4}),
+    test::PrintedName{});
 
 }  // namespace
 }  // namespace strata

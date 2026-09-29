@@ -13,6 +13,7 @@
 #include <vector>
 #include <version>  // _LIBCPP_VERSION: which standard library this is
 
+#include "hnsw_test_util.hpp"
 #include "strata/brute_force.hpp"
 #include "strata/crc32c.hpp"
 #include "strata/hnsw.hpp"
@@ -32,44 +33,8 @@ HnswIndex make_index(std::size_t dim, HnswParams params = {}, Metric metric = Me
   return std::move(*index);
 }
 
-// Everything that determines future behavior: vectors, tombstones, levels, every neighbor list,
-// entry point, and parameters. (The level generator's state is checked indirectly: adding more
-// vectors to both indexes must keep them equal.)
-void expect_same_header(const HnswIndex& a, const HnswIndex& b) {
-  ASSERT_EQ(a.size(), b.size());
-  ASSERT_EQ(a.live_size(), b.live_size());
-  ASSERT_EQ(a.dim(), b.dim());
-  ASSERT_EQ(a.metric(), b.metric());
-  ASSERT_EQ(a.entry_point(), b.entry_point());
-  ASSERT_EQ(a.max_level(), b.max_level());
-  ASSERT_EQ(a.params().M, b.params().M);
-  ASSERT_EQ(a.params().ef_construction, b.params().ef_construction);
-  ASSERT_EQ(a.params().seed, b.params().seed);
-  ASSERT_EQ(a.params().selection, b.params().selection);
-}
-
-// True if node `id` has the same level, tombstone, vector, and neighbor lists in both indexes.
-bool same_node(const HnswIndex& a, const HnswIndex& b, VectorId id) {
-  if (a.level(id) != b.level(id) || a.is_deleted(id) != b.is_deleted(id) ||
-      !std::ranges::equal(a.vector(id), b.vector(id))) {
-    return false;
-  }
-  for (int layer = 0; layer <= a.level(id); ++layer) {
-    if (!std::ranges::equal(a.neighbors(id, layer), b.neighbors(id, layer))) {
-      return false;
-    }
-  }
-  return true;
-}
-
 void expect_same_graph(const HnswIndex& a, const HnswIndex& b) {
-  expect_same_header(a, b);
-  if (::testing::Test::HasFatalFailure()) {
-    return;
-  }
-  for (VectorId id = 0; id < a.size(); ++id) {
-    ASSERT_TRUE(same_node(a, b, id)) << "node " << id << " differs";
-  }
+  EXPECT_TRUE(test::same_hnsw_graph(a, b));
 }
 
 void expect_same_results(const HnswIndex& a, const HnswIndex& b, const Matrix<float>& queries,
@@ -94,6 +59,19 @@ class TempDir : public ::testing::Test {
   void TearDown() override { fs::remove_all(dir_); }
   fs::path dir_;
 };
+
+// The comparison used throughout must be able to fail: different seeds give different graphs.
+TEST(HnswTestUtil, SameGraphDetectsDifferences) {
+  const auto data = test::random_matrix(300, 8, 60);
+  auto a = make_index(8, {.seed = 1});
+  auto b = make_index(8, {.seed = 2});
+  auto c = make_index(8, {.seed = 1});
+  ASSERT_TRUE(a.add_batch(data) && b.add_batch(data) && c.add_batch(data));
+  EXPECT_FALSE(test::same_hnsw_graph(a, b));
+  EXPECT_TRUE(test::same_hnsw_graph(a, c));
+  ASSERT_TRUE(c.remove(5));
+  EXPECT_FALSE(test::same_hnsw_graph(a, c));  // tombstones count
+}
 
 // --- Deletes -------------------------------------------------------------------------------------
 

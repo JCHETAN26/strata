@@ -1,0 +1,112 @@
+{
+  "timestamp": "2026-09-29T06:57:28.347626+00:00",
+  "git": {
+    "commit": "0f25f11098a28c04eeb57161c0ad974cf5056407",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      2.04,
+      2.56,
+      3.84
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": {
+      "torch": "2.14.0",
+      "torch_cuda": null,
+      "available": false,
+      "device_count": 0,
+      "device_name": null
+    },
+    "hosted": null
+  },
+  "dataset": "sift1m-200k-q1000",
+  "command": [
+    "/Users/chetan/Strata/build/release/bench/strata_hnsw_persist_bench",
+    "--data",
+    "/Users/chetan/Strata/data/sift1m-200k-q1000",
+    "--out",
+    "/var/folders/pk/f2plptpx0jj8x3dybtfdrxr80000gn/T/strata_hnsw_persist.snap",
+    "--M",
+    "16",
+    "--ef-construction",
+    "200"
+  ],
+  "filesystem": "/dev/disk3s5  965595304 815794064  77751360    92%    /System/Volumes/Data",
+  "runs": [
+    {
+      "num_base": 200000,
+      "dim": 128,
+      "M": 16,
+      "ef_construction": 200,
+      "asserts": false,
+      "build_seconds": 23.5317,
+      "save_seconds": 0.556007,
+      "load_seconds": 0.361976,
+      "file_bytes": 129937430,
+      "results_identical": true
+    },
+    {
+      "num_base": 200000,
+      "dim": 128,
+      "M": 16,
+      "ef_construction": 200,
+      "asserts": false,
+      "build_seconds": 23.396,
+      "save_seconds": 0.48094,
+      "load_seconds": 0.360728,
+      "file_bytes": 129937430,
+      "results_identical": true
+    },
+    {
+      "num_base": 200000,
+      "dim": 128,
+      "M": 16,
+      "ef_construction": 200,
+      "asserts": false,
+      "build_seconds": 23.5087,
+      "save_seconds": 0.501204,
+      "load_seconds": 0.34796,
+      "file_bytes": 129937430,
+      "results_identical": true
+    }
+  ],
+  "summary": {
+    "build_seconds": {
+      "mean": 23.478800000000003,
+      "median": 23.5087,
+      "stdev": 0.07262320565769596,
+      "min": 23.396,
+      "max": 23.5317
+    },
+    "save_seconds": {
+      "mean": 0.512717,
+      "median": 0.501204,
+      "stdev": 0.038835235276743235,
+      "min": 0.48094,
+      "max": 0.556007
+    },
+    "load_seconds": {
+      "mean": 0.35688800000000004,
+      "median": 0.360728,
+      "stdev": 0.007757013858438062,
+      "min": 0.34796,
+      "max": 0.361976
+    },
+    "file_bytes": {
+      "mean": 129937430.0,
+      "median": 129937430,
+      "stdev": 0.0,
+      "min": 129937430,
+      "max": 129937430
+    }
+  }
+}

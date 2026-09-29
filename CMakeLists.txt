@@ -84,20 +84,11 @@ add_library(strata STATIC
   src/util/thread_pool.cpp)
 add_library(strata::strata ALIAS strata)
 
-# HNSW is built in reviewed stages (see CLAUDE.md). Until src/index/hnsw.cpp exists,
-# the library, tests, harness, and Python module build without it. Re-run this check whenever
-# src/index changes (adding a file updates the directory's timestamp), so creating hnsw.cpp
-# switches HNSW on at the next build without a manual reconfigure.
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/index")
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/index/hnsw.cpp")
-  set(STRATA_HAS_HNSW ON)
-  target_sources(strata PRIVATE src/index/hnsw.cpp)
-  target_compile_definitions(strata PUBLIC STRATA_HAS_HNSW=1)
-else()
-  set(STRATA_HAS_HNSW OFF)
-  message(STATUS "src/index/hnsw.cpp not found: building without HNSW")
-endif()
+# HNSW is part of the library (Collection depends on it). STRATA_HAS_HNSW stays defined, and the
+# CMake variable stays ON, for code that was written when HNSW was optional.
+set(STRATA_HAS_HNSW ON)
+target_sources(strata PRIVATE src/index/hnsw.cpp)
+target_compile_definitions(strata PUBLIC STRATA_HAS_HNSW=1)
 target_include_directories(strata PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 # Internal headers shared across src/ subdirectories (e.g. util/bytes.hpp); not exported.

@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 
+#include "hnsw_test_util.hpp"
 #include "strata/collection.hpp"
 #include "strata/crc32c.hpp"
 #include "strata/snapshot.hpp"
@@ -528,6 +529,148 @@ TEST_F(CollectionTest, ConcurrentSearchesDuringWrites) {
   readers.clear();
   EXPECT_GT(searches.load(), 0U);
   EXPECT_EQ(c->live_size(), 270U);
+}
+
+}  // namespace
+}  // namespace strata
+
+namespace strata {
+namespace {
+
+// --- Collection on HNSW
+// ---------------------------------------------------------------------------
+
+class HnswCollectionTest : public ::testing::Test {
+ protected:
+  static constexpr std::size_t kDim = 8;
+  static inline const HnswParams kParams{.M = 8, .ef_construction = 50, .seed = 3};
+  void SetUp() override {
+    dir_ = fs::temp_directory_path() /
+           ("strata_hnsw_collection_" +
+            std::string(::testing::UnitTest::GetInstance()->current_test_info()->name()));
+    fs::remove_all(dir_);
+  }
+  void TearDown() override { fs::remove_all(dir_); }
+
+  [[nodiscard]] Expected<Collection> open(HnswParams params = kParams,
+                                          IndexKind kind = IndexKind::kHnsw) const {
+    return Collection::open(dir_, kDim, Metric::kL2,
+                            {.sync = SyncMode::kNone, .index = kind, .hnsw = params});
+  }
+  // What the collection should hold after inserting data rows [0, n) and deleting `deleted`: the
+  // same writes applied directly to an HnswIndex that never went through the disk.
+  static HnswIndex reference(const Matrix<float>& data, std::size_t n,
+                             const std::vector<VectorId>& deleted) {
+    auto index = *HnswIndex::create(kDim, Metric::kL2, kParams);
+    for (std::size_t i = 0; i < n; ++i) {
+      EXPECT_TRUE(index.add(data.row(i)));
+    }
+    for (VectorId id : deleted) {
+      EXPECT_TRUE(index.remove(id));
+    }
+    return index;
+  }
+
+  fs::path dir_;
+};
+
+// WAL-only recovery rebuilds exactly the graph the writer had, and so does snapshot + WAL.
+TEST_F(HnswCollectionTest, RecoveryRebuildsTheSameGraph) {
+  const auto data = test::random_matrix(600, kDim, 61);
+  const std::vector<VectorId> deleted{3, 150, 299, 420};
+  {
+    auto c = open();
+    ASSERT_TRUE(c) << c.error().message;
+    for (std::size_t i = 0; i < 300; ++i) {
+      ASSERT_TRUE(c->insert(data.row(i)));
+    }
+    ASSERT_TRUE(c->remove(3) && c->remove(150) && c->remove(299));
+  }
+  {
+    auto c = open();  // snapshot (empty, from creation) + WAL
+    ASSERT_TRUE(c) << c.error().message;
+    ASSERT_EQ(c->index_kind(), IndexKind::kHnsw);
+    EXPECT_TRUE(test::same_hnsw_graph(*c->hnsw(), reference(data, 300, {3, 150, 299})));
+    ASSERT_TRUE(c->checkpoint());
+    for (std::size_t i = 300; i < 600; ++i) {
+      ASSERT_TRUE(c->insert(data.row(i)));
+    }
+    ASSERT_TRUE(c->remove(420));
+  }
+  auto c = open();  // checkpointed graph + WAL after it
+  ASSERT_TRUE(c) << c.error().message;
+  EXPECT_TRUE(c->recovery().loaded_snapshot);
+  EXPECT_EQ(c->recovery().wal_records_replayed, 301U);
+  EXPECT_TRUE(test::same_hnsw_graph(*c->hnsw(), reference(data, 600, deleted)));
+
+  auto found = c->search(data.row(420), 10, 64);
+  ASSERT_TRUE(found);
+  ASSERT_EQ(found->size(), 10U);
+  for (const auto& n : *found) {
+    EXPECT_NE(n.id, 420U) << "deleted id returned";
+  }
+}
+
+TEST_F(HnswCollectionTest, ReopeningWithDifferentSettingsFails) {
+  {
+    auto c = open();
+    ASSERT_TRUE(c) << c.error().message;
+    ASSERT_TRUE(c->insert(test::random_matrix(1, kDim, 62).row(0)));
+  }
+  const auto expect_refused = [&](const HnswParams& params, IndexKind kind,
+                                  const std::string& fragment) {
+    auto c = open(params, kind);
+    ASSERT_FALSE(c) << "reopened with " << fragment;
+    EXPECT_EQ(c.error().code, ErrorCode::kInvalidArgument);
+    EXPECT_NE(c.error().message.find(fragment), std::string::npos) << c.error().message;
+  };
+  expect_refused(kParams, IndexKind::kFlat, "holds a hnsw collection, not flat");
+  HnswParams p = kParams;
+  p.M = 16;
+  expect_refused(p, IndexKind::kHnsw, "M: on disk 8, requested 16");
+  p = kParams;
+  p.ef_construction = 200;
+  expect_refused(p, IndexKind::kHnsw, "ef_construction: on disk 50, requested 200");
+  p = kParams;
+  p.selection = NeighborSelection::kSimple;
+  expect_refused(p, IndexKind::kHnsw, "selection: on disk heuristic, requested simple");
+  p = kParams;
+  p.seed = 4;
+  expect_refused(p, IndexKind::kHnsw, "seed: on disk 3, requested 4");
+  // Still opens with the original settings, and nothing was changed by the refusals.
+  auto c = open();
+  ASSERT_TRUE(c) << c.error().message;
+  EXPECT_EQ(c->size(), 1U);
+}
+
+// Refused even before the first checkpoint: the initial snapshot records the settings.
+TEST_F(HnswCollectionTest, SettingsAreCheckedBeforeTheFirstCheckpoint) {
+  {
+    ASSERT_TRUE(open());
+  }
+  HnswParams p = kParams;
+  p.M = 12;
+  EXPECT_FALSE(open(p));
+}
+
+TEST_F(HnswCollectionTest, FlatCollectionsRefuseHnsw) {
+  {
+    auto c = open(kParams, IndexKind::kFlat);
+    ASSERT_TRUE(c);
+    ASSERT_TRUE(c->insert(test::random_matrix(1, kDim, 63).row(0)));
+  }
+  auto c = open();
+  ASSERT_FALSE(c);
+  EXPECT_NE(c.error().message.find("holds a flat collection, not hnsw"), std::string::npos)
+      << c.error().message;
+  // A directory from before initial snapshots (WAL only) is a flat collection.
+  fs::remove(dir_ / "snapshot.bin");
+  auto legacy_as_hnsw = open();
+  ASSERT_FALSE(legacy_as_hnsw);
+  EXPECT_NE(legacy_as_hnsw.error().message.find("holds a flat collection"), std::string::npos);
+  auto legacy = open(kParams, IndexKind::kFlat);
+  ASSERT_TRUE(legacy) << legacy.error().message;
+  EXPECT_EQ(legacy->size(), 1U);
 }
 
 }  // namespace

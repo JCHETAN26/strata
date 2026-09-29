@@ -536,10 +536,35 @@ may still pick it as a neighbor.
   never on which deletes happened (`DeletesDoNotChangeTheGraph`). That keeps save/load and
   write-ahead-log replay simple: replaying the inserts rebuilds exactly the same graph.
 - **The trade-offs.** Memory is never reclaimed: a deleted node costs as much as a live one. And
-  a search pays to walk through deleted nodes. With a few percent deleted this is negligible. With
-  most of the index deleted, a search has to expand many dead nodes to find k live ones, up to a
-  scan of the whole graph when nearly everything is deleted. The remedy is a rebuild: add the live
-  vectors to a new index. Automatic compaction is not implemented.
+  a search pays to walk through deleted nodes. Recall is *not* what suffers: it rises with
+  deletes, because the search widens through tombstones until it holds ef_search live nodes.
+  What suffers is speed.
+
+### Measured: when to rebuild
+
+Source: `results/hnsw_deletes/deletes_sift1m-200k-q1000.md` and
+`results/plots/hnsw_deletes_sift1m-200k-q1000.png` (`bench/run_hnsw_delete_bench.py`, at
+`0f25f11`). 200k SIFT vectors, M = 16, ef_construction = 200, 0 / 25 / 50 / 90% of ids deleted by
+a hash, ground truth recomputed over the live vectors. It compares the tombstoned index with a
+fresh index over only the live vectors, at **matched recall** (matching ef_search would flatter
+the tombstoned index, which gets higher recall per ef). These are Mac development results, so the
+ratios are indicative.
+
+| deleted | tombstoned vs. rebuilt, recall 0.95 | recall 0.99 | tombstoned vs. before deletes, recall 0.99 | rebuild time |
+|---:|---:|---:|---:|---:|
+| 25% | 0.83x | 0.79x | 0.97x | 17.3 s |
+| 50% | 0.69x | 0.64x | 0.91x | 10.1 s |
+| 90% | ≥ 0.23x | 0.24x | 0.59x | 1.5 s |
+
+**Guideline:** rebuild once roughly a quarter to a half of the index is deleted, if search speed
+matters. At 25% deleted you are leaving ~20% QPS on the table compared with a rebuilt index; at
+50%, ~35%; at 90%, ~75%. A rebuild costs about as much as building the live vectors (~17 s for
+150k vectors, single thread, on the M2), and it also returns the dead nodes' memory. Relative to
+the index before any deletes, tombstones are cheap up to 50% (0.91x at recall 0.99): the loss is
+mostly that a smaller, rebuilt index would be faster still.
+
+A rebuild assigns new, dense ids. Neither `HnswIndex` nor `Collection` offers a rebuild operation
+yet, or a mapping from old ids to new ones; compaction is future work.
 
 ### Search with tombstones: why the stopping rule changes
 
@@ -639,6 +664,14 @@ portable. Version 3 is written to close that gap and is next confirmed on Linux.
 must load under libc++ (and upgrade to version 3 on save) and be rejected with the explanation
 under libstdc++. A second test rewrites its generator text into the other library's shape, so the
 rejection is exercised on every platform.
+
+### Measured: loading instead of rebuilding
+
+Source: `results/storage/hnsw_persist_sift1m-200k-q1000.md` (`bench/run_hnsw_persist_bench.py`,
+at `0f25f11`; 3 runs; M2, indicative). For 200k × 128-dimensional vectors, M = 16: build 23.5 s
+(single thread), save 0.51 s (durable and atomic, including fsyncs), load 0.36 s (read, checksum,
+validate). The snapshot is 124 MiB, and loading is about **66x faster** than rebuilding. Every run
+checked that the loaded index answers all 1000 queries identically.
 
 ### Known limit
 

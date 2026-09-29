@@ -55,7 +55,9 @@ struct HnswParams {
 // Trade-offs: its memory is never reclaimed, and searches pay to traverse deleted nodes. Under
 // heavy deletion a search keeps expanding until it has found ef_search live nodes (or run out of
 // reachable ones), so it still returns k results but grows slower, up to a scan of the whole graph
-// when almost everything is deleted. Rebuilding (re-adding the live vectors) is the remedy.
+// when almost everything is deleted. Rebuilding (re-adding the live vectors) is the remedy; the
+// measured guideline (docs/explainers/hnsw.md, section 9) is to rebuild once a quarter to a half
+// of the index is deleted, if search speed matters.
 //
 // Snapshot index section (IndexKind::kHnsw), little-endian, after the vectors and tombstones that
 // the snapshot layer stores (see include/strata/snapshot.hpp):
