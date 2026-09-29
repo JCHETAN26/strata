@@ -1508,3 +1508,9 @@ stress (M = 4, 8 threads, 3 rounds); save/load after a parallel build then seque
 deterministic; a parallel batch over tombstones plus errors. They passed 10-15 repeats in debug,
 3 repeats under TSan with no race reports, and under ASan. The SIFT10K quality test skips itself
 under TSan (too slow there); it runs in debug and asan.
+
+**Measured** (`bench/run_hnsw_build_scaling.py` at `97f4dda`, 200k subset, 3 interleaved runs per
+thread count, 60 s cool-downs, no thermal warnings; M2, indicative):
+build 24.55 ± 0.12 s (1 thread) / 13.58 ± 0.27 s (2, 1.81x) / 7.68 ± 0.12 s (4, 3.20x). Recall@10 at
+ef 10/40/160 within 0.0004 of sequential, layer-0 reachability 1.0 and mean degree 20.3 at every
+thread count. The full 1-16 thread curve comes from the AWS session.

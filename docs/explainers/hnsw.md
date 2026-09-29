@@ -778,6 +778,23 @@ parallel batch on top of tombstones; and a **high-contention stress test** (M = 
 clusters, 8 threads, repeated) run under ThreadSanitizer. TSan reported no races. The tests also
 ran repeatedly to catch timing-dependent failures.
 
+### Measured (Mac development results, indicative)
+
+Source: `results/hnsw_build/build_scaling_sift1m-200k-q1000.md` (`bench/run_hnsw_build_scaling.py`,
+at `97f4dda`). 200k SIFT vectors, M = 16, ef_construction = 200, 3 runs per thread count,
+interleaved, with cool-downs and no thermal warnings.
+
+| build threads | build time | speedup | recall@10 at ef 10 / 40 / 160 | layer-0 reachable | mean degree |
+|---:|---:|---:|---|---:|---:|
+| 1 (sequential) | 24.6 s | 1.00x | 0.766 / 0.956 / 0.998 | 1.000 | 20.3 |
+| 2 | 13.6 s | 1.81x | 0.766 / 0.956 / 0.998 | 1.000 | 20.3 |
+| 4 | 7.7 s | 3.20x | 0.765 / 0.956 / 0.998 | 1.000 | 20.3 |
+
+Graph quality is unchanged: recall moves by at most 0.0004, reachability and degree match. The
+speedup is 0.9x per thread at 2 threads and 0.8x at 4, where the M2's 4 performance cores are all
+busy (and the fanless chassis runs warm). The full 1-16 thread curve, on a machine that does not
+throttle, comes from the AWS session.
+
 **What the stress test does not check:** reachability. Its data (5 tight clusters, M = 4) is
 pathological for HNSW: 20 sequential builds in shuffled insertion orders gave layer-0
 reachability anywhere from 0.2 to 1.0, and parallel builds fall inside that range. On such data

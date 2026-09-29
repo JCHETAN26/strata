@@ -1,0 +1,92 @@
+{
+  "harness": "strata_search",
+  "build_type": "Release",
+  "asserts": false,
+  "compiler": "Apple LLVM 21.0.0 (clang-2100.1.1.101)",
+  "index": "hnsw",
+  "build_params": {
+    "M": 16,
+    "ef_construction": 200,
+    "selection": "heuristic"
+  },
+  "build_seconds": 24.600687,
+  "graph": {
+    "max_level": 5,
+    "nodes_per_layer": [
+      200000,
+      12484,
+      779,
+      50,
+      9,
+      1
+    ],
+    "layer0_mean_degree": 20.33712,
+    "layer0_reachable_fraction": 1
+  },
+  "metric": "l2",
+  "kernel": "neon",
+  "k": 10,
+  "threads": 1,
+  "warmup_passes": 1,
+  "num_base": 200000,
+  "index_bytes": 102400000,
+  "rerank_bytes": 0,
+  "num_queries": 1000,
+  "dim": 128,
+  "points": [
+    {
+      "search_params": {
+        "ef_search": 10
+      },
+      "runs": [
+        {
+          "search_seconds": 0.012663875,
+          "qps": 78964.7718,
+          "recall": 0.7656,
+          "recall_by_id": 0.7655,
+          "latency_mean_us": 12.641162,
+          "latency_p50_us": 12.292,
+          "latency_p95_us": 17.334,
+          "latency_p99_us": 21.5,
+          "latency_max_us": 31.458
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 40
+      },
+      "runs": [
+        {
+          "search_seconds": 0.034235834,
+          "qps": 29209.1614,
+          "recall": 0.9564,
+          "recall_by_id": 0.9564,
+          "latency_mean_us": 34.210531,
+          "latency_p50_us": 34.417,
+          "latency_p95_us": 43.25,
+          "latency_p99_us": 48.833,
+          "latency_max_us": 55.208
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 160
+      },
+      "runs": [
+        {
+          "search_seconds": 0.12725625,
+          "qps": 7858.16021,
+          "recall": 0.9979,
+          "recall_by_id": 0.9979,
+          "latency_mean_us": 127.227866,
+          "latency_p50_us": 121.708,
+          "latency_p95_us": 183.25,
+          "latency_p99_us": 270.25,
+          "latency_max_us": 1132.916
+        }
+      ]
+    }
+  ]
+}
