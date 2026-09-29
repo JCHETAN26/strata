@@ -455,6 +455,12 @@ class SectionReader {
     if (rest_.size() / sizeof(T) < out.size()) {
       return false;
     }
+    // An empty span (an empty index, a level-0 node's upper lists) may have a null data();
+    // memcpy with a null pointer is undefined even for a zero byte count, so skip the copy.
+    // glibc declares memcpy nonnull, so UBSan reports this on Linux; macOS's libc does not.
+    if (out.empty()) {
+      return true;
+    }
     std::memcpy(out.data(), rest_.data(), out.size_bytes());
     rest_ = rest_.subspan(out.size_bytes());
     return true;

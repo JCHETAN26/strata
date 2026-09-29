@@ -1326,3 +1326,28 @@ predates the HNSW core, so rebuilding and testing on Linux is the first step on 
 **Next (Stage B):** `Collection` backed by HNSW (index kind and HNSW parameters stored and
 checked on reopen, per your addition 3), WAL replay into HNSW, crash tests for HNSW, and a
 save/load vs. rebuild measurement on the 200k subset.
+
+## 2026-09-29 — First Linux build (Oracle ARM, GCC 13, branch `linux-arm-check`)
+
+Oracle machine: aarch64, 4 cores, 23 GB, Ubuntu 22.04, GCC 13.4, presets `linux-debug`,
+`linux-asan`, `linux-tsan` (no preset changes needed: AVX2 is off on aarch64, NEON is baseline).
+All 216 C++ tests pass under all three presets except the golden test, with no ASan, UBSan, or
+TSan reports. Python: 114 passed, 26 skipped (datasets and the API key absent).
+
+**What went wrong**
+- **Golden snapshot does not load on Linux ("bad generator state"). Not fixed; needs a decision.**
+  libc++ writes `std::mt19937_64`'s state as the standard's 312 words; libstdc++ writes its raw
+  312-word array plus its internal index (313 numbers) and requires that index when reading. So
+  snapshots do not cross between macOS and Linux in either direction, and the comment in
+  `include/strata/hnsw.hpp` that the standard makes this format portable is wrong in practice.
+  Everything else is portable: a scratch rebuild of the golden index with GCC gives byte-identical
+  levels, neighbor lists, vectors, and tombstones, and all 200 search results match the Mac's
+  ids and float bits. Only the generator text, its length fields, and the CRC differ.
+- **UBSan: `memcpy` with a null pointer in `SectionReader::read_all`** (empty span, e.g. an empty
+  index or a level-0 node's upper lists). Undefined even for zero bytes; glibc declares `memcpy`
+  nonnull, so UBSan reports it on Linux, and macOS's libc does not. Fixed with an empty-span guard
+  (the same guard `snapshot.cpp` already has). No behavior change.
+- GCC-only warnings (`-Wmissing-field-initializers` on designated initializers in `filter.cpp`,
+  `-Wsign-conversion` on `x += c ? 1 : 0`, `-Wcomment` on a `\` in two usage comments): benign,
+  left as they are.
+- The Python extension is built by the default compiler (GCC 11.4 here), not the presets' GCC 13.
