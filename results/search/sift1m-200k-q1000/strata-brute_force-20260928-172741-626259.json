@@ -1,0 +1,193 @@
+{
+  "timestamp": "2026-09-29T00:27:39.407792+00:00",
+  "git": {
+    "commit": "bc33dea89660c2c33025b588029cf8f00122325f",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      3.31,
+      2.84,
+      2.91
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": {
+      "torch": "2.14.0",
+      "torch_cuda": null,
+      "available": false,
+      "device_count": 0,
+      "device_name": null
+    },
+    "hosted": null
+  },
+  "dataset": {
+    "name": "sift1m-200k-q1000",
+    "source_url": "subset of data/sift1m: scripts/make_subset.py",
+    "subset_of": {
+      "name": "sift1m",
+      "source_sha256": "dd6f0a6ed6b7ebb8934680f861a33ed01ff33991eaee4fd60914d854a0ca5984",
+      "base": 200000,
+      "queries": 1000
+    },
+    "metric": "l2",
+    "base_shape": [
+      200000,
+      128
+    ],
+    "query_shape": [
+      1000,
+      128
+    ],
+    "groundtruth_shape": [
+      1000,
+      100
+    ]
+  },
+  "library": "strata",
+  "index": "brute_force",
+  "build_params": {
+    "kernel": "neon"
+  },
+  "build_seconds": 0.011117417,
+  "k": 10,
+  "threads": 1,
+  "num_queries": 1000,
+  "command": [
+    "/Users/chetan/Strata/build/release/bench/strata_search",
+    "--data",
+    "/Users/chetan/Strata/data/sift1m-200k-q1000",
+    "--metric",
+    "l2",
+    "--index",
+    "brute_force",
+    "--k",
+    "10",
+    "--runs",
+    "3",
+    "--max-queries",
+    "0",
+    "--kernel",
+    "best",
+    "--threads",
+    "1"
+  ],
+  "points": [
+    {
+      "search_params": {},
+      "runs": [
+        {
+          "search_seconds": 2.09570379,
+          "qps": 477.16667,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 2095.67078,
+          "latency_p50_us": 2065.416,
+          "latency_p95_us": 2280.542,
+          "latency_p99_us": 2584.709,
+          "latency_max_us": 3401.583
+        },
+        {
+          "search_seconds": 2.23109783,
+          "qps": 448.209839,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 2231.04419,
+          "latency_p50_us": 2084.792,
+          "latency_p95_us": 2630.708,
+          "latency_p99_us": 4130.083,
+          "latency_max_us": 17194.75
+        },
+        {
+          "search_seconds": 2.41306321,
+          "qps": 414.411026,
+          "recall": 1,
+          "recall_by_id": 1,
+          "latency_mean_us": 2412.96076,
+          "latency_p50_us": 2215.375,
+          "latency_p95_us": 3498.792,
+          "latency_p99_us": 5800.583,
+          "latency_max_us": 9742.25
+        }
+      ],
+      "summary": {
+        "qps": {
+          "mean": 446.595845,
+          "median": 448.209839,
+          "stdev": 31.408938949568345,
+          "min": 414.411026,
+          "max": 477.16667
+        },
+        "recall": {
+          "mean": 1.0,
+          "median": 1,
+          "stdev": 0.0,
+          "min": 1,
+          "max": 1
+        },
+        "recall_by_id": {
+          "mean": 1.0,
+          "median": 1,
+          "stdev": 0.0,
+          "min": 1,
+          "max": 1
+        },
+        "latency_mean_us": {
+          "mean": 2246.558576666667,
+          "median": 2231.04419,
+          "stdev": 159.21292346204888,
+          "min": 2095.67078,
+          "max": 2412.96076
+        },
+        "latency_p50_us": {
+          "mean": 2121.8610000000003,
+          "median": 2084.792,
+          "stdev": 81.56291124647277,
+          "min": 2065.416,
+          "max": 2215.375
+        },
+        "latency_p95_us": {
+          "mean": 2803.347333333333,
+          "median": 2630.708,
+          "stdev": 627.2053253802404,
+          "min": 2280.542,
+          "max": 3498.792
+        },
+        "latency_p99_us": {
+          "mean": 4171.791666666667,
+          "median": 4130.083,
+          "stdev": 1608.3426580257494,
+          "min": 2584.709,
+          "max": 5800.583
+        }
+      }
+    }
+  ],
+  "raw": {
+    "harness": "strata_search",
+    "build_type": "Release",
+    "asserts": false,
+    "compiler": "Apple LLVM 21.0.0 (clang-2100.1.1.101)",
+    "index": "brute_force",
+    "build_params": {},
+    "build_seconds": 0.011117417,
+    "graph": null,
+    "metric": "l2",
+    "kernel": "neon",
+    "k": 10,
+    "threads": 1,
+    "warmup_passes": 1,
+    "num_base": 200000,
+    "index_bytes": 102400000,
+    "rerank_bytes": 0,
+    "num_queries": 1000,
+    "dim": 128
+  }
+}

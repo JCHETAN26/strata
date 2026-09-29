@@ -85,7 +85,8 @@ def plot_dataset(
     ax.set_xlabel(f"Recall@{k}", color=TEXT)
     ax.set_ylabel("Queries per second (log scale, single thread)", color=TEXT)
     title = f"{dataset}: recall vs. throughput  ·  {hardware}"
-    ax.set_title(f"{title}  ·  {title_suffix}" if title_suffix else title, color=TEXT, loc="left")
+    # The suffix gets its own line: long dataset names would push it off the figure.
+    ax.set_title(f"{title}\n{title_suffix}" if title_suffix else title, color=TEXT, loc="left")
     ax.grid(True, which="major", color="#e4e3df", linewidth=0.8)
     ax.grid(True, which="minor", color="#efeeea", linewidth=0.5)
     ax.set_axisbelow(True)

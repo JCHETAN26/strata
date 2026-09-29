@@ -468,8 +468,11 @@ What the curves show:
     (~48%: heap updates, visited checks, loading neighbor lists), which points at memory access
     rather than allocation. Prefetching neighbor vectors, as FAISS and hnswlib do, then
     doubled QPS on a 200k subset (see `search_layer` above). The SIFT1M curves in this section
-    predate it and have not been re-run; that happens with the Phase 9 runs. Batched distances
-    are the next candidate.
+    predate it and have not been re-run; that happens with the Phase 9 runs. On the 200k subset
+    after prefetching, Strata leads FAISS at every ef (about 1.4-1.9x, from a noisy 3-run
+    comparison; `results/hnsw/hnsw_vs_reference.md`), while FAISS keeps slightly higher recall
+    at low ef. A new profile puts ~60% of search time in `search_layer`'s own loop and ~33% in
+    the distance kernel. The devlog (2026-09-28) records the next steps.
 - **Build (indicative).** On SIFT1M, single-threaded, Strata took about 5 minutes, FAISS about
   7, and hnswlib about 10. Strata's build is not parallel yet (Phase 3).
 
