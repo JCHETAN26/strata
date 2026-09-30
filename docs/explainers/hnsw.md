@@ -865,3 +865,52 @@ evaluate 500 comparisons per id, which would have skewed the crossover toward th
 and binary search above. Pre-filter QPS on a 50% correlated filter (SIFT10K smoke test) went from
 142 to 3,346.
 
+### Measured (Mac development results, indicative)
+
+Source: `results/hnsw_filter/filter_sift1m-200k-q1000.md` and
+`results/plots/hnsw_filter_sift1m-200k-q1000.png` (`bench/run_hnsw_filter_bench.py`, at
+`08eb3cb`). 200k SIFT vectors, one index (M = 16, ef_construction = 200) loaded by every process,
+500 queries, 3 runs per point. Filters are evaluated per query inside the timed region. Random
+filters use a hash of the id; correlated filters take whole k-means clusters (1,000 clusters).
+
+**The crossover is about 1%.** For each filter kind and target recall, it is the selectivity below
+which the pre-filter's QPS beats the graph's QPS at that recall:
+
+| filters | recall 0.95 | recall 0.99 |
+|---|---:|---:|
+| random | 1.03% | 1.04% |
+| correlated | 1.25% | 1.28% |
+
+`kDefaultPrefilterBelow` is the largest, rounded: **1.3%**. Auto cannot tell at query time whether a
+filter is correlated, and the pre-filter is exact, so erring toward it is the safe side. Either
+side of the crossover the gap is large: at 0.1% random the pre-filter runs at 2.3k QPS against the
+graph's 28-317 QPS (ef 320 down to 10), and at 50% the graph runs at 2.7k-43k QPS against the
+pre-filter's 204.
+
+**Auto made the right choice everywhere measured.** It chose the pre-filter for 100% of queries at
+0.1%, 0.2%, 1.0% and 1.1% selectivity (recall 1.0), and the graph for 100% at 10% and 50%.
+
+**The fallback never fired in this protocol (0% everywhere),** because every measured selectivity
+is far from the threshold: the estimate chose correctly, and no graph search came near its budget.
+The fallback is tested (`FallbackToPreFilterWhenTheGraphSearchIsTooLong`) but not yet measured.
+Measuring it needs selectivities close to the threshold (1-3%), or filters whose sampled estimate
+misleads.
+
+**No recall ceiling on correlated filters.** Raising ef lifted the graph's recall to 1.0 at every
+point, correlated included (1.0 by ef 40-320). The split by the query's own cluster shows one
+pattern: at low ef, queries whose own cluster matches get lower recall (at 10% selectivity,
+ef 10: 0.89 vs 0.95), and the difference is gone by ef 80. The expected failure, a query far from
+every matching cluster that the graph cannot reach, did not appear at these sizes. If it appears at
+larger scale, predicate-aware traversal (for example ACORN, which adds edges so filtered subgraphs
+stay connected) is the known remedy. That is future work.
+
+**A cost of auto: per-query sampling.** At high selectivity auto runs slower than a forced graph
+search at low ef: 32k vs 43k QPS (random 50%, ef 10), and 14k vs 41k (correlated 50%, ef 10,
+noisy). The 1,000-id selectivity sample costs about as much as a fast graph search itself. Two
+cheaper options: pass a `Bitset` (counted exactly with popcount), or, a future improvement,
+estimate once per filter rather than once per query.
+
+**Depends on n.** The pre-filter's cost grows with the index size, the graph's with
+ef / selectivity (and slowly with n), so the crossover moves with n. It is re-measured at 1M and
+10M in the AWS session before being quoted as general.
+

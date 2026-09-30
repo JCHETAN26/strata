@@ -1559,3 +1559,22 @@ prefilter_below=, fallback_budget=)`, accepting a compiled filter, bool mask, or
 - concurrent filtered searches under TSan.
 
 249 C++ tests pass under debug, asan, and tsan, and 141 Python.
+
+**Measured** (`bench/run_hnsw_filter_bench.py` at `08eb3cb`, 200k subset, 500 queries, 3 runs; M2,
+indicative; no thermal warnings). The first attempt was refused by `preflight`: a Chrome tab held
+60-140% of a core for 5 minutes. A background waiter started the run once the machine had been
+quiet for a minute.
+- **Crossover:** random 1.03% / 1.04% (recall 0.95 / 0.99), correlated 1.25% / 1.28%. The
+  default `kDefaultPrefilterBelow` is now **1.3%** (the largest, rounded; it was provisionally 2%).
+- **Auto** chose the pre-filter for 100% of queries at 0.1-1.1% selectivity (recall 1.0), and the
+  graph for 100% at 10% and 50%.
+- **Fallback fired 0%:** every measured selectivity is far from the threshold, so it was never
+  needed. Tested, not yet measured; measuring it needs selectivities near 1-3%.
+- **No correlated recall ceiling:** the graph reaches recall 1.0 by ef 40-320 everywhere.
+  Queries whose own cluster matches have lower recall at low ef (0.89 vs 0.95 at 10%, ef 10),
+  equal by ef 80. ACORN-style predicate-aware traversal is noted as future work in case larger
+  scale shows a ceiling.
+- **Weakness:** auto's per-query 1,000-id sample makes it slower than a forced graph search at
+  high selectivity and low ef (random 50% ef 10: 32k vs 43k QPS; correlated: 14k vs 41k, noisy).
+  Fix options: a `Bitset` filter (exact popcount), or estimate once per filter.
+- The crossover depends on n; re-measured at 1M and 10M in the AWS session.

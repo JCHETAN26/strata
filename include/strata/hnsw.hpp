@@ -47,11 +47,12 @@ enum class FilterStrategy {
   kPreFilter,
 };
 
-// Default for FilteredSearchOptions::prefilter_below: the crossover measured on 200k SIFT vectors
-// (results/hnsw_filter/, docs/explainers/hnsw.md section 11). It depends on index size: the
-// pre-filter's cost grows with n, the graph's with ef / selectivity. Re-measured at 1M and 10M in
-// the AWS session.
-inline constexpr double kDefaultPrefilterBelow = 0.02;
+// Default for FilteredSearchOptions::prefilter_below: 1.3%, the crossover measured on 200k SIFT
+// vectors (1.03-1.28% across random and cluster-correlated filters at recall 0.95-0.99; the largest,
+// rounded: results/hnsw_filter/filter_sift1m-200k-q1000.md, docs/explainers/hnsw.md section 11).
+// It depends on index size: the pre-filter's cost grows with n, the graph's with ef / selectivity.
+// Re-measured at 1M and 10M in the AWS session.
+inline constexpr double kDefaultPrefilterBelow = 0.013;
 
 struct FilteredSearchOptions {
   std::size_t ef_search = 64;
