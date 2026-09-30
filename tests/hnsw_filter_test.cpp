@@ -237,6 +237,53 @@ TEST_F(HnswFilter, FallbackToPreFilterWhenTheGraphSearchIsTooLong) {
   EXPECT_FALSE(stats.fell_back);
 }
 
+// A caller that knows the selectivity passes it, and auto uses it instead of estimating.
+TEST_F(HnswFilter, KnownSelectivityIsUsedInsteadOfAnEstimate) {
+  FilteredSearchStats stats;
+  const auto half = filter(500);
+  ASSERT_TRUE(run(0, half, {.fallback_budget = 0, .selectivity = 0.001}, &stats));
+  EXPECT_EQ(stats.used, FilterStrategy::kPreFilter);  // told it is rare
+  EXPECT_DOUBLE_EQ(stats.estimated_selectivity, 0.001);
+  EXPECT_FALSE(stats.resampled);
+  ASSERT_TRUE(run(0, half, {.fallback_budget = 0, .selectivity = 0.5}, &stats));
+  EXPECT_EQ(stats.used, FilterStrategy::kGraph);
+}
+
+// The auto estimate is cached on the filter: repeated queries, and copies of the filter, reuse it.
+TEST_F(HnswFilter, SelectivityEstimateIsCachedPerFilter) {
+  const auto f = filter(20);  // near the default threshold, so the precise sample is used too
+  const double coarse = f.coarse_selectivity();
+  const double precise = f.precise_selectivity();
+  EXPECT_EQ(coarse, f.estimate_selectivity(CompiledFilter::kCoarseSamples, 1));
+  EXPECT_EQ(precise, f.estimate_selectivity(CompiledFilter::kPreciseSamples, 2));
+  const CompiledFilter copy = f;  // NOLINT(performance-unnecessary-copy-initialization)
+  EXPECT_EQ(copy.coarse_selectivity(), coarse);
+  FilteredSearchStats first;
+  FilteredSearchStats second;
+  ASSERT_TRUE(run(0, f, {.prefilter_below = 0.02, .fallback_budget = 0}, &first));
+  ASSERT_TRUE(run(1, copy, {.prefilter_below = 0.02, .fallback_budget = 0}, &second));
+  EXPECT_EQ(first.estimated_selectivity, second.estimated_selectivity);
+  EXPECT_EQ(first.used, second.used);
+}
+
+// Many threads asking one fresh filter for its estimate at once all get the same value (TSan
+// checks the call_once).
+TEST_F(HnswFilter, ConcurrentFirstEstimatesAgree) {
+  const auto f = filter(30);
+  std::vector<double> seen(8, -1);
+  std::vector<std::thread> threads;
+  threads.reserve(seen.size());
+  for (std::size_t t = 0; t < seen.size(); ++t) {
+    threads.emplace_back([&, t] { seen[t] = f.precise_selectivity(); });
+  }
+  for (auto& thread : threads) {
+    thread.join();
+  }
+  for (double v : seen) {
+    EXPECT_EQ(v, seen[0]);
+  }
+}
+
 TEST_F(HnswFilter, BitsetFormAgreesWithCompiledFilter) {
   const auto f = filter(100);
   const Bitset bits = f.evaluate();

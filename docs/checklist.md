@@ -88,13 +88,14 @@ Machines:
 ## 🏁 Finish order (adopted 2026-09-28)
 
 1. **HNSW persistence and deletes** (Mac)
-   - [ ] Save/load the HNSW graph in snapshots
-   - [ ] HNSW tombstone deletes (skipped during search, still used for navigation)
+   - [x] Save/load the HNSW graph in snapshots
+   - [x] HNSW tombstone deletes (skipped during search, still used for navigation)
 2. **Parallel index build** (Mac for correctness; scaling numbers on AWS)
-   - [ ] Concurrent insertion with per-node locks on the thread pool
+   - [x] Concurrent insertion with per-node locks on the thread pool
 3. **Filtered HNSW search** (Mac on subsets; final crossover on AWS)
-   - [ ] Strategy B: filter during graph traversal
-   - [ ] Automatic strategy selection from the measured crossover (`estimate_selectivity` exists)
+   - [x] Strategy B: filter during graph traversal
+   - [x] Automatic strategy selection from the measured crossover (`estimate_selectivity` exists)
+   - [x] Selectivity estimated once per filter (cached), not per query
 4. **gRPC server and sharding** (Oracle ARM machine)
    - [ ] First: rebuild and run all tests there (Linux, ARM, with HNSW)
    - [ ] gRPC API: insert, search, delete
@@ -110,6 +111,9 @@ Machines:
    - [ ] Re-measure prefetching's gain on x86 (Apple's hardware prefetchers may differ), and
          re-test the saved `greedy_search` prefetch patch there
    - [ ] Storage benchmark at a size where WAL vs. snapshot recovery differ
+   - [ ] Filtered-search crossover at 1M and 10M, with selectivities of 1%, 1.5%, 2%, 3% added
+         to 0.1/1/10/50%, to measure how often auto's fallback fires near the threshold (skipped
+         on the Mac: the 200k run never came near it)
 6. **Final ARM numbers on the Oracle machine**
    - [ ] Same benchmark set as AWS where it applies
 7. **Publish**

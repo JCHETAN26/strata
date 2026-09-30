@@ -48,10 +48,10 @@ enum class FilterStrategy {
 };
 
 // Default for FilteredSearchOptions::prefilter_below: 1.3%, the crossover measured on 200k SIFT
-// vectors (1.03-1.28% across random and cluster-correlated filters at recall 0.95-0.99; the largest,
-// rounded: results/hnsw_filter/filter_sift1m-200k-q1000.md, docs/explainers/hnsw.md section 11).
-// It depends on index size: the pre-filter's cost grows with n, the graph's with ef / selectivity.
-// Re-measured at 1M and 10M in the AWS session.
+// vectors (1.03-1.28% across random and cluster-correlated filters at recall 0.95-0.99; the
+// largest, rounded: results/hnsw_filter/filter_sift1m-200k-q1000.md, docs/explainers/hnsw.md
+// section 11). It depends on index size: the pre-filter's cost grows with n, the graph's with ef /
+// selectivity. Re-measured at 1M and 10M in the AWS session.
 inline constexpr double kDefaultPrefilterBelow = 0.013;
 
 struct FilteredSearchOptions {
@@ -64,6 +64,10 @@ struct FilteredSearchOptions {
   // own cost in distance computations: one filter test per id (about a tenth of a distance, hence
   // the default) plus one distance per match. 0 disables the fallback.
   double fallback_budget = 0.1;
+  // kAuto: the filter's selectivity, if the caller already knows it (for example, counted once for
+  // a batch of queries sharing a filter). Unset: estimated per call, from a cached sample for a
+  // CompiledFilter or a popcount for a Bitset.
+  std::optional<double> selectivity;
 };
 
 // What a filtered search did, for measurement and debugging.

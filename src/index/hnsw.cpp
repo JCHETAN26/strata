@@ -130,21 +130,19 @@ struct KeepLiveAllowed {
 // a selectivity estimate.
 struct CompiledFilterSource {
   // A 1000-id sample holds about one match at 0.1% selectivity, too few to place a filter near
-  // the threshold. So: sample 1000; if that lands within 3 standard errors of the threshold (the
-  // error of a 1000-sample estimate at the threshold), sample 20000 more precisely (exact when the
-  // index is no larger). Fixed seeds keep the choice deterministic for a given filter.
-  static constexpr std::size_t kFirstSample = 1000;
-  static constexpr std::size_t kSecondSample = 20000;
-
+  // the threshold. So: take the coarse estimate (1000 ids); if it lands within 3 standard errors of
+  // the threshold (the error of a 1000-sample estimate at the threshold), take the precise one
+  // (20000 ids, exact when the index is no larger). Both are cached on the filter, so a filter
+  // reused across queries samples once, not per query.
   const CompiledFilter* filter;
   [[nodiscard]] std::size_t rows() const noexcept { return filter->rows(); }
   bool operator()(VectorId id) const noexcept { return filter->matches(id); }
   [[nodiscard]] Bitset matching() const { return filter->evaluate(); }
   [[nodiscard]] double selectivity(double threshold, bool& resampled) const {
-    const double first = filter->estimate_selectivity(kFirstSample, 1);
-    const double error = std::sqrt(threshold * (1 - threshold) / kFirstSample);
-    resampled = std::abs(first - threshold) < 3 * error;
-    return resampled ? filter->estimate_selectivity(kSecondSample, 2) : first;
+    const double coarse = filter->coarse_selectivity();
+    const double error = std::sqrt(threshold * (1 - threshold) / CompiledFilter::kCoarseSamples);
+    resampled = std::abs(coarse - threshold) < 3 * error;
+    return resampled ? filter->precise_selectivity() : coarse;
   }
 };
 
@@ -344,7 +342,10 @@ Expected<std::vector<Neighbor>> HnswIndex::search_filtered_impl(
 
   FilterStrategy strategy = options.strategy;
   if (strategy == FilterStrategy::kAuto) {
-    st.estimated_selectivity = source.selectivity(options.prefilter_below, st.resampled);
+    // A caller that already knows the selectivity (e.g. counted once for a batch) passes it.
+    st.estimated_selectivity = options.selectivity
+                                   ? *options.selectivity
+                                   : source.selectivity(options.prefilter_below, st.resampled);
     strategy = st.estimated_selectivity < options.prefilter_below ? FilterStrategy::kPreFilter
                                                                   : FilterStrategy::kGraph;
   }

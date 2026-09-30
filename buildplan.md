@@ -187,10 +187,13 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 
 - [x] Metadata attributes per vector (e.g., year, category)
 - [x] Strategy A: pre-filter + brute force (best for very selective filters)
-- [ ] Strategy B: filter during graph traversal (best for broad filters) — finish order 3
-- [ ] Automatic strategy selection based on estimated selectivity (`estimate_selectivity` exists) — finish order 3
+- [x] Strategy B: filter during graph traversal (best for broad filters) — finish order 3
+- [x] Automatic strategy selection based on estimated selectivity (`estimate_selectivity` exists) — finish order 3
 
 **Measure:** recall and QPS at 1%, 10%, 50% filter selectivity for each strategy (crossover chart).
+Done on the 200k subset (Mac). In the AWS session the crossover is re-measured at 1M and 10M, and
+those sweeps add 1-3% selectivity (near the threshold) to measure how often auto's fallback fires;
+that sweep is skipped on the Mac.
 
 ---
 
@@ -229,6 +232,7 @@ answer groundedness on HotpotQA.
 - [ ] Rebuild and test on Linux with HNSW and everything since (first thing on the Oracle machine)
 - [ ] Full runs on SIFT1M and GloVe-100, averaged over multiple runs — AWS
 - [ ] 10M-vector run — AWS
+- [ ] Filtered-search crossover at 1M and 10M, including 1-3% selectivity (fallback rate) — AWS
 - [ ] Thread scaling 1 → N cores, and multi-machine sharding scaling — AWS
 - [ ] x86 AVX2 results (AWS) + final ARM NEON results (Oracle machine)
 - [ ] README: one-line summary, recall-QPS chart vs. FAISS/hnswlib at the top, architecture diagram,

@@ -130,7 +130,19 @@ tl::unexpected<Error> type_error(const std::string& column, const char* expected
 }  // namespace
 
 CompiledFilter::CompiledFilter(std::vector<Op> ops, std::size_t rows)
-    : ops_(std::move(ops)), rows_(rows) {}
+    : ops_(std::move(ops)), rows_(rows), cache_(std::make_shared<SelectivityCache>()) {}
+
+double CompiledFilter::coarse_selectivity() const {
+  std::call_once(cache_->coarse_once,
+                 [&] { cache_->coarse = estimate_selectivity(kCoarseSamples, 1); });
+  return cache_->coarse;
+}
+
+double CompiledFilter::precise_selectivity() const {
+  std::call_once(cache_->precise_once,
+                 [&] { cache_->precise = estimate_selectivity(kPreciseSamples, 2); });
+  return cache_->precise;
+}
 
 Expected<CompiledFilter> CompiledFilter::compile(const Filter& filter,
                                                  const AttributeTable& table) {

@@ -843,6 +843,16 @@ match.
    within 3 standard errors of the threshold (the error of a 1,000-sample estimate at the
    threshold), it samples 20,000 more (exact when the index is no larger). Fixed seeds make the
    choice deterministic for a given filter.
+
+   Both estimates are **computed once per filter and cached** (`coarse_selectivity()`,
+   `precise_selectivity()`, each behind a `std::call_once`), so a filter reused across a batch of
+   queries pays for sampling once, not per query. The cache is a `shared_ptr` so copies of the
+   filter share it and the filter stays cheap to copy; `call_once` makes the first concurrent
+   estimate safe (the TSan test `ConcurrentFirstEstimatesAgree`). A caller that already knows the
+   selectivity passes it as `FilteredSearchOptions::selectivity` and nothing is estimated; the
+   Python binding does this, counting its bitset once per batch instead of once per query.
+   Caching is correct only because a `CompiledFilter` must not outlive changes to its table (the
+   table must not be appended to while the filter is in use), so the estimate cannot go stale.
 2. **Choose.** Pre-filter if the estimate is below `prefilter_below` (default: the measured
    crossover, next subsection), otherwise the graph.
 3. **Fall back.** A graph search that computes more than

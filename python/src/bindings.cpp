@@ -414,8 +414,8 @@ strata::FilterStrategy parse_strategy(const std::string& name) {
 
 // Filtered HNSW search for any filter form. The filter is evaluated to a bitset once, with the GIL
 // held (AttributeTable.append also runs under the GIL, so the table cannot change mid-evaluation,
-// and nothing reads it after the GIL is released); every query in the batch then uses the bitset
-// overload, whose selectivity is counted exactly.
+// and nothing reads it after the GIL is released). Its selectivity is counted once for the batch
+// and passed to every query, so auto does no per-query estimation.
 template <typename FilterArg>
 SearchResult hnsw_filtered(const PyHnsw& self, const FloatArray& queries, std::size_t k,
                            const FilterArg& filter, const strata::FilteredSearchOptions& options,
@@ -423,6 +423,11 @@ SearchResult hnsw_filtered(const PyHnsw& self, const FloatArray& queries, std::s
   const Rows q = as_rows(queries, "queries");
   const std::size_t size_now = shared(self.mutex, [&] { return self.index.size(); });
   const strata::Bitset allowed = bitset_from(filter, size_now);
+  strata::FilteredSearchOptions batch_options = options;
+  if (allowed.size() != 0) {
+    batch_options.selectivity =
+        static_cast<double>(allowed.count()) / static_cast<double>(allowed.size());
+  }
   std::optional<ResultBuffers> out;
   {
     nb::gil_scoped_release release;
@@ -434,7 +439,7 @@ SearchResult hnsw_filtered(const PyHnsw& self, const FloatArray& queries, std::s
                                 .c_str());
     }
     out.emplace(search_rows(q.view.rows(), k, threads, [&](std::size_t row) {
-      return self.index.search_filtered(q.view.row(row), k, allowed, options);
+      return self.index.search_filtered(q.view.row(row), k, allowed, batch_options);
     }));
   }
   return std::move(*out).to_python(q.view.rows(), q.single);

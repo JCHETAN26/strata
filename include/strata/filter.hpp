@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <random>
 #include <string>
 #include <unordered_map>
@@ -85,7 +86,8 @@ class Filter {
 // cannot occur in the data); an unknown column or a type mismatch is a compile error.
 //
 // The table must outlive the CompiledFilter and must not be appended to while it is in use.
-// Thread safety: immutable; safe to use from many threads.
+// Thread safety: immutable apart from the selectivity cache, which is filled once under
+// std::call_once; safe to use from many threads. Copies share the cache (they are the same filter).
 class CompiledFilter {
  public:
   [[nodiscard]] static Expected<CompiledFilter> compile(const Filter& filter,
@@ -98,6 +100,13 @@ class CompiledFilter {
   [[nodiscard]] Bitset evaluate() const;
   // Fraction of ids that match, estimated from `samples` random ids (exact if samples >= rows).
   [[nodiscard]] double estimate_selectivity(std::size_t samples, std::uint64_t seed = 1) const;
+  // The same estimates, computed at most once per filter and then reused: a coarse one (1000 ids,
+  // seed 1) and a precise one (20000 ids, seed 2; exact when rows <= 20000). HnswIndex's auto
+  // strategy uses these, so a filter reused across queries pays for sampling once, not per query.
+  static constexpr std::size_t kCoarseSamples = 1000;
+  static constexpr std::size_t kPreciseSamples = 20000;
+  [[nodiscard]] double coarse_selectivity() const;
+  [[nodiscard]] double precise_selectivity() const;
 
   struct Op;
 
@@ -108,6 +117,15 @@ class CompiledFilter {
   // Flattened expression tree; ops_[0] is the root.
   std::vector<Op> ops_;
   std::size_t rows_;
+
+  struct SelectivityCache {
+    std::once_flag coarse_once;
+    std::once_flag precise_once;
+    double coarse = 0;
+    double precise = 0;
+  };
+  // Shared, so the filter stays copyable and copies reuse each other's estimates.
+  std::shared_ptr<SelectivityCache> cache_;
 };
 
 // Opcode for one node of a compiled filter. Public only so the implementation can build it.
