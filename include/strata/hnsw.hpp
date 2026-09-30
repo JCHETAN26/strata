@@ -10,6 +10,7 @@
 #include <span>
 #include <vector>
 
+#include "strata/bitset.hpp"
 #include "strata/distance.hpp"
 #include "strata/error.hpp"
 #include "strata/matrix.hpp"
@@ -18,6 +19,7 @@
 
 namespace strata {
 
+class CompiledFilter;
 class ThreadPool;
 
 // How a node's neighbors are chosen from its candidates (on insert, and when a full neighbor list
@@ -29,6 +31,47 @@ enum class NeighborSelection {
   // already-selected neighbor than to the node itself. Keeps links pointing in diverse
   // directions, so clusters stay connected.
   kHeuristic,
+};
+
+// Filtered search (HnswIndex::search_filtered): how to find the nearest vectors that match.
+enum class FilterStrategy {
+  // Pick per query: the pre-filter when the filter's estimated selectivity is below
+  // FilteredSearchOptions::prefilter_below, else the graph, falling back to the pre-filter if the
+  // graph search exceeds its budget.
+  kAuto,
+  // Search the graph, expanding every node but returning only matching live ones (the tombstone
+  // mechanism, with the widened stopping rule). Approximate, like search(). Never falls back.
+  kGraph,
+  // Evaluate the filter on every id and score each matching live vector. Exact; cost grows with
+  // the index size plus the number of matches.
+  kPreFilter,
+};
+
+// Default for FilteredSearchOptions::prefilter_below: the crossover measured on 200k SIFT vectors
+// (results/hnsw_filter/, docs/explainers/hnsw.md section 11). It depends on index size: the
+// pre-filter's cost grows with n, the graph's with ef / selectivity. Re-measured at 1M and 10M in
+// the AWS session.
+inline constexpr double kDefaultPrefilterBelow = 0.02;
+
+struct FilteredSearchOptions {
+  std::size_t ef_search = 64;
+  FilterStrategy strategy = FilterStrategy::kAuto;
+  // kAuto: use the pre-filter when the estimated selectivity is below this.
+  double prefilter_below = kDefaultPrefilterBelow;
+  // kAuto: a graph search that computes more than (fallback_budget + estimated selectivity) *
+  // size() distances gives up, and the pre-filter answers instead. That is about the pre-filter's
+  // own cost in distance computations: one filter test per id (about a tenth of a distance, hence
+  // the default) plus one distance per match. 0 disables the fallback.
+  double fallback_budget = 0.1;
+};
+
+// What a filtered search did, for measurement and debugging.
+struct FilteredSearchStats {
+  FilterStrategy used = FilterStrategy::kGraph;  // kGraph or kPreFilter
+  bool fell_back = false;                        // kAuto chose the graph, which hit its budget
+  double estimated_selectivity = -1;             // kAuto only; -1 otherwise
+  bool resampled = false;                        // kAuto needed the larger selectivity sample
+  std::size_t graph_distances = 0;               // distances the graph search computed on layer 0
 };
 
 // Construction parameters, named as in Malkov & Yashunin (2018) and hnswlib.
@@ -115,6 +158,19 @@ class HnswIndex {
   [[nodiscard]] Expected<std::vector<Neighbor>> search(std::span<const float> query, std::size_t k,
                                                        std::size_t ef_search) const;
 
+  // k nearest live vectors among those `filter` matches (strategies above). `filter` must cover
+  // exactly size() ids (kInvalidArgument otherwise). Results are sorted by (distance, id) with
+  // exact distances; the pre-filter returns min(k, matching live) exact results, the graph an
+  // approximation of them. `stats`, if given, reports what was done.
+  [[nodiscard]] Expected<std::vector<Neighbor>> search_filtered(
+      std::span<const float> query, std::size_t k, const CompiledFilter& filter,
+      const FilteredSearchOptions& options = {}, FilteredSearchStats* stats = nullptr) const;
+  // The same, with the matching ids given as a bitset of size() bits (e.g. a filter evaluated
+  // once and reused across queries). Its selectivity is counted exactly.
+  [[nodiscard]] Expected<std::vector<Neighbor>> search_filtered(
+      std::span<const float> query, std::size_t k, const Bitset& allowed,
+      const FilteredSearchOptions& options = {}, FilteredSearchStats* stats = nullptr) const;
+
   // Persistence (format above). to_snapshot/from_snapshot are what a collection uses to combine
   // the index with its write-ahead log; save/load write and read a snapshot file directly.
   [[nodiscard]] Snapshot to_snapshot(std::uint64_t last_lsn = 0) const;
@@ -146,6 +202,15 @@ class HnswIndex {
  private:
   HnswIndex(std::size_t dim, Metric metric, HnswParams params);
 
+  // search_filtered for either filter form. Source provides rows(), operator()(id) (matches),
+  // matching() (a Bitset of every match), and selectivity(threshold) (see the .cpp).
+  template <typename Source>
+  [[nodiscard]] Expected<std::vector<Neighbor>> search_filtered_impl(
+      std::span<const float> query, std::size_t k, const Source& source,
+      const FilteredSearchOptions& options, FilteredSearchStats* stats) const;
+  // The pre-filter strategy: the exact k nearest live vectors among the bits set in `allowed`.
+  [[nodiscard]] std::vector<Neighbor> prefilter_scan(std::span<const float> query, std::size_t k,
+                                                     const Bitset& allowed) const;
   // Checks a batch before anything is added: dimension and id space.
   [[nodiscard]] Expected<void> check_batch(MatrixView<const float> vectors) const;
   // Insertion: append_node then link_node. Precondition: values.size() == dim(), values does not
@@ -172,13 +237,22 @@ class HnswIndex {
   template <bool kConcurrent>
   [[nodiscard]] Neighbor greedy_search(std::span<const float> query, Neighbor start,
                                        int layer) const;
-  // Beam search on one layer (paper Algorithm 2). Returns up to ef nodes, sorted ascending. With
-  // kSkipDeleted, deleted nodes are expanded but not returned (see search_layer in the .cpp).
-  // kConcurrent: during a parallel build (see link_node).
-  template <bool kSkipDeleted, bool kConcurrent = false>
+  // Distance computations allowed to one filtered graph search before it gives up (the auto
+  // strategy then switches to the pre-filter). Filled in by search_layer.
+  struct TraversalBudget {
+    std::size_t max_distances = 0;
+    std::size_t distances = 0;
+    bool exceeded = false;
+  };
+  // Beam search on one layer (paper Algorithm 2). Returns up to ef nodes the `keep` policy accepts,
+  // sorted ascending; rejected nodes are still expanded (see search_layer and the policies in the
+  // .cpp). kConcurrent: during a parallel build (see link_node). A budgeted policy needs `budget`
+  // and returns nothing once it is exceeded.
+  template <typename Keep, bool kConcurrent = false>
   [[nodiscard]] std::vector<Neighbor> search_layer(std::span<const float> query,
                                                    const std::vector<Neighbor>& entry_points,
-                                                   std::size_t ef, int layer) const;
+                                                   std::size_t ef, int layer, const Keep& keep,
+                                                   TraversalBudget* budget = nullptr) const;
   // Shrinks candidates (sorted by distance to a base node, which they must not contain) to at
   // most m neighbors of that node, per params_.selection.
   void select_neighbors(std::vector<Neighbor>& candidates, std::size_t m) const;

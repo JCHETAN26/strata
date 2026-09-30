@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <random>
+#include <set>
+#include <string>
 #include <vector>
 
 #include "strata/bitset.hpp"
@@ -106,6 +108,38 @@ TEST(Filter, UnknownCategoryMatchesNothing) {
   EXPECT_EQ(matching(Filter::equals("source", std::string("podcast")), t), (Ids{}));
   EXPECT_EQ(matching(Filter::negate(Filter::equals("source", std::string("podcast"))), t),
             (Ids{0, 1, 2, 3, 4}));
+}
+
+// Large `in` sets (more than the linear-scan limit, so binary search) on both column types agree
+// with plain membership, including duplicate values and values absent from the data.
+TEST(Filter, LargeInSetsMatchMembership) {
+  auto t = *AttributeTable::create({{"cluster", ColumnType::kInt}, {"tag", ColumnType::kCategory}});
+  for (std::int64_t i = 0; i < 1000; ++i) {
+    ASSERT_TRUE(t.append({i % 97, "t" + std::to_string(i % 53)}));
+  }
+  std::vector<AttributeValue> ints;
+  std::vector<AttributeValue> tags;
+  std::set<std::int64_t> int_set;
+  std::set<std::string> tag_set;
+  for (std::int64_t v = 3; v < 97 + 10; v += 4) {  // includes values that never occur
+    ints.emplace_back(v);
+    ints.emplace_back(v);  // duplicate
+    int_set.insert(v);
+  }
+  for (int v = 0; v < 60; v += 3) {
+    tags.emplace_back("t" + std::to_string(v));
+    tag_set.insert("t" + std::to_string(v));
+  }
+  ASSERT_GT(int_set.size(), 16U);
+  ASSERT_GT(tag_set.size(), 16U);
+  const auto by_int = *CompiledFilter::compile(Filter::in("cluster", ints), t);
+  const auto by_tag = *CompiledFilter::compile(Filter::in("tag", tags), t);
+  for (VectorId id = 0; id < 1000; ++id) {
+    EXPECT_EQ(by_int.matches(id), int_set.contains(static_cast<std::int64_t>(id % 97))) << id;
+    EXPECT_EQ(by_tag.matches(id), tag_set.contains("t" + std::to_string(id % 53))) << id;
+  }
+  // An empty int set matches nothing.
+  EXPECT_EQ(CompiledFilter::compile(Filter::in("cluster", {}), t)->evaluate().count(), 0U);
 }
 
 TEST(Filter, CompileErrors) {

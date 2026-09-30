@@ -1514,3 +1514,48 @@ thread count, 60 s cool-downs, no thermal warnings; M2, indicative):
 build 24.55 ± 0.12 s (1 thread) / 13.58 ± 0.27 s (2, 1.81x) / 7.68 ± 0.12 s (4, 3.20x). Recall@10 at
 ef 10/40/160 within 0.0004 of sequential, layer-0 reachability 1.0 and mean degree 20.3 at every
 thread count. The full 1-16 thread curve comes from the AWS session.
+
+## 2026-09-30: Filtered HNSW search with automatic strategy selection
+
+**Design (approved):** `HnswIndex::search_filtered` for a `CompiledFilter` or a `Bitset`, with
+strategies kGraph (filtered-out nodes traversed like tombstones: keep-policy templates on
+`search_layer`, same widened stopping rule), kPreFilter (exact), and kAuto (estimate selectivity,
+choose, fall back). Python: `HnswIndex.search_filtered(..., strategy=, ef_search=,
+prefilter_below=, fallback_budget=)`, accepting a compiled filter, bool mask, or id array.
+`Collection` filtering is future work.
+
+**Your additions:**
+- (a) **Two-stage sampling:** 1,000 ids, and 20,000 when the first estimate is within 3 standard
+  errors of the threshold. **Runtime fallback:** a graph search past `(fallback_budget +
+  estimated selectivity) * n` distances (about the pre-filter's own cost) switches that query to
+  the pre-filter; `FilteredSearchStats` reports it and the benchmark counts it.
+- (b) The benchmark report flags any graph recall ceiling (recall below 0.99 with under 0.005
+  gained from ef 160 to 320).
+
+**Went wrong, and fixed**
+- **The first fallback budget was just `fallback_budget * n`.** On the 4,000-vector test index
+  that is 400 distances, less than a plain search at ef 64 computes, so a 50% filter fell back.
+  The budget now adds the estimated selectivity (the pre-filter's per-match distances), which is
+  what the pre-filter would actually cost.
+- **A dangling reference in a test helper:** `for (n : *run(...))` iterated a temporary
+  `Expected` that was already destroyed. That produced recall 0 while the search itself was
+  correct (checked against exact results directly).
+- **Slow `in` filters:** int `in` was an OR of ranges (one test per value per id), and category
+  `in` scanned its set. At 500 clusters the pre-filter slowed about 20x. Both are now sorted sets
+  with binary search above 16 values; `Filter.LargeInSetsMatchMembership` covers it.
+
+**Tests** (`tests/hnsw_filter_test.cpp`, 13, plus 1 filter test and 1 Python test):
+- graph recall against exact filtered brute force at 1%, 10%, and 50%;
+- the pre-filter is exact;
+- no non-matching or deleted id is ever returned (5 selectivities, 4 option sets);
+- filters matching nothing (empty) and everything (bit-identical to unfiltered);
+- filters combined with deletes;
+- fewer matches than k;
+- auto picking each side of a per-call threshold;
+- resampling near the threshold;
+- fallback firing (and never for a forced graph);
+- `Bitset` and `CompiledFilter` forms agreeing;
+- errors;
+- concurrent filtered searches under TSan.
+
+249 C++ tests pass under debug, asan, and tsan, and 141 Python.

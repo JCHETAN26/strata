@@ -26,3 +26,8 @@ target_compile_definitions(strata_filter_bench PRIVATE STRATA_BUILD_TYPE="${CMAK
 add_executable(strata_hnsw_persist_bench
   hnsw_persist_bench.cpp)
 target_link_libraries(strata_hnsw_persist_bench PRIVATE strata::strata strata_options)
+
+# Filtered HNSW search: recall and QPS per filter kind, selectivity, strategy, and ef_search.
+add_executable(strata_hnsw_filter_bench
+  hnsw_filter_bench.cpp)
+target_link_libraries(strata_hnsw_filter_bench PRIVATE strata::strata strata_options)

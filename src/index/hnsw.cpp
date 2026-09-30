@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 
+#include "strata/filter.hpp"
 #include "strata/thread_pool.hpp"
 #include "util/bytes.hpp"
 
@@ -94,6 +95,72 @@ inline void prefetch(const void* p, std::size_t bytes) noexcept {
   (void)bytes;
 #endif
 }
+
+// Which nodes search_layer may return (keep in W). Every node reached is still expanded, since a
+// rejected node can lead to kept ones. kFilters = true switches on the widened stopping rule (see
+// search_layer); kBudgeted = true counts distance computations against a TraversalBudget. The
+// policies are compile-time types, so an unfiltered search compiles to exactly the plain loop.
+struct KeepAll {
+  static constexpr bool kFilters = false;
+  static constexpr bool kBudgeted = false;
+  bool operator()(VectorId /*id*/) const noexcept { return true; }
+};
+
+// Tombstones: live nodes only.
+struct KeepLive {
+  static constexpr bool kFilters = true;
+  static constexpr bool kBudgeted = false;
+  const std::vector<std::uint8_t>* deleted;
+  bool operator()(VectorId id) const noexcept { return (*deleted)[id] == 0; }
+};
+
+// Filtered search: live nodes that the filter allows. `allowed` is any bool(VectorId) callable
+// (a compiled filter's matches, or a bitset's test); it runs only on nodes the search reaches.
+template <typename Allowed>
+struct KeepLiveAllowed {
+  static constexpr bool kFilters = true;
+  static constexpr bool kBudgeted = true;
+  const std::vector<std::uint8_t>* deleted;
+  const Allowed* allowed;
+  bool operator()(VectorId id) const noexcept { return (*deleted)[id] == 0 && (*allowed)(id); }
+};
+
+// Filter sources for search_filtered_impl. Each gives the graph strategy a per-id predicate (run
+// only on nodes the search reaches), the pre-filter a Bitset of every match, and the auto strategy
+// a selectivity estimate.
+struct CompiledFilterSource {
+  // A 1000-id sample holds about one match at 0.1% selectivity, too few to place a filter near
+  // the threshold. So: sample 1000; if that lands within 3 standard errors of the threshold (the
+  // error of a 1000-sample estimate at the threshold), sample 20000 more precisely (exact when the
+  // index is no larger). Fixed seeds keep the choice deterministic for a given filter.
+  static constexpr std::size_t kFirstSample = 1000;
+  static constexpr std::size_t kSecondSample = 20000;
+
+  const CompiledFilter* filter;
+  [[nodiscard]] std::size_t rows() const noexcept { return filter->rows(); }
+  bool operator()(VectorId id) const noexcept { return filter->matches(id); }
+  [[nodiscard]] Bitset matching() const { return filter->evaluate(); }
+  [[nodiscard]] double selectivity(double threshold, bool& resampled) const {
+    const double first = filter->estimate_selectivity(kFirstSample, 1);
+    const double error = std::sqrt(threshold * (1 - threshold) / kFirstSample);
+    resampled = std::abs(first - threshold) < 3 * error;
+    return resampled ? filter->estimate_selectivity(kSecondSample, 2) : first;
+  }
+};
+
+struct BitsetSource {
+  const Bitset* bits;
+  [[nodiscard]] std::size_t rows() const noexcept { return bits->size(); }
+  bool operator()(VectorId id) const noexcept { return bits->test(id); }
+  [[nodiscard]] const Bitset& matching() const noexcept { return *bits; }
+  // Counting set bits costs one popcount per 64 ids: exact and cheap.
+  [[nodiscard]] double selectivity(double /*threshold*/, bool& resampled) const {
+    resampled = false;
+    return bits->size() == 0
+               ? 0.0
+               : static_cast<double>(bits->count()) / static_cast<double>(bits->size());
+  }
+};
 
 }  // namespace
 
@@ -232,12 +299,116 @@ Expected<std::vector<Neighbor>> HnswIndex::search(std::span<const float> query, 
   // tombstone-aware version is used only when there are tombstones, so an index without deletes
   // pays nothing for them.
   const std::size_t ef = std::max(ef_search, k);
-  auto results = num_deleted_ == 0 ? search_layer<false>(query, {entry}, ef, 0)
-                                   : search_layer<true>(query, {entry}, ef, 0);
+  auto results = num_deleted_ == 0
+                     ? search_layer(query, {entry}, ef, 0, KeepAll{})
+                     : search_layer(query, {entry}, ef, 0, KeepLive{.deleted = &deleted_});
   if (results.size() > k) {
     results.resize(k);
   }
   return results;
+}
+
+Expected<std::vector<Neighbor>> HnswIndex::search_filtered(std::span<const float> query,
+                                                           std::size_t k,
+                                                           const CompiledFilter& filter,
+                                                           const FilteredSearchOptions& options,
+                                                           FilteredSearchStats* stats) const {
+  return search_filtered_impl(query, k, CompiledFilterSource{.filter = &filter}, options, stats);
+}
+
+Expected<std::vector<Neighbor>> HnswIndex::search_filtered(std::span<const float> query,
+                                                           std::size_t k, const Bitset& allowed,
+                                                           const FilteredSearchOptions& options,
+                                                           FilteredSearchStats* stats) const {
+  return search_filtered_impl(query, k, BitsetSource{.bits = &allowed}, options, stats);
+}
+
+template <typename Source>
+Expected<std::vector<Neighbor>> HnswIndex::search_filtered_impl(
+    std::span<const float> query, std::size_t k, const Source& source,
+    const FilteredSearchOptions& options, FilteredSearchStats* stats) const {
+  if (query.size() != dim_) {
+    return dimension_error(dim_, query.size());
+  }
+  if (source.rows() != size()) {
+    return make_error(ErrorCode::kInvalidArgument, "filter covers " +
+                                                       std::to_string(source.rows()) +
+                                                       " ids, index has " + std::to_string(size()));
+  }
+  FilteredSearchStats local;
+  FilteredSearchStats& st = stats != nullptr ? *stats : local;
+  st = {};
+  if (k == 0 || live_size() == 0) {
+    return std::vector<Neighbor>{};
+  }
+
+  FilterStrategy strategy = options.strategy;
+  if (strategy == FilterStrategy::kAuto) {
+    st.estimated_selectivity = source.selectivity(options.prefilter_below, st.resampled);
+    strategy = st.estimated_selectivity < options.prefilter_below ? FilterStrategy::kPreFilter
+                                                                  : FilterStrategy::kGraph;
+  }
+
+  if (strategy == FilterStrategy::kGraph) {
+    // Navigate the upper layers unfiltered (they only find a starting point), then run the
+    // layer-0 beam search keeping only matching live nodes: non-matching ones are expanded like
+    // tombstones, and the stopping rule waits until W holds ef matches.
+    Neighbor entry{.id = *entry_point_, .distance = dist(query, *entry_point_)};
+    for (int layer = max_level_; layer > 0; --layer) {
+      entry = greedy_search<false>(query, entry, layer);
+    }
+    const bool may_fall_back =
+        options.strategy == FilterStrategy::kAuto && options.fallback_budget > 0;
+    // The budget is about what the pre-filter would cost, in distance computations: it tests the
+    // filter on every id (fallback_budget, ~0.1 of a distance each) and computes one distance per
+    // match (the estimated selectivity).
+    const double budget_fraction = options.fallback_budget + st.estimated_selectivity;
+    TraversalBudget budget{
+        .max_distances =
+            may_fall_back ? static_cast<std::size_t>(budget_fraction * static_cast<double>(size()))
+                          : std::numeric_limits<std::size_t>::max()};
+    const KeepLiveAllowed<Source> keep{.deleted = &deleted_, .allowed = &source};
+    auto results = search_layer(query, {entry}, std::max(options.ef_search, k), 0, keep, &budget);
+    st.graph_distances = budget.distances;
+    if (!budget.exceeded) {
+      st.used = FilterStrategy::kGraph;
+      if (results.size() > k) {
+        results.resize(k);
+      }
+      return results;
+    }
+    // Past the budget, the graph has already spent about what the pre-filter costs; a filter this
+    // hard (very selective, or matching a region the search has to travel far to reach) is
+    // answered exactly instead.
+    st.fell_back = true;
+  }
+  st.used = FilterStrategy::kPreFilter;
+  const auto& allowed = source.matching();
+  return prefilter_scan(query, k, allowed);
+}
+
+std::vector<Neighbor> HnswIndex::prefilter_scan(std::span<const float> query, std::size_t k,
+                                                const Bitset& allowed) const {
+  MaxHeap best;  // the k nearest so far, furthest on top
+  allowed.for_each_set([&](std::size_t i) {
+    const auto id = static_cast<VectorId>(i);
+    if (deleted_[id] != 0) {
+      return;
+    }
+    const Neighbor n{.id = id, .distance = dist(query, id)};
+    if (best.size() < k) {
+      best.push(n);
+    } else if (n < best.top()) {
+      best.pop();
+      best.push(n);
+    }
+  });
+  std::vector<Neighbor> sorted(best.size());
+  for (Neighbor& slot : std::views::reverse(sorted)) {
+    slot = best.top();
+    best.pop();
+  }
+  return sorted;
 }
 
 Expected<void> HnswIndex::remove(VectorId id) {
@@ -341,8 +512,8 @@ void HnswIndex::link_node(VectorId id) {
   for (int layer = std::min(level, max_level); layer >= 0; --layer) {
     // Deleted nodes are still candidates: they stay in the graph for navigation, and keeping
     // them makes the graph independent of which deletes happened.
-    auto candidates =
-        search_layer<false, kConcurrent>(query, entry_points, params_.ef_construction, layer);
+    auto candidates = search_layer<KeepAll, kConcurrent>(query, entry_points,
+                                                         params_.ef_construction, layer, KeepAll{});
     if constexpr (kConcurrent) {
       // In a parallel build this node can already be reachable on this layer (another thread
       // linked to it after finding it on a layer above), so the search may return the node itself.
@@ -434,20 +605,23 @@ Neighbor HnswIndex::greedy_search(std::span<const float> query, Neighbor start, 
   }
 }
 
-// Paper Algorithm 2 (SEARCH-LAYER). With kSkipDeleted, deleted nodes are expanded (they still
-// lead to live ones) but never enter W, so only live nodes are returned.
-template <bool kSkipDeleted, bool kConcurrent>
+// Paper Algorithm 2 (SEARCH-LAYER). Nodes the keep policy rejects (deleted, or not matching a
+// filter) are expanded, since they still lead to kept ones, but never enter W, so only kept nodes
+// are returned. With a budgeted policy, the search stops and reports it once it has computed
+// budget->max_distances distances.
+template <typename Keep, bool kConcurrent>
 std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
                                               const std::vector<Neighbor>& entry_points,
-                                              std::size_t ef, int layer) const {
+                                              std::size_t ef, int layer, const Keep& keep_node,
+                                              TraversalBudget* budget) const {
   SearchScratch& scratch = thread_scratch();
   VisitedSet& visited = scratch.visited;
   visited.reset(size());
   MinHeap candidates;  // C: frontier still to expand, nearest first
   MaxHeap results;     // W: best ef found so far, furthest on top
   const auto keep = [&](const Neighbor& n) {
-    if constexpr (kSkipDeleted) {
-      if (deleted_[n.id] != 0) {
+    if constexpr (Keep::kFilters) {
+      if (!keep_node(n.id)) {
         return;
       }
     }
@@ -466,12 +640,12 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
     const Neighbor nearest = candidates.top();
     // The nearest unexpanded node is further than everything we keep, and expanding only moves
     // outward from it, so nothing left in C can improve W.
-    if constexpr (kSkipDeleted) {
-      // With tombstones, deleted nodes sit in C but not in W, so W can be short of ef while C
-      // holds nodes beyond W's furthest. Stopping then would return fewer live results than
-      // exist nearby, so the rule applies only once W is full: until then the search keeps
-      // widening. (Without tombstones the two rules agree: while W is not full, every node in C is
-      // also in W, so C's nearest can never lie beyond W's furthest.)
+    if constexpr (Keep::kFilters) {
+      // With rejected nodes (tombstones, filtered-out ids), those sit in C but not in W, so W can
+      // be short of ef while C holds nodes beyond W's furthest. Stopping then would return fewer
+      // kept results than exist nearby, so the rule applies only once W is full: until then the
+      // search keeps widening. (Without rejection the two rules agree: while W is not full, every
+      // node in C is also in W, so C's nearest can never lie beyond W's furthest.)
       if (results.size() >= ef && results.top() < nearest) {
         break;
       }
@@ -499,9 +673,16 @@ std::vector<Neighbor> HnswIndex::search_layer(std::span<const float> query,
         prefetch(vector(nbr).data(), dim_ * sizeof(float));
       }
     }
+    if constexpr (Keep::kBudgeted) {
+      budget->distances += unvisited.size();
+      if (budget->distances > budget->max_distances) {
+        budget->exceeded = true;
+        return {};
+      }
+    }
     for (VectorId nbr : unvisited) {
       const Neighbor next{.id = nbr, .distance = dist(query, nbr)};
-      // Only nodes that would enter W are worth expanding later. (A deleted node that qualifies
+      // Only nodes that would enter W are worth expanding later. (A rejected node that qualifies
       // is expanded but not kept.)
       if (results.size() < ef || next < results.top()) {
         candidates.push(next);

@@ -490,6 +490,39 @@ def test_hnsw_parallel_add() -> None:
     assert len(all_cores) == 3000
 
 
+def test_hnsw_search_filtered() -> None:
+    base, queries = rng_matrix(3000, 16, 37), rng_matrix(40, 16, 38)
+    index = strata.HnswIndex(16, M=16, ef_construction=100)
+    index.add(base)
+    exact = strata.BruteForceIndex(16)
+    exact.add(base)
+    mask = np.zeros(3000, dtype=bool)
+    mask[::7] = True  # ~14%
+    truth = exact.search_filtered(queries, K, mask)[0]
+    # The pre-filter is exact, for every filter form.
+    for form in (mask, np.flatnonzero(mask)):
+        ids, dists = index.search_filtered(queries, K, form, strategy="prefilter")
+        np.testing.assert_array_equal(ids, truth)
+    # The graph never returns a non-matching id, and its recall is high at a wide beam.
+    for strategy in ("graph", "auto"):
+        ids, _ = index.search_filtered(queries, K, mask, ef_search=200, strategy=strategy)
+        assert mask[ids[ids >= 0]].all()
+        assert id_recall(ids, truth) >= 0.95
+    # A compiled filter works the same way.
+    table = strata.AttributeTable([("bucket", "int")])
+    table.extend([[i % 7] for i in range(3000)])
+    compiled = strata.Filter.equals("bucket", 0).compile(table)
+    ids, _ = index.search_filtered(queries, K, compiled, strategy="prefilter")
+    np.testing.assert_array_equal(ids, truth)
+    # Matching nothing gives padded, empty results.
+    ids, dists = index.search_filtered(queries[0], K, np.zeros(3000, dtype=bool))
+    assert (ids == -1).all() and np.isinf(dists).all()
+    with pytest.raises(ValueError, match="strategy"):
+        index.search_filtered(queries, K, mask, strategy="fastest")
+    with pytest.raises(ValueError, match="filter covers"):
+        index.search_filtered(queries, K, np.ones(10, dtype=bool))
+
+
 def test_hnsw_load_errors(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError):
         strata.HnswIndex.load(tmp_path / "missing.snap")

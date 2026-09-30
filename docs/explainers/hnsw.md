@@ -800,3 +800,68 @@ pathological for HNSW: 20 sequential builds in shuffled insertion orders gave la
 reachability anywhere from 0.2 to 1.0, and parallel builds fall inside that range. On such data
 reachability measures insertion order, not correctness.
 
+---
+
+## 11. Filtered search
+
+`search_filtered(query, k, filter, options)` returns the k nearest live vectors among those a
+filter matches. The filter is a `CompiledFilter` (metadata predicates), or a `Bitset` of allowed
+ids when the caller has already evaluated one and reuses it across queries. There are two
+strategies and an automatic choice between them.
+
+### The graph strategy: filtered-out nodes are tombstones
+
+This reuses the deletion mechanism (section 9). `search_layer` takes a compile-time **keep
+policy**: `KeepAll` (plain search, and inserts), `KeepLive` (tombstones), or `KeepLiveAllowed`
+(tombstones plus the filter). Rejected nodes are still expanded, because they lead to accepted
+ones, but never enter W. The stopping rule waits until W holds ef accepted nodes: the same
+widening that makes a search under heavy deletion still return k results. So:
+- the upper layers are walked unfiltered (they only choose a starting point);
+- the filter runs only on nodes the search reaches, never on the whole index;
+- reachability is unchanged by the filter, since non-matching nodes still carry the search;
+- a filter matching everything gives exactly the unfiltered results, bit for bit
+  (`FilterMatchingEverything`).
+
+Policies are types, so `search()` and inserts compile to the same code as before. The C++
+reference outputs stayed bit-identical.
+
+**Cost:** to fill W with ef matches, the search expands roughly ef / selectivity nodes. At 50%
+selectivity that is about twice the unfiltered work. At 0.1% it is most of the index.
+
+### The pre-filter strategy: exact
+
+Evaluate the filter on every id (for a `CompiledFilter`), then compute the distance to every
+matching live vector and keep the k nearest. The result is exact. Its cost is one filter test per
+id plus one distance per match: nearly constant as selectivity falls, and cheap when few vectors
+match.
+
+### Auto: estimate, choose, and fall back
+
+1. **Estimate selectivity.** A `Bitset` is counted exactly (one popcount per 64 ids). A
+   `CompiledFilter` is sampled: 1,000 random ids first. At 0.1% selectivity that sample holds
+   about one match, too noisy to place a filter near the threshold. So if the first estimate lands
+   within 3 standard errors of the threshold (the error of a 1,000-sample estimate at the
+   threshold), it samples 20,000 more (exact when the index is no larger). Fixed seeds make the
+   choice deterministic for a given filter.
+2. **Choose.** Pre-filter if the estimate is below `prefilter_below` (default: the measured
+   crossover, next subsection), otherwise the graph.
+3. **Fall back.** A graph search that computes more than
+   `(fallback_budget + estimated selectivity) × n` distances gives up, and the pre-filter answers
+   that query. That budget is about the pre-filter's own cost in distance units: one filter test
+   per id (about a tenth of a distance, hence the default of 0.1) plus one distance per match. So a
+   query the graph handles badly (a hard filter the estimate misjudged, or matches far from the
+   query) costs at most about twice the pre-filter's price, and is answered exactly. A forced
+   `kGraph` never falls back.
+
+`FilteredSearchStats` reports, per query, the strategy used, whether it fell back, the estimate,
+whether it resampled, and the graph's distance count. That is what the measurements count.
+
+### A filter-compiler fix found on the way
+
+`Filter::in` on an int column compiled to an OR of one-point ranges, so testing an id cost one
+comparison per listed value. A correlated filter listing 500 clusters then made the pre-filter
+evaluate 500 comparisons per id, which would have skewed the crossover toward the graph. Now an int
+`in` is a sorted set (`kIntIn`), and both int and category sets use a linear scan up to 16 values
+and binary search above. Pre-filter QPS on a 50% correlated filter (SIFT10K smoke test) went from
+142 to 3,346.
+

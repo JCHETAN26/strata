@@ -398,6 +398,58 @@ SearchResult brute_force_filtered(const PyBruteForce& self, const FloatArray& qu
   return std::move(*out).to_python(q.view.rows(), q.single);
 }
 
+#ifdef STRATA_HAS_HNSW
+strata::FilterStrategy parse_strategy(const std::string& name) {
+  if (name == "auto") {
+    return strata::FilterStrategy::kAuto;
+  }
+  if (name == "graph") {
+    return strata::FilterStrategy::kGraph;
+  }
+  if (name == "prefilter") {
+    return strata::FilterStrategy::kPreFilter;
+  }
+  throw nb::value_error(("unknown strategy '" + name + "' (auto, graph, prefilter)").c_str());
+}
+
+// Filtered HNSW search for any filter form. The filter is evaluated to a bitset once, with the GIL
+// held (AttributeTable.append also runs under the GIL, so the table cannot change mid-evaluation,
+// and nothing reads it after the GIL is released); every query in the batch then uses the bitset
+// overload, whose selectivity is counted exactly.
+template <typename FilterArg>
+SearchResult hnsw_filtered(const PyHnsw& self, const FloatArray& queries, std::size_t k,
+                           const FilterArg& filter, const strata::FilteredSearchOptions& options,
+                           std::optional<std::size_t> threads) {
+  const Rows q = as_rows(queries, "queries");
+  const std::size_t size_now = shared(self.mutex, [&] { return self.index.size(); });
+  const strata::Bitset allowed = bitset_from(filter, size_now);
+  std::optional<ResultBuffers> out;
+  {
+    nb::gil_scoped_release release;
+    const std::shared_lock lock(self.mutex);
+    if (allowed.size() != self.index.size()) {
+      throw nb::value_error(("filter covers " + std::to_string(allowed.size()) +
+                             " ids but the index has " + std::to_string(self.index.size()) +
+                             " vectors")
+                                .c_str());
+    }
+    out.emplace(search_rows(q.view.rows(), k, threads, [&](std::size_t row) {
+      return self.index.search_filtered(q.view.row(row), k, allowed, options);
+    }));
+  }
+  return std::move(*out).to_python(q.view.rows(), q.single);
+}
+
+strata::FilteredSearchOptions filter_options(std::size_t ef_search, const std::string& strategy,
+                                             std::optional<double> prefilter_below,
+                                             double fallback_budget) {
+  return {.ef_search = ef_search,
+          .strategy = parse_strategy(strategy),
+          .prefilter_below = prefilter_below.value_or(strata::kDefaultPrefilterBelow),
+          .fallback_budget = fallback_budget};
+}
+#endif
+
 using PyValue = std::variant<std::int64_t, std::string>;
 
 const char* kThreadsDoc = "threads: worker threads for the batch (None = all cores, 1 = serial).";
@@ -1296,6 +1348,49 @@ exclusive lock, so inserts are serialized.)doc")
                    [](const PyHnsw& self) {
                      return shared(self.mutex, [&] { return self.index.live_size(); });
                    })
+      .def(
+          "search_filtered",
+          [](const PyHnsw& self, const FloatArray& queries, std::size_t k,
+             const PyCompiledFilter& f, std::size_t ef_search, const std::string& strategy,
+             std::optional<double> prefilter_below, double fallback_budget,
+             std::optional<std::size_t> threads) {
+            return hnsw_filtered(
+                self, queries, k, f,
+                filter_options(ef_search, strategy, prefilter_below, fallback_budget), threads);
+          },
+          "queries"_a, "k"_a, "filter"_a, "ef_search"_a = 64, "strategy"_a = "auto",
+          "prefilter_below"_a = nb::none(), "fallback_budget"_a = 0.1, "threads"_a = 1,
+          "Filtered search: the k nearest vectors the filter allows. filter is a CompiledFilter, a "
+          "bool mask of length len(index), or an int array of allowed ids. strategy: 'auto' "
+          "(default: exact pre-filter below prefilter_below selectivity, else the graph, falling "
+          "back to the pre-filter when a graph search exceeds (fallback_budget + selectivity) * "
+          "len(index) distance computations), 'graph' (approximate, non-matching nodes are "
+          "traversed but never returned), or 'prefilter' (exact). prefilter_below defaults to the "
+          "measured crossover, which depends on index size.")
+      .def(
+          "search_filtered",
+          [](const PyHnsw& self, const FloatArray& queries, std::size_t k, const IdArray& f,
+             std::size_t ef_search, const std::string& strategy,
+             std::optional<double> prefilter_below, double fallback_budget,
+             std::optional<std::size_t> threads) {
+            return hnsw_filtered(
+                self, queries, k, f,
+                filter_options(ef_search, strategy, prefilter_below, fallback_budget), threads);
+          },
+          "queries"_a, "k"_a, "filter"_a, "ef_search"_a = 64, "strategy"_a = "auto",
+          "prefilter_below"_a = nb::none(), "fallback_budget"_a = 0.1, "threads"_a = 1)
+      .def(
+          "search_filtered",
+          [](const PyHnsw& self, const FloatArray& queries, std::size_t k, const BoolMask& f,
+             std::size_t ef_search, const std::string& strategy,
+             std::optional<double> prefilter_below, double fallback_budget,
+             std::optional<std::size_t> threads) {
+            return hnsw_filtered(
+                self, queries, k, f,
+                filter_options(ef_search, strategy, prefilter_below, fallback_budget), threads);
+          },
+          "queries"_a, "k"_a, "filter"_a, "ef_search"_a = 64, "strategy"_a = "auto",
+          "prefilter_below"_a = nb::none(), "fallback_budget"_a = 0.1, "threads"_a = 1)
       .def(
           "save",
           [](const PyHnsw& self, const std::filesystem::path& path) {

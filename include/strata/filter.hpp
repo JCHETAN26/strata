@@ -92,6 +92,8 @@ class CompiledFilter {
                                                         const AttributeTable& table);
 
   [[nodiscard]] bool matches(VectorId id) const noexcept;
+  // Number of ids the filter covers (the table's rows when compiled).
+  [[nodiscard]] std::size_t rows() const noexcept { return rows_; }
   // Bitset of every matching id in [0, table.rows()).
   [[nodiscard]] Bitset evaluate() const;
   // Fraction of ids that match, estimated from `samples` random ids (exact if samples >= rows).
@@ -110,12 +112,13 @@ class CompiledFilter {
 
 // Opcode for one node of a compiled filter. Public only so the implementation can build it.
 struct CompiledFilter::Op {
-  enum class Kind { kIntRange, kCodeIn, kAll, kAny, kNot, kNever } kind;
+  enum class Kind { kIntRange, kIntIn, kCodeIn, kAll, kAny, kNot, kNever } kind;
   const std::vector<std::int64_t>* ints = nullptr;
   const std::vector<std::uint32_t>* codes = nullptr;
   std::int64_t lo = 0;
   std::int64_t hi = 0;
-  std::vector<std::uint32_t> code_set;  // sorted; kCodeIn
+  std::vector<std::uint32_t> code_set;  // sorted, distinct; kCodeIn
+  std::vector<std::int64_t> int_set;    // sorted, distinct; kIntIn
   std::vector<std::size_t> children;    // kAll, kAny, kNot
 };
 

@@ -18,7 +18,8 @@ add_executable(strata_tests
   text_test.cpp
   thread_pool_test.cpp)
 if(STRATA_HAS_HNSW)
-  target_sources(strata_tests PRIVATE hnsw_test.cpp hnsw_persistence_test.cpp hnsw_parallel_test.cpp)
+  target_sources(strata_tests PRIVATE hnsw_test.cpp hnsw_persistence_test.cpp hnsw_parallel_test.cpp
+    hnsw_filter_test.cpp)
 endif()
 target_link_libraries(strata_tests PRIVATE strata::strata strata_options GTest::gtest_main)
 # Tests may use internal headers (util/bytes.hpp) as well as the public ones.

@@ -108,6 +108,17 @@ Filter Filter::negate(Filter filter) {
 
 namespace {
 
+// Membership in a sorted, distinct set. Small sets (a few values, the common case) are faster to
+// scan than to binary-search; large ones (e.g. hundreds of cluster ids) are not.
+template <typename T>
+bool set_contains(const std::vector<T>& set, T value) noexcept {
+  constexpr std::size_t kScanLimit = 16;
+  if (set.size() <= kScanLimit) {
+    return std::ranges::find(set, value) != set.end();
+  }
+  return std::ranges::binary_search(set, value);
+}
+
 using Op = CompiledFilter::Op;
 using Node = Filter::Node;
 
@@ -161,15 +172,26 @@ Expected<CompiledFilter> CompiledFilter::compile(const Filter& filter,
           break;
         }
         if (column->spec.type == ColumnType::kInt) {
-          // Equality / membership on ints: an OR of single-point ranges.
-          op.kind = Op::Kind::kAny;
+          // Equality / membership on ints: one value is a single-point range; more are a sorted
+          // set (an OR of ranges would cost one test per value per id).
           for (const auto& value : node.values) {
             if (!std::holds_alternative<std::int64_t>(value)) {
               return type_error(node.column, "a category column");
             }
-            const auto v = std::get<std::int64_t>(value);
-            op.children.push_back(ops.size());
-            ops.push_back(Op{.kind = Op::Kind::kIntRange, .ints = &column->ints, .lo = v, .hi = v});
+            op.int_set.push_back(std::get<std::int64_t>(value));
+          }
+          std::ranges::sort(op.int_set);
+          op.int_set.erase(std::ranges::unique(op.int_set).begin(), op.int_set.end());
+          if (op.int_set.size() == 1) {
+            op = Op{.kind = Op::Kind::kIntRange,
+                    .ints = &column->ints,
+                    .lo = op.int_set[0],
+                    .hi = op.int_set[0]};
+          } else if (op.int_set.empty()) {
+            op = Op{.kind = Op::Kind::kNever};
+          } else {
+            op.kind = Op::Kind::kIntIn;
+            op.ints = &column->ints;
           }
         } else {
           op.kind = Op::Kind::kCodeIn;
@@ -184,6 +206,7 @@ Expected<CompiledFilter> CompiledFilter::compile(const Filter& filter,
             }
           }
           std::ranges::sort(op.code_set);
+          op.code_set.erase(std::ranges::unique(op.code_set).begin(), op.code_set.end());
           if (op.code_set.empty()) {
             op.kind = Op::Kind::kNever;
           }
@@ -208,11 +231,10 @@ bool CompiledFilter::eval(std::size_t index, VectorId id) const noexcept {
       const std::int64_t v = (*op.ints)[id];
       return v >= op.lo && v <= op.hi;
     }
-    case Op::Kind::kCodeIn: {
-      const std::uint32_t code = (*op.codes)[id];
-      // Small sets (the common case) are faster to scan than to binary-search.
-      return std::ranges::find(op.code_set, code) != op.code_set.end();
-    }
+    case Op::Kind::kIntIn:
+      return set_contains(op.int_set, (*op.ints)[id]);
+    case Op::Kind::kCodeIn:
+      return set_contains(op.code_set, (*op.codes)[id]);
     case Op::Kind::kAll:
       return std::ranges::all_of(op.children, [&](std::size_t c) { return eval(c, id); });
     case Op::Kind::kAny:
