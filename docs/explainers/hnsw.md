@@ -914,11 +914,19 @@ every matching cluster that the graph cannot reach, did not appear at these size
 larger scale, predicate-aware traversal (for example ACORN, which adds edges so filtered subgraphs
 stay connected) is the known remedy. That is future work.
 
-**A cost of auto: per-query sampling.** At high selectivity auto runs slower than a forced graph
-search at low ef: 32k vs 43k QPS (random 50%, ef 10), and 14k vs 41k (correlated 50%, ef 10,
-noisy). The 1,000-id selectivity sample costs about as much as a fast graph search itself. Two
-cheaper options: pass a `Bitset` (counted exactly with popcount), or, a future improvement,
-estimate once per filter rather than once per query.
+**Auto's sampling cost, found and fixed.** In the first measurement (`08eb3cb`) auto estimated
+selectivity on every query, and at high selectivity and low ef that 1,000-id sample cost about as
+much as the graph search itself: 32k vs 43k QPS against a forced graph (random 50%, ef 10), and 14k
+vs 41k (correlated 50%, ef 10). The estimate is now cached per filter (step 1 above). Re-measured at
+`58e6e30`, with forced graph and auto in the same session and the threshold fixed at 1.3%
+(`results/hnsw_filter/filter_sift1m-200k-q1000_cached-selectivity.md`, 10% and 50%, ef 10-320):
+at 50%, ef 10, auto now runs at 1.10x the forced graph's QPS (random) and 1.05x (correlated), and
+the median auto / graph ratio over all 24 points is 1.00. Recall is identical at every point, as
+it must be: with the estimate cached, auto does the same work as a forced graph. The spread
+(18 of 24 points within ±7%; outliers from 0.47 to 1.17, each with a large standard deviation on
+one side, e.g. forced graph ±999 QPS at random 10%, ef 40) is Mac measurement noise, not a cost of
+auto. In the benchmark one filter serves all queries, so only the warmup pays for sampling; a
+workload that compiles a new filter for every query still pays once per filter.
 
 **Depends on n.** The pre-filter's cost grows with the index size, the graph's with
 ef / selectivity (and slowly with n), so the crossover moves with n. It is re-measured at 1M and

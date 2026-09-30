@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-09-30T09:16:35.206921+00:00",
+  "git": {
+    "commit": "58e6e30e8b3440e87b927bcfb42809f90cd03d9b",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      6.01,
+      8.25,
+      7.24
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": {
+      "torch": "2.14.0",
+      "torch_cuda": null,
+      "available": false,
+      "device_count": 0,
+      "device_name": null
+    },
+    "hosted": null
+  },
+  "args": {
+    "dataset": "sift1m-200k-q1000",
+    "selectivities": "0.1,0.5",
+    "ef_search": "10,20,40,80,160,320",
+    "runs": "3",
+    "max_queries": "500",
+    "cooldown": "60",
+    "build_dir": "/Users/chetan/Strata/build/release",
+    "report_only": "False",
+    "label": "cached-selectivity",
+    "threshold": "0.013"
+  }
+}

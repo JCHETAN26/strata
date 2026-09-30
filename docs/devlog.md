@@ -1578,3 +1578,24 @@ quiet for a minute.
   high selectivity and low ef (random 50% ef 10: 32k vs 43k QPS; correlated: 14k vs 41k, noisy).
   Fix options: a `Bitset` filter (exact popcount), or estimate once per filter.
 - The crossover depends on n; re-measured at 1M and 10M in the AWS session.
+
+### 2026-09-30: selectivity estimated once per filter
+
+- `CompiledFilter` caches its coarse (1,000-id) and precise (20,000-id) estimates behind
+  `std::call_once`, in a `shared_ptr` so copies share them and the filter stays cheap to copy.
+  `FilteredSearchOptions::selectivity` lets a caller pass a known value; the Python binding counts
+  its bitset once per batch and passes it. Caching is safe because a compiled filter must not be
+  used across appends to its table. Three new tests (override honored, cache shared by copies,
+  concurrent first estimates under TSan); 252 C++ tests pass under debug, asan, and tsan, and 141
+  Python.
+- The driver gained `--label` / `--threshold`: a re-measurement into its own directory and report,
+  with forced graph and auto in the same session.
+- **Measured** at `58e6e30` (200k subset, 10% and 50%, threshold fixed at 1.3%; no thermal
+  warnings): the gap is closed. At 50%, ef 10, auto / graph QPS is 1.10 (random, was 0.74) and
+  1.05 (correlated, was 0.34); the median over all 24 points is 1.00, with identical recall.
+  Outliers (0.47 at random 10%, ef 40; 0.83-0.89 at three others; 1.17 at one) each have a large
+  standard deviation on one side, and auto does the same work as the graph once the estimate is
+  cached, so they are noise on the fanless Mac.
+- **Plan change:** the fallback-rate measurement at 1-3% selectivity is not run on the Mac. The AWS
+  crossover sweeps at 1M and 10M include 1%, 1.5%, 2%, and 3% instead (buildplan.md,
+  docs/checklist.md).
