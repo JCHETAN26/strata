@@ -1726,3 +1726,20 @@ tombstone. Responses with out-of-range ids are rejected as INTERNAL.
 
 **Also:** Python tests re-run after the Homebrew openssl/c-ares upgrade: 142 passed (the live API
 test ran, the usage cap having reset). New `server-release` preset for the benchmark.
+
+**Measured: async fan-out vs. thread per shard** (`results/server/coordinator_latency_sift1m-200k-q1000.md`,
+200k SIFT vectors, HNSW shards, ef_search 64, M2 Mac: development, indicative; 3 runs x 5 rounds,
+modes alternated within each round; recall@10 identical in both modes):
+
+- Sequential median latency: 299 -> 275 us (-8%) with 2 shards, 362 -> 327 us (-10%) with 4
+  (async better in 14/15 and 15/15 rounds). That matches the cost of starting 2 or 4 threads per
+  query that async no longer pays.
+- Concurrent, 8 clients: QPS +17% (2 shards) and +23% (4 shards); median latency -16% and -21%
+  (async better in 14/15 and 15/15 rounds). Under load, thread creation competes with the searches,
+  so the gain grows with the shard count, as expected.
+- Tails are noisy here. With 4 shards the concurrent p99 *mean* is worse for async (+57%), but
+  async had the lower p99 in 12/15 rounds. The mean comes from two rounds at 26.6 ms and 16.0 ms;
+  thread per shard had one at 11.1 ms. That pattern looks like scheduling noise: 8 clients + 4 shard
+  servers + 2 coordinators on 8 cores, 4 of them efficiency cores. I added an "async better in N of
+  M rounds" column (generated) so the table shows this instead of a hand note. Tail latency needs
+  re-measuring on dedicated hardware, with shards on separate machines (Phase 9).

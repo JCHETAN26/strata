@@ -1,0 +1,1438 @@
+{
+  "timestamp": "2026-10-01T20:20:55.030429+00:00",
+  "git": {
+    "commit": "6027835eb33e00bcf887571157021ba710379762",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "arm64",
+    "os": "Darwin 25.5.0",
+    "logical_cpus": 8,
+    "load_average_1m_5m_15m": [
+      3.97,
+      3.94,
+      4.36
+    ],
+    "cpu": "Apple M2",
+    "memory_gib": 8.0,
+    "os_version": "26.5.2"
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": {
+      "torch": "2.14.0",
+      "torch_cuda": null,
+      "available": false,
+      "device_count": 0,
+      "device_name": null
+    },
+    "hosted": null
+  },
+  "dataset": "sift1m-200k-q1000",
+  "results": {
+    "2": {
+      "command": [
+        "/Users/chetan/Strata/build/server-release/server/strata_coordinator_bench",
+        "--data",
+        "/Users/chetan/Strata/data/sift1m-200k-q1000",
+        "--shards",
+        "2",
+        "--rounds",
+        "5",
+        "--queries",
+        "2000",
+        "--clients",
+        "8",
+        "--ef-search",
+        "64"
+      ],
+      "runs": [
+        {
+          "shards": 2,
+          "num_base": 200000,
+          "dim": 128,
+          "num_queries": 1000,
+          "queries_per_pass": 2000,
+          "clients": 8,
+          "k": 10,
+          "ef_search": 64,
+          "M": 16,
+          "ef_construction": 200,
+          "build_seconds": 11.882,
+          "hardware_concurrency": 8,
+          "asserts": false,
+          "recall": {
+            "async": 0.9912,
+            "thread_per_shard": 0.9912
+          },
+          "rounds": [
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 268.499,
+                  "p50_us": 267.375,
+                  "p95_us": 298.083,
+                  "p99_us": 316.416
+                },
+                "concurrent": {
+                  "qps": 10509,
+                  "mean_us": 753.504,
+                  "p50_us": 747.083,
+                  "p95_us": 952.083,
+                  "p99_us": 1037.92
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 298.715,
+                  "p50_us": 297.583,
+                  "p95_us": 328.875,
+                  "p99_us": 348.375
+                },
+                "concurrent": {
+                  "qps": 8629.81,
+                  "mean_us": 919.294,
+                  "p50_us": 916.917,
+                  "p95_us": 1135.25,
+                  "p99_us": 1253.54
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 298.731,
+                  "p50_us": 297.709,
+                  "p95_us": 329,
+                  "p99_us": 345.375
+                },
+                "concurrent": {
+                  "qps": 8467.51,
+                  "mean_us": 937.475,
+                  "p50_us": 930.958,
+                  "p95_us": 1180.62,
+                  "p99_us": 1337.96
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 267.693,
+                  "p50_us": 266.75,
+                  "p95_us": 294.459,
+                  "p99_us": 315.584
+                },
+                "concurrent": {
+                  "qps": 10289,
+                  "mean_us": 770.011,
+                  "p50_us": 765.542,
+                  "p95_us": 980.75,
+                  "p99_us": 1095.04
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 268.358,
+                  "p50_us": 266.875,
+                  "p95_us": 299.875,
+                  "p99_us": 315.167
+                },
+                "concurrent": {
+                  "qps": 10415.9,
+                  "mean_us": 760.691,
+                  "p50_us": 754.791,
+                  "p95_us": 977.375,
+                  "p99_us": 1079.46
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 299.243,
+                  "p50_us": 298.375,
+                  "p95_us": 329.416,
+                  "p99_us": 350.625
+                },
+                "concurrent": {
+                  "qps": 8558.53,
+                  "mean_us": 927.029,
+                  "p50_us": 924.75,
+                  "p95_us": 1163.17,
+                  "p99_us": 1281.21
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 297.97,
+                  "p50_us": 296.916,
+                  "p95_us": 327.875,
+                  "p99_us": 346.708
+                },
+                "concurrent": {
+                  "qps": 8783.19,
+                  "mean_us": 902.849,
+                  "p50_us": 899.959,
+                  "p95_us": 1112.25,
+                  "p99_us": 1227.67
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 268.821,
+                  "p50_us": 267.834,
+                  "p95_us": 298.125,
+                  "p99_us": 316.083
+                },
+                "concurrent": {
+                  "qps": 10718.9,
+                  "mean_us": 739.06,
+                  "p50_us": 735.333,
+                  "p95_us": 920.083,
+                  "p99_us": 999.25
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 268.557,
+                  "p50_us": 265.916,
+                  "p95_us": 296.959,
+                  "p99_us": 320.875
+                },
+                "concurrent": {
+                  "qps": 10640.9,
+                  "mean_us": 743.964,
+                  "p50_us": 738.875,
+                  "p95_us": 922.167,
+                  "p99_us": 1032.12
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 295.606,
+                  "p50_us": 296.709,
+                  "p95_us": 327.917,
+                  "p99_us": 348.292
+                },
+                "concurrent": {
+                  "qps": 8710.3,
+                  "mean_us": 910.668,
+                  "p50_us": 907.791,
+                  "p95_us": 1124.38,
+                  "p99_us": 1248.79
+                }
+              }
+            }
+          ]
+        },
+        {
+          "shards": 2,
+          "num_base": 200000,
+          "dim": 128,
+          "num_queries": 1000,
+          "queries_per_pass": 2000,
+          "clients": 8,
+          "k": 10,
+          "ef_search": 64,
+          "M": 16,
+          "ef_construction": 200,
+          "build_seconds": 12.0029,
+          "hardware_concurrency": 8,
+          "asserts": false,
+          "recall": {
+            "async": 0.9912,
+            "thread_per_shard": 0.9912
+          },
+          "rounds": [
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 266.048,
+                  "p50_us": 264.542,
+                  "p95_us": 296.833,
+                  "p99_us": 312.833
+                },
+                "concurrent": {
+                  "qps": 10618.2,
+                  "mean_us": 745.908,
+                  "p50_us": 740.5,
+                  "p95_us": 932.791,
+                  "p99_us": 1014.17
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 297.964,
+                  "p50_us": 297.625,
+                  "p95_us": 329.583,
+                  "p99_us": 348.875
+                },
+                "concurrent": {
+                  "qps": 8864.18,
+                  "mean_us": 894.263,
+                  "p50_us": 885.917,
+                  "p95_us": 1122.75,
+                  "p99_us": 1301.29
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 295.724,
+                  "p50_us": 297.292,
+                  "p95_us": 328.333,
+                  "p99_us": 350.209
+                },
+                "concurrent": {
+                  "qps": 8845.22,
+                  "mean_us": 896.376,
+                  "p50_us": 891.25,
+                  "p95_us": 1103.54,
+                  "p99_us": 1229.92
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 268.003,
+                  "p50_us": 267.125,
+                  "p95_us": 296.875,
+                  "p99_us": 314.458
+                },
+                "concurrent": {
+                  "qps": 10186.4,
+                  "mean_us": 778.087,
+                  "p50_us": 771.292,
+                  "p95_us": 999.709,
+                  "p99_us": 1129.75
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 268.091,
+                  "p50_us": 267.417,
+                  "p95_us": 296.875,
+                  "p99_us": 316.875
+                },
+                "concurrent": {
+                  "qps": 10583.2,
+                  "mean_us": 748.124,
+                  "p50_us": 742.125,
+                  "p95_us": 945.375,
+                  "p99_us": 1052.83
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 346.392,
+                  "p50_us": 299.833,
+                  "p95_us": 492.292,
+                  "p99_us": 1290.67
+                },
+                "concurrent": {
+                  "qps": 8742.11,
+                  "mean_us": 907.381,
+                  "p50_us": 897.041,
+                  "p95_us": 1144.21,
+                  "p99_us": 1303
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 296.808,
+                  "p50_us": 296.75,
+                  "p95_us": 328.459,
+                  "p99_us": 348.542
+                },
+                "concurrent": {
+                  "qps": 8824.96,
+                  "mean_us": 898.8,
+                  "p50_us": 897.25,
+                  "p95_us": 1102.08,
+                  "p99_us": 1220.38
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 268.883,
+                  "p50_us": 267.333,
+                  "p95_us": 303.458,
+                  "p99_us": 337.959
+                },
+                "concurrent": {
+                  "qps": 10130.4,
+                  "mean_us": 782.123,
+                  "p50_us": 777.208,
+                  "p95_us": 1005.92,
+                  "p99_us": 1135.54
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 265.556,
+                  "p50_us": 266.041,
+                  "p95_us": 297.125,
+                  "p99_us": 316.542
+                },
+                "concurrent": {
+                  "qps": 8397.26,
+                  "mean_us": 946.038,
+                  "p50_us": 831.959,
+                  "p95_us": 1359.17,
+                  "p99_us": 4428.58
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 280.368,
+                  "p50_us": 291.75,
+                  "p95_us": 326,
+                  "p99_us": 350.708
+                },
+                "concurrent": {
+                  "qps": 8611.69,
+                  "mean_us": 921.305,
+                  "p50_us": 907.459,
+                  "p95_us": 1185.08,
+                  "p99_us": 1369.75
+                }
+              }
+            }
+          ]
+        },
+        {
+          "shards": 2,
+          "num_base": 200000,
+          "dim": 128,
+          "num_queries": 1000,
+          "queries_per_pass": 2000,
+          "clients": 8,
+          "k": 10,
+          "ef_search": 64,
+          "M": 16,
+          "ef_construction": 200,
+          "build_seconds": 12.8342,
+          "hardware_concurrency": 8,
+          "asserts": false,
+          "recall": {
+            "async": 0.9912,
+            "thread_per_shard": 0.9912
+          },
+          "rounds": [
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 293.37,
+                  "p50_us": 279.291,
+                  "p95_us": 354.458,
+                  "p99_us": 656.375
+                },
+                "concurrent": {
+                  "qps": 6542.04,
+                  "mean_us": 1216.18,
+                  "p50_us": 1132.29,
+                  "p95_us": 1904.38,
+                  "p99_us": 2912.71
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 316.774,
+                  "p50_us": 307.75,
+                  "p95_us": 373.833,
+                  "p99_us": 594.875
+                },
+                "concurrent": {
+                  "qps": 5582.69,
+                  "mean_us": 1423.48,
+                  "p50_us": 1257.88,
+                  "p95_us": 2185,
+                  "p99_us": 3410.75
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 425.372,
+                  "p50_us": 343.292,
+                  "p95_us": 822.042,
+                  "p99_us": 1607.75
+                },
+                "concurrent": {
+                  "qps": 4498.89,
+                  "mean_us": 1770.08,
+                  "p50_us": 1439.08,
+                  "p95_us": 3272.54,
+                  "p99_us": 8547.83
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 455.123,
+                  "p50_us": 379.5,
+                  "p95_us": 821.083,
+                  "p99_us": 1704.62
+                },
+                "concurrent": {
+                  "qps": 8577.54,
+                  "mean_us": 924.962,
+                  "p50_us": 886.417,
+                  "p95_us": 1317.79,
+                  "p99_us": 1679.38
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 251.607,
+                  "p50_us": 258.166,
+                  "p95_us": 307.625,
+                  "p99_us": 339.792
+                },
+                "concurrent": {
+                  "qps": 10004.7,
+                  "mean_us": 792.296,
+                  "p50_us": 788.167,
+                  "p95_us": 1022,
+                  "p99_us": 1159.88
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 294.846,
+                  "p50_us": 295.334,
+                  "p95_us": 331.958,
+                  "p99_us": 396.041
+                },
+                "concurrent": {
+                  "qps": 8661.48,
+                  "mean_us": 915.73,
+                  "p50_us": 906.375,
+                  "p95_us": 1145.83,
+                  "p99_us": 1287.92
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 284.572,
+                  "p50_us": 292.209,
+                  "p95_us": 336.375,
+                  "p99_us": 387.125
+                },
+                "concurrent": {
+                  "qps": 8446.45,
+                  "mean_us": 939.779,
+                  "p50_us": 936.875,
+                  "p95_us": 1186.42,
+                  "p99_us": 1339.62
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 333.992,
+                  "p50_us": 266.917,
+                  "p95_us": 725.25,
+                  "p99_us": 1295.04
+                },
+                "concurrent": {
+                  "qps": 8433.31,
+                  "mean_us": 940.633,
+                  "p50_us": 848.125,
+                  "p95_us": 1473.12,
+                  "p99_us": 2556.21
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 286.375,
+                  "p50_us": 267.791,
+                  "p95_us": 393.041,
+                  "p99_us": 705.333
+                },
+                "concurrent": {
+                  "qps": 6370.95,
+                  "mean_us": 1243.76,
+                  "p50_us": 1006,
+                  "p95_us": 2214.42,
+                  "p99_us": 4297.71
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 337.522,
+                  "p50_us": 273.667,
+                  "p95_us": 675.375,
+                  "p99_us": 986.708
+                },
+                "concurrent": {
+                  "qps": 7567.64,
+                  "mean_us": 1049.44,
+                  "p50_us": 987.666,
+                  "p95_us": 1521.88,
+                  "p99_us": 1989.46
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "summary": {
+        "async": {
+          "sequential": {
+            "mean_us": {
+              "mean": 286.59839999999997,
+              "median": 268.499,
+              "stdev": 50.315780719372725,
+              "min": 251.607,
+              "max": 455.123
+            },
+            "p50_us": {
+              "mean": 274.5915333333333,
+              "median": 267.125,
+              "stdev": 29.314637179759746,
+              "min": 258.166,
+              "max": 379.5
+            },
+            "p95_us": {
+              "mean": 372.00826666666666,
+              "median": 298.125,
+              "stdev": 166.12486299315717,
+              "min": 294.459,
+              "max": 821.083
+            },
+            "p99_us": {
+              "mean": 525.5968,
+              "median": 316.875,
+              "stdev": 422.26806055111484,
+              "min": 312.833,
+              "max": 1704.62
+            }
+          },
+          "concurrent": {
+            "qps": {
+              "mean": 9494.513333333334,
+              "median": 10186.4,
+              "stdev": 1477.4165373267847,
+              "min": 6370.95,
+              "max": 10718.9
+            },
+            "mean_us": {
+              "mean": 859.0227333333333,
+              "median": 778.087,
+              "stdev": 167.44509515764378,
+              "min": 739.06,
+              "max": 1243.76
+            },
+            "p50_us": {
+              "mean": 817.7138,
+              "median": 771.292,
+              "stdev": 113.78995923831391,
+              "min": 735.333,
+              "max": 1132.29
+            },
+            "p95_us": {
+              "mean": 1195.1422,
+              "median": 999.709,
+              "stdev": 396.32159750334074,
+              "min": 920.083,
+              "max": 2214.42
+            },
+            "p99_us": {
+              "mean": 1774.0366666666666,
+              "median": 1129.75,
+              "stdev": 1203.163781029396,
+              "min": 999.25,
+              "max": 4428.58
+            }
+          }
+        },
+        "thread_per_shard": {
+          "sequential": {
+            "mean_us": {
+              "mean": 311.1071333333333,
+              "median": 297.97,
+              "stdev": 36.27177264931795,
+              "min": 280.368,
+              "max": 425.372
+            },
+            "p50_us": {
+              "mean": 298.85293333333334,
+              "median": 297.292,
+              "stdev": 14.18278929581638,
+              "min": 273.667,
+              "max": 343.292
+            },
+            "p95_us": {
+              "mean": 399.1555333333334,
+              "median": 329.416,
+              "stdev": 150.7100318316443,
+              "min": 326,
+              "max": 822.042
+            },
+            "p99_us": {
+              "mean": 560.0585333333333,
+              "median": 350.625,
+              "stdev": 403.0089767645854,
+              "min": 345.375,
+              "max": 1607.75
+            }
+          },
+          "concurrent": {
+            "qps": {
+              "mean": 8119.6433333333325,
+              "median": 8629.81,
+              "stdev": 1304.4429302616209,
+              "min": 4498.89,
+              "max": 8864.18
+            },
+            "mean_us": {
+              "mean": 1014.2632666666667,
+              "median": 919.294,
+              "stdev": 248.2188281621874,
+              "min": 894.263,
+              "max": 1770.08
+            },
+            "p50_us": {
+              "mean": 972.4778666666666,
+              "median": 907.791,
+              "stdev": 158.39375709733488,
+              "min": 885.917,
+              "max": 1439.08
+            },
+            "p95_us": {
+              "mean": 1379.0,
+              "median": 1145.83,
+              "stdev": 593.9754795925021,
+              "min": 1102.08,
+              "max": 3272.54
+            },
+            "p99_us": {
+              "mean": 1956.606,
+              "median": 1301.29,
+              "stdev": 1909.0823781702036,
+              "min": 1220.38,
+              "max": 8547.83
+            }
+          }
+        }
+      }
+    },
+    "4": {
+      "command": [
+        "/Users/chetan/Strata/build/server-release/server/strata_coordinator_bench",
+        "--data",
+        "/Users/chetan/Strata/data/sift1m-200k-q1000",
+        "--shards",
+        "4",
+        "--rounds",
+        "5",
+        "--queries",
+        "2000",
+        "--clients",
+        "8",
+        "--ef-search",
+        "64"
+      ],
+      "runs": [
+        {
+          "shards": 4,
+          "num_base": 200000,
+          "dim": 128,
+          "num_queries": 1000,
+          "queries_per_pass": 2000,
+          "clients": 8,
+          "k": 10,
+          "ef_search": 64,
+          "M": 16,
+          "ef_construction": 200,
+          "build_seconds": 6.29217,
+          "hardware_concurrency": 8,
+          "asserts": false,
+          "recall": {
+            "async": 0.9968,
+            "thread_per_shard": 0.9968
+          },
+          "rounds": [
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 321.661,
+                  "p50_us": 318.708,
+                  "p95_us": 376.375,
+                  "p99_us": 405.291
+                },
+                "concurrent": {
+                  "qps": 6782.11,
+                  "mean_us": 1171.76,
+                  "p50_us": 1158.17,
+                  "p95_us": 1507.46,
+                  "p99_us": 1710.54
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 357.967,
+                  "p50_us": 357.416,
+                  "p95_us": 412.209,
+                  "p99_us": 437
+                },
+                "concurrent": {
+                  "qps": 5288,
+                  "mean_us": 1505.25,
+                  "p50_us": 1503.42,
+                  "p95_us": 1890.12,
+                  "p99_us": 2198.25
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 354.137,
+                  "p50_us": 352.292,
+                  "p95_us": 411.584,
+                  "p99_us": 442.583
+                },
+                "concurrent": {
+                  "qps": 5123.34,
+                  "mean_us": 1553.53,
+                  "p50_us": 1480.04,
+                  "p95_us": 1929.83,
+                  "p99_us": 2379.25
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 325.484,
+                  "p50_us": 324.167,
+                  "p95_us": 378.958,
+                  "p99_us": 403.792
+                },
+                "concurrent": {
+                  "qps": 6794.11,
+                  "mean_us": 1170.07,
+                  "p50_us": 1149.29,
+                  "p95_us": 1524.92,
+                  "p99_us": 1840.17
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 320.516,
+                  "p50_us": 318.625,
+                  "p95_us": 374.292,
+                  "p99_us": 398.792
+                },
+                "concurrent": {
+                  "qps": 6467.73,
+                  "mean_us": 1230,
+                  "p50_us": 1226.25,
+                  "p95_us": 1619.29,
+                  "p99_us": 1869.25
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 357.146,
+                  "p50_us": 355.542,
+                  "p95_us": 415.458,
+                  "p99_us": 446.125
+                },
+                "concurrent": {
+                  "qps": 5094.07,
+                  "mean_us": 1563.14,
+                  "p50_us": 1554.25,
+                  "p95_us": 2028.67,
+                  "p99_us": 2420.33
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 360.387,
+                  "p50_us": 360.542,
+                  "p95_us": 420.291,
+                  "p99_us": 451.917
+                },
+                "concurrent": {
+                  "qps": 5269.97,
+                  "mean_us": 1510.27,
+                  "p50_us": 1504.33,
+                  "p95_us": 1935,
+                  "p99_us": 2172.21
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 326.073,
+                  "p50_us": 326.5,
+                  "p95_us": 374.458,
+                  "p99_us": 402.416
+                },
+                "concurrent": {
+                  "qps": 6729.06,
+                  "mean_us": 1181.45,
+                  "p50_us": 1168.54,
+                  "p95_us": 1536.71,
+                  "p99_us": 1794
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 417.516,
+                  "p50_us": 345.25,
+                  "p95_us": 483.417,
+                  "p99_us": 1153.21
+                },
+                "concurrent": {
+                  "qps": 6262.73,
+                  "mean_us": 1270.56,
+                  "p50_us": 1249.38,
+                  "p95_us": 1750.54,
+                  "p99_us": 2040.12
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 359.282,
+                  "p50_us": 358.208,
+                  "p95_us": 414.125,
+                  "p99_us": 436.792
+                },
+                "concurrent": {
+                  "qps": 5137.71,
+                  "mean_us": 1550.07,
+                  "p50_us": 1554.62,
+                  "p95_us": 1972.38,
+                  "p99_us": 2282.25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "shards": 4,
+          "num_base": 200000,
+          "dim": 128,
+          "num_queries": 1000,
+          "queries_per_pass": 2000,
+          "clients": 8,
+          "k": 10,
+          "ef_search": 64,
+          "M": 16,
+          "ef_construction": 200,
+          "build_seconds": 6.48137,
+          "hardware_concurrency": 8,
+          "asserts": false,
+          "recall": {
+            "async": 0.9968,
+            "thread_per_shard": 0.9968
+          },
+          "rounds": [
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 330.784,
+                  "p50_us": 323.875,
+                  "p95_us": 430.791,
+                  "p99_us": 533.292
+                },
+                "concurrent": {
+                  "qps": 3808.16,
+                  "mean_us": 2093.38,
+                  "p50_us": 1363.38,
+                  "p95_us": 3682.38,
+                  "p99_us": 26558.4
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 385.454,
+                  "p50_us": 363.375,
+                  "p95_us": 533.75,
+                  "p99_us": 947.959
+                },
+                "concurrent": {
+                  "qps": 4540.55,
+                  "mean_us": 1752.77,
+                  "p50_us": 1622.46,
+                  "p95_us": 2533.12,
+                  "p99_us": 4579.96
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 502.359,
+                  "p50_us": 370.916,
+                  "p95_us": 948.583,
+                  "p99_us": 2342.08
+                },
+                "concurrent": {
+                  "qps": 4949.65,
+                  "mean_us": 1608.86,
+                  "p50_us": 1595.75,
+                  "p95_us": 2129.33,
+                  "p99_us": 2421.83
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 328.792,
+                  "p50_us": 323.167,
+                  "p95_us": 404.917,
+                  "p99_us": 538.334
+                },
+                "concurrent": {
+                  "qps": 6597.5,
+                  "mean_us": 1204.58,
+                  "p50_us": 1193.67,
+                  "p95_us": 1575.04,
+                  "p99_us": 1803.42
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 323.667,
+                  "p50_us": 321.917,
+                  "p95_us": 379.167,
+                  "p99_us": 405.292
+                },
+                "concurrent": {
+                  "qps": 6515.19,
+                  "mean_us": 1220.83,
+                  "p50_us": 1197.46,
+                  "p95_us": 1632.92,
+                  "p99_us": 1933.33
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 349.152,
+                  "p50_us": 352.917,
+                  "p95_us": 415.125,
+                  "p99_us": 449.584
+                },
+                "concurrent": {
+                  "qps": 5384.91,
+                  "mean_us": 1477.66,
+                  "p50_us": 1465.04,
+                  "p95_us": 1891.17,
+                  "p99_us": 2233.62
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 604.825,
+                  "p50_us": 401.167,
+                  "p95_us": 1145.46,
+                  "p99_us": 4252.33
+                },
+                "concurrent": {
+                  "qps": 3485.08,
+                  "mean_us": 2281.96,
+                  "p50_us": 1722.29,
+                  "p95_us": 3319.25,
+                  "p99_us": 11059.8
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 505.496,
+                  "p50_us": 344.833,
+                  "p95_us": 769.084,
+                  "p99_us": 2025.17
+                },
+                "concurrent": {
+                  "qps": 5753.31,
+                  "mean_us": 1383.04,
+                  "p50_us": 1247.54,
+                  "p95_us": 1839.54,
+                  "p99_us": 5488.62
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 333.123,
+                  "p50_us": 326.375,
+                  "p95_us": 417.708,
+                  "p99_us": 560.208
+                },
+                "concurrent": {
+                  "qps": 6406.7,
+                  "mean_us": 1241.27,
+                  "p50_us": 1218.92,
+                  "p95_us": 1664.46,
+                  "p99_us": 1986.58
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 368.01,
+                  "p50_us": 361.25,
+                  "p95_us": 459.375,
+                  "p99_us": 562.25
+                },
+                "concurrent": {
+                  "qps": 5298.34,
+                  "mean_us": 1501.9,
+                  "p50_us": 1485.5,
+                  "p95_us": 1960.58,
+                  "p99_us": 2282.12
+                }
+              }
+            }
+          ]
+        },
+        {
+          "shards": 4,
+          "num_base": 200000,
+          "dim": 128,
+          "num_queries": 1000,
+          "queries_per_pass": 2000,
+          "clients": 8,
+          "k": 10,
+          "ef_search": 64,
+          "M": 16,
+          "ef_construction": 200,
+          "build_seconds": 6.31347,
+          "hardware_concurrency": 8,
+          "asserts": false,
+          "recall": {
+            "async": 0.9968,
+            "thread_per_shard": 0.9968
+          },
+          "rounds": [
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 329.846,
+                  "p50_us": 327.417,
+                  "p95_us": 382.875,
+                  "p99_us": 414.958
+                },
+                "concurrent": {
+                  "qps": 6553.34,
+                  "mean_us": 1213.36,
+                  "p50_us": 1199.33,
+                  "p95_us": 1572.83,
+                  "p99_us": 1875.75
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 364.491,
+                  "p50_us": 363.084,
+                  "p95_us": 420.834,
+                  "p99_us": 451.083
+                },
+                "concurrent": {
+                  "qps": 5312,
+                  "mean_us": 1498.43,
+                  "p50_us": 1480.38,
+                  "p95_us": 1928.33,
+                  "p99_us": 2202.58
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 361.638,
+                  "p50_us": 360.042,
+                  "p95_us": 419.583,
+                  "p99_us": 451.791
+                },
+                "concurrent": {
+                  "qps": 4943.63,
+                  "mean_us": 1611.01,
+                  "p50_us": 1590.54,
+                  "p95_us": 2123.25,
+                  "p99_us": 2591.92
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 331.24,
+                  "p50_us": 325.708,
+                  "p95_us": 392.292,
+                  "p99_us": 531.166
+                },
+                "concurrent": {
+                  "qps": 5931.36,
+                  "mean_us": 1341.72,
+                  "p50_us": 1216.33,
+                  "p95_us": 1853.33,
+                  "p99_us": 5817.62
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 327.803,
+                  "p50_us": 325.417,
+                  "p95_us": 384.958,
+                  "p99_us": 413.833
+                },
+                "concurrent": {
+                  "qps": 6362.49,
+                  "mean_us": 1250.74,
+                  "p50_us": 1246.17,
+                  "p95_us": 1645.08,
+                  "p99_us": 1957.25
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 360.934,
+                  "p50_us": 360.292,
+                  "p95_us": 419.416,
+                  "p99_us": 443.75
+                },
+                "concurrent": {
+                  "qps": 4807.67,
+                  "mean_us": 1656.38,
+                  "p50_us": 1590.33,
+                  "p95_us": 2357.79,
+                  "p99_us": 3498.21
+                }
+              }
+            },
+            {
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 363.299,
+                  "p50_us": 361.542,
+                  "p95_us": 419.625,
+                  "p99_us": 442.75
+                },
+                "concurrent": {
+                  "qps": 5201.48,
+                  "mean_us": 1530.5,
+                  "p50_us": 1513.33,
+                  "p95_us": 1976.17,
+                  "p99_us": 2403
+                }
+              },
+              "async": {
+                "sequential": {
+                  "mean_us": 358.784,
+                  "p50_us": 323.5,
+                  "p95_us": 542.25,
+                  "p99_us": 1001.33
+                },
+                "concurrent": {
+                  "qps": 6660.14,
+                  "mean_us": 1193.47,
+                  "p50_us": 1178.33,
+                  "p95_us": 1568.79,
+                  "p99_us": 1859.5
+                }
+              }
+            },
+            {
+              "async": {
+                "sequential": {
+                  "mean_us": 326.356,
+                  "p50_us": 325.125,
+                  "p95_us": 381,
+                  "p99_us": 407.625
+                },
+                "concurrent": {
+                  "qps": 4272.23,
+                  "mean_us": 1865.23,
+                  "p50_us": 1300.5,
+                  "p95_us": 3935.04,
+                  "p99_us": 15953
+                }
+              },
+              "thread_per_shard": {
+                "sequential": {
+                  "mean_us": 356.269,
+                  "p50_us": 354.417,
+                  "p95_us": 436.583,
+                  "p99_us": 567.708
+                },
+                "concurrent": {
+                  "qps": 5057.36,
+                  "mean_us": 1573.77,
+                  "p50_us": 1539.29,
+                  "p95_us": 2145.5,
+                  "p99_us": 2582.58
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "summary": {
+        "async": {
+          "sequential": {
+            "mean_us": {
+              "mean": 347.1427333333333,
+              "median": 328.792,
+              "stdev": 50.103618986009764,
+              "min": 320.516,
+              "max": 505.496
+            },
+            "p50_us": {
+              "mean": 326.7056,
+              "median": 325.125,
+              "stdev": 7.872881990006678,
+              "min": 318.625,
+              "max": 345.25
+            },
+            "p95_us": {
+              "mean": 431.5028,
+              "median": 384.958,
+              "stdev": 104.71186763154266,
+              "min": 374.292,
+              "max": 769.084
+            },
+            "p99_us": {
+              "mean": 639.6472666666667,
+              "median": 414.958,
+              "stdev": 446.3313552119685,
+              "min": 398.792,
+              "max": 2025.17
+            }
+          },
+          "concurrent": {
+            "qps": {
+              "mean": 6126.410666666667,
+              "median": 6467.73,
+              "stdev": 899.9229649369731,
+              "min": 3808.16,
+              "max": 6794.11
+            },
+            "mean_us": {
+              "mean": 1335.4306666666666,
+              "median": 1230,
+              "stdev": 271.5030741858754,
+              "min": 1170.07,
+              "max": 2093.38
+            },
+            "p50_us": {
+              "mean": 1220.8840000000002,
+              "median": 1216.33,
+              "stdev": 56.20275677021041,
+              "min": 1149.29,
+              "max": 1363.38
+            },
+            "p95_us": {
+              "mean": 1927.2220000000002,
+              "median": 1632.92,
+              "stdev": 772.5194026245739,
+              "min": 1507.46,
+              "max": 3935.04
+            },
+            "p99_us": {
+              "mean": 4965.836666666667,
+              "median": 1933.33,
+              "stdev": 7034.881728027707,
+              "min": 1710.54,
+              "max": 26558.4
+            }
+          }
+        },
+        "thread_per_shard": {
+          "sequential": {
+            "mean_us": {
+              "mean": 387.02333333333337,
+              "median": 360.934,
+              "stdev": 70.8000450813685,
+              "min": 349.152,
+              "max": 604.825
+            },
+            "p50_us": {
+              "mean": 362.2001333333333,
+              "median": 360.292,
+              "stdev": 11.762558661561126,
+              "min": 352.292,
+              "max": 401.167
+            },
+            "p95_us": {
+              "mean": 512.8000666666667,
+              "median": 419.625,
+              "stdev": 222.24355019741827,
+              "min": 411.584,
+              "max": 1145.46
+            },
+            "p99_us": {
+              "mean": 875.0468,
+              "median": 451.083,
+              "stdev": 1055.6866471024034,
+              "min": 436.792,
+              "max": 4252.33
+            }
+          },
+          "concurrent": {
+            "qps": {
+              "mean": 4992.917333333333,
+              "median": 5123.34,
+              "stdev": 472.47619470594447,
+              "min": 3485.08,
+              "max": 5384.91
+            },
+            "mean_us": {
+              "mean": 1611.7,
+              "median": 1553.53,
+              "stdev": 198.78178322687705,
+              "min": 1477.66,
+              "max": 2281.96
+            },
+            "p50_us": {
+              "mean": 1546.7713333333334,
+              "median": 1539.29,
+              "stdev": 69.18661987352618,
+              "min": 1465.04,
+              "max": 1722.29
+            },
+            "p95_us": {
+              "mean": 2141.366,
+              "median": 1976.17,
+              "stdev": 373.00734316402634,
+              "min": 1890.12,
+              "max": 3319.25
+            },
+            "p99_us": {
+              "mean": 3153.8606666666665,
+              "median": 2403,
+              "stdev": 2278.5387783447864,
+              "min": 2172.21,
+              "max": 11059.8
+            }
+          }
+        }
+      }
+    }
+  }
+}
