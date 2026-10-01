@@ -26,6 +26,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(STRATA_BUILD_TESTS "Build unit tests" ON)
 option(STRATA_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(STRATA_BUILD_PYTHON "Build the Python extension module (strata._core)" OFF)
+option(STRATA_BUILD_SERVER "Build the gRPC server and sharding coordinator (needs gRPC + Protobuf)" OFF)
 option(STRATA_SANITIZE "Build with AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
 option(STRATA_TSAN "Build with ThreadSanitizer (exclusive with STRATA_SANITIZE)" OFF)
 
@@ -132,4 +133,8 @@ endif()
 
 if(STRATA_BUILD_PYTHON)
   add_subdirectory(python)
+endif()
+
+if(STRATA_BUILD_SERVER)
+  add_subdirectory(server)
 endif()

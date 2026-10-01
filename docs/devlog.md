@@ -1599,3 +1599,46 @@ quiet for a minute.
 - **Plan change:** the fallback-rate measurement at 1-3% selectivity is not run on the Mac. The AWS
   crossover sweeps at 1M and 10M include 1%, 1.5%, 2%, and 3% instead (buildplan.md,
   docs/checklist.md).
+
+## 2026-10-01: Phase 7 begins: gRPC shard and coordinator (first commit)
+
+**Written by another session** (its report, verified here):
+- `proto/strata/v1/vector_service.proto`: one `VectorService` (Insert, InsertBatch, Search, Delete,
+  Stats) served by both a shard and the coordinator, so clients cannot tell them apart.
+- `server/shard_service`: gRPC in front of `Collection`, so it keeps WAL, snapshots, and crash
+  recovery. `strata_shard`: `--dir --dim --metric --index flat|hnsw --port` and HNSW settings.
+- `server/coordinator_service`: round-robin inserts, parallel search on every shard merged into
+  one top-k, delete routed to the owning shard, summed stats. `strata_coordinator`.
+- `server/id_codec.hpp`: global id = local * num_shards + shard_index (no lookup table; the
+  order of the `--shard` flags must stay fixed across restarts). `status_util.hpp` maps Strata
+  errors to gRPC status codes.
+- Build: `STRATA_BUILD_SERVER` (off by default) and a `server` vcpkg feature for Linux.
+- Tests: id codec round trips, and 3 real shards on localhost checked against exact brute
+  force, including delete and batch insert.
+
+**Verified here (Mac, Homebrew gRPC 1.84.0, protobuf 36.2, abseil 20260817)**
+- The default build is unchanged: 252 tests pass, no warnings.
+- The server, coordinator, and tests build with no warnings, and all 6 server tests pass.
+- `Collection::remove` returns `kNotFound` for an unknown or already-deleted id, before logging
+  anything, so a repeated Delete fails cleanly (the other session's unchecked assumption).
+- **ASan reported a container-overflow, judged a false positive.** It fires inside protobuf's
+  `RepeatedField<float>::data()` (`shard_service.cpp:14`), reading the field's own pointer inside
+  an 87-byte gRPC arena block: in bounds. Protobuf annotates `RepeatedField` storage only when
+  compiled with ASan; our generated code and inlined headers are, but Homebrew's libprotobuf and
+  libgrpc (which parsed the request) are not. That is the mixed-instrumentation false positive the
+  ASan docs describe. With `ASAN_OPTIONS=detect_container_overflow=0` (every other check still on),
+  all 6 tests pass with no ASan or UBSan report. The real fix is gRPC/protobuf built with ASan
+  (possible through vcpkg on Linux); until then server ASan runs use that option.
+
+**Changes to this machine (done by the other session):** `brew install grpc protobuf` (prebuilt
+bottles) with `yes` piped in, which also auto-approved installing abseil and re2 and upgrading
+openssl@3, c-ares, and ca-certificates system-wide. This can affect other projects.
+
+**Known gaps, not yet addressed**
+- Insecure: no TLS or auth, and both servers listen on 0.0.0.0.
+- `InsertBatch` is not atomic across shards.
+- Global ids are 32-bit (about 4.29 billion vectors).
+- Search starts one thread per shard per query.
+- No presets or README steps for the server build.
+- tsan not yet run.
+- Not yet built on Linux.

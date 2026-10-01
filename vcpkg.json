@@ -14,6 +14,13 @@
         "benchmark",
         "gtest"
       ]
+    },
+    "server": {
+      "description": "gRPC + Protobuf for the vector-search server and sharding coordinator (Phase 7)",
+      "dependencies": [
+        "grpc",
+        "protobuf"
+      ]
     }
   }
 }

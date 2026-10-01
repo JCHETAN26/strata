@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package strata.v1;
+
+// The vector search API. A single shard and the sharding coordinator both implement this same
+// service, so a client cannot tell (and does not need to know) whether it is talking to one node
+// or a fan-out coordinator in front of many. Ids returned by Search and accepted by Delete are
+// global ids: on a single shard they equal the local ids; behind a coordinator they encode the
+// shard as well (see server/coordinator.hpp).
+
+service VectorService {
+  // Adds one vector and returns the id assigned to it.
+  rpc Insert(InsertRequest) returns (InsertResponse);
+
+  // Adds many vectors in one round trip, in order; the returned ids line up with the inputs.
+  rpc InsertBatch(InsertBatchRequest) returns (InsertBatchResponse);
+
+  // Returns the k nearest neighbors to the query, nearest first.
+  rpc Search(SearchRequest) returns (SearchResponse);
+
+  // Marks a vector deleted. Idempotent: deleting an unknown or already-deleted id succeeds.
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+  // Reports the collection's size and configuration. Behind a coordinator, aggregates the shards.
+  rpc Stats(StatsRequest) returns (StatsResponse);
+}
+
+// A single search result. Lower distance means more similar, for every metric.
+message Neighbor {
+  uint32 id = 1;
+  float distance = 2;
+}
+
+message InsertRequest {
+  // Must have exactly `dimension` elements (see StatsResponse).
+  repeated float values = 1 [packed = true];
+}
+
+message InsertResponse {
+  uint32 id = 1;
+}
+
+message InsertBatchRequest {
+  // Row-major: `count` vectors of `dimension` each, so values.size() == count * dimension.
+  repeated float values = 1 [packed = true];
+  uint32 count = 2;
+}
+
+message InsertBatchResponse {
+  repeated uint32 ids = 1 [packed = true];
+}
+
+message SearchRequest {
+  repeated float values = 1 [packed = true];
+  uint32 k = 2;
+  // HNSW beam width; at least k is used. Ignored by a flat collection.
+  uint32 ef_search = 3;
+}
+
+message SearchResponse {
+  repeated Neighbor neighbors = 1;
+}
+
+message DeleteRequest {
+  uint32 id = 1;
+}
+
+message DeleteResponse {}
+
+message StatsRequest {}
+
+message StatsResponse {
+  uint32 dimension = 1;
+  // "l2", "inner_product", or "cosine".
+  string metric = 2;
+  // "flat" or "hnsw".
+  string index_kind = 3;
+  // Ids assigned, including deleted.
+  uint64 size = 4;
+  // Live vectors, excluding deleted.
+  uint64 live_size = 5;
+  // Number of shards behind the endpoint: 1 for a single shard, N for a coordinator.
+  uint32 num_shards = 6;
+}
