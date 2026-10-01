@@ -1642,3 +1642,33 @@ openssl@3, c-ares, and ca-certificates system-wide. This can affect other projec
 - No presets or README steps for the server build.
 - tsan not yet run.
 - Not yet built on Linux.
+
+## 2026-10-01: Phase 7 build fixes and sanitizer status
+
+- **Presets.** `server` and `server-asan` (macOS, gRPC/protobuf/abseil from Homebrew via
+  `CMAKE_PREFIX_PATH=/opt/homebrew`); `linux-server`, `linux-server-release`, `linux-server-asan`
+  (vcpkg feature `server`, GCC 13). The README has a matching section. The Linux presets are not
+  yet tried (no Linux build of the server so far).
+- **ASan workaround scoped.** `detect_container_overflow=0` is now set only on the server tests
+  (a `gtest_discover_tests` property under `STRATA_SANITIZE`), so the core ASan suite keeps that
+  check.
+- **TSan is not possible against stock protobuf.** A TSan build of the server crashed (SEGV in
+  `ZeroFieldsBase::~ZeroFieldsBase`, destroying a `StatsRequest`). Cause: when the compiler
+  defines `ABSL_HAVE_THREAD_SANITIZER`, protobuf's `port_def.inc` declares an extra
+  `char _tsan_detect_race` member in every message, so our TSan-compiled generated code and
+  Homebrew's non-TSan libprotobuf disagree on message layout. Not a Strata bug. Server TSan needs
+  gRPC and protobuf built with TSan (a vcpkg sanitizer triplet, on Linux). CMake now warns when
+  `STRATA_TSAN` and `STRATA_BUILD_SERVER` are both on; there is no server TSan preset.
+- **Versions recorded.** `strata_shard` and `strata_coordinator` print the gRPC, protobuf, and
+  abseil versions they were built against on their startup line, since Homebrew (Mac) and vcpkg
+  (Linux) can differ. On this Mac: gRPC 1.84.0, protobuf C++ runtime 7.36.2 (protobuf 36.2),
+  abseil 20260817. The startup line is now flushed: with stdout redirected to a log file it was
+  block-buffered and never appeared while the server ran.
+- **Cleanup.** `strata_server`'s include path is now `server/` only (was the whole repository
+  root), and a CMake comment that wrongly credited `POSITION_INDEPENDENT_CODE` for the generated
+  code having no strict warnings is corrected (it's because `strata_proto` doesn't link
+  `strata_options`).
+- Delete-twice was already covered (`sharding_test.cpp`): Delete is idempotent.
+
+Remaining known gaps: no TLS/auth and listening on 0.0.0.0; non-atomic `InsertBatch`; 32-bit
+global ids; one thread per shard per query; not yet built on Linux.

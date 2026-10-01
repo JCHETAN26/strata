@@ -1,4 +1,4 @@
-#include "server/coordinator_service.hpp"
+#include "coordinator_service.hpp"
 
 #include <algorithm>
 #include <cstdint>

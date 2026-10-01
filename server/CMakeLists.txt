@@ -18,7 +18,9 @@ set(STRATA_PROTO_FILE "${STRATA_PROTO_ROOT}/strata/v1/vector_service.proto")
 add_library(strata_proto STATIC "${STRATA_PROTO_FILE}")
 target_link_libraries(strata_proto PUBLIC protobuf::libprotobuf gRPC::grpc++)
 target_include_directories(strata_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-# Generated sources are not ours to lint; keep the project's strict warnings off this target.
+# Generated sources are not ours to lint: this target does not link strata_options, so the
+# project's strict warnings never apply to them. Position-independent so it can be linked into
+# shared objects too.
 set_target_properties(strata_proto PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 protobuf_generate(
@@ -41,9 +43,10 @@ add_library(strata_server STATIC
 target_link_libraries(strata_server
   PUBLIC strata::strata strata_proto gRPC::grpc++
   PRIVATE strata_options)
-# Headers are included as "server/..." and "strata/v1/...": the former from the project root, the
-# latter from strata_proto's PUBLIC include dir.
-target_include_directories(strata_server PUBLIC "${PROJECT_SOURCE_DIR}")
+# Server headers are included by name ("shard_service.hpp") from this directory only, and the
+# generated stubs as "strata/v1/..." from strata_proto's PUBLIC include dir. (Exposing the whole
+# repository root would let any consumer include any file in it.)
+target_include_directories(strata_server PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # --- Executables ---------------------------------------------------------------------------------
 add_executable(strata_shard strata_shard.cpp)
@@ -60,5 +63,15 @@ if(STRATA_BUILD_TESTS)
     tests/id_codec_test.cpp
     tests/sharding_test.cpp)
   target_link_libraries(strata_server_tests PRIVATE strata_server strata_options GTest::gtest_main)
-  gtest_discover_tests(strata_server_tests)
+  if(STRATA_SANITIZE)
+    # protobuf annotates RepeatedField storage for ASan's container-overflow check. When protobuf
+    # itself is not ASan-built (Homebrew, default vcpkg triplets), the annotations are only half
+    # applied and reads of request->values() report false container overflows. Turn that one
+    # check off for these tests only; the core test suite keeps it. Everything else ASan and
+    # UBSan check stays on.
+    gtest_discover_tests(strata_server_tests PROPERTIES ENVIRONMENT
+      "ASAN_OPTIONS=abort_on_error=1:detect_container_overflow=0")
+  else()
+    gtest_discover_tests(strata_server_tests)
+  endif()
 endif()

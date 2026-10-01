@@ -20,7 +20,8 @@
 #include <string_view>
 #include <utility>
 
-#include "server/shard_service.hpp"
+#include "build_info.hpp"
+#include "shard_service.hpp"
 #include "strata/collection.hpp"
 #include "strata/distance.hpp"
 
@@ -125,8 +126,10 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::cout << "strata_shard listening on " << address << " (dir=" << args.dir
-            << ", dim=" << args.dim << ", index="
-            << (args.index == strata::IndexKind::kHnsw ? "hnsw" : "flat") << ")\n";
+            << ", dim=" << args.dim
+            << ", index=" << (args.index == strata::IndexKind::kHnsw ? "hnsw" : "flat") << ") ["
+            << strata::server::rpc_versions() << "]"
+            << std::endl;  // flush: stdout may be a log file
   server->Wait();
   return 0;
 }

@@ -84,22 +84,96 @@
     {
       "name": "linux-debug",
       "displayName": "Linux Debug (GCC 13)",
-      "inherits": ["debug", "linux-base"]
+      "inherits": [
+        "debug",
+        "linux-base"
+      ]
     },
     {
       "name": "linux-release",
       "displayName": "Linux Release (GCC 13)",
-      "inherits": ["release", "linux-base"]
+      "inherits": [
+        "release",
+        "linux-base"
+      ]
     },
     {
       "name": "linux-asan",
       "displayName": "Linux Debug + ASan/UBSan (GCC 13)",
-      "inherits": ["asan", "linux-base"]
+      "inherits": [
+        "asan",
+        "linux-base"
+      ]
     },
     {
       "name": "linux-tsan",
       "displayName": "Linux Debug + ThreadSanitizer (GCC 13)",
-      "inherits": ["tsan", "linux-base"]
+      "inherits": [
+        "tsan",
+        "linux-base"
+      ]
+    },
+    {
+      "name": "mac-server-base",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "STRATA_BUILD_SERVER": "ON",
+        "CMAKE_PREFIX_PATH": "/opt/homebrew"
+      }
+    },
+    {
+      "name": "server",
+      "displayName": "macOS Debug + gRPC server (gRPC/protobuf from Homebrew)",
+      "inherits": [
+        "debug",
+        "mac-server-base"
+      ]
+    },
+    {
+      "name": "server-asan",
+      "displayName": "macOS Debug + gRPC server + ASan/UBSan (gRPC/protobuf from Homebrew)",
+      "inherits": [
+        "asan",
+        "mac-server-base"
+      ]
+    },
+    {
+      "name": "linux-server-base",
+      "hidden": true,
+      "inherits": "linux-base",
+      "cacheVariables": {
+        "STRATA_BUILD_SERVER": "ON",
+        "VCPKG_MANIFEST_FEATURES": "tests;server"
+      }
+    },
+    {
+      "name": "linux-server",
+      "displayName": "Linux Debug + gRPC server (GCC 13, gRPC/protobuf from vcpkg)",
+      "inherits": [
+        "linux-server-base",
+        "debug"
+      ]
+    },
+    {
+      "name": "linux-server-release",
+      "displayName": "Linux Release + gRPC server (GCC 13, gRPC/protobuf from vcpkg)",
+      "inherits": [
+        "linux-server-base",
+        "release"
+      ]
+    },
+    {
+      "name": "linux-server-asan",
+      "displayName": "Linux Debug + gRPC server + ASan/UBSan (GCC 13)",
+      "inherits": [
+        "linux-server-base",
+        "asan"
+      ]
     }
   ],
   "buildPresets": [
@@ -138,6 +212,26 @@
     {
       "name": "linux-tsan",
       "configurePreset": "linux-tsan"
+    },
+    {
+      "name": "server",
+      "configurePreset": "server"
+    },
+    {
+      "name": "server-asan",
+      "configurePreset": "server-asan"
+    },
+    {
+      "name": "linux-server",
+      "configurePreset": "linux-server"
+    },
+    {
+      "name": "linux-server-release",
+      "configurePreset": "linux-server-release"
+    },
+    {
+      "name": "linux-server-asan",
+      "configurePreset": "linux-server-asan"
     }
   ],
   "testPresets": [
@@ -199,6 +293,31 @@
       "name": "linux-tsan",
       "inherits": "tsan",
       "configurePreset": "linux-tsan"
+    },
+    {
+      "name": "server",
+      "inherits": "debug",
+      "configurePreset": "server"
+    },
+    {
+      "name": "server-asan",
+      "inherits": "asan",
+      "configurePreset": "server-asan"
+    },
+    {
+      "name": "linux-server",
+      "inherits": "debug",
+      "configurePreset": "linux-server"
+    },
+    {
+      "name": "linux-server-release",
+      "inherits": "release",
+      "configurePreset": "linux-server-release"
+    },
+    {
+      "name": "linux-server-asan",
+      "inherits": "asan",
+      "configurePreset": "linux-server-asan"
     }
   ]
 }

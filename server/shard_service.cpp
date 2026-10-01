@@ -1,10 +1,10 @@
-#include "server/shard_service.hpp"
+#include "shard_service.hpp"
 
 #include <cstddef>
 #include <span>
 #include <vector>
 
-#include "server/status_util.hpp"
+#include "status_util.hpp"
 #include "strata/distance.hpp"
 
 namespace strata::server {

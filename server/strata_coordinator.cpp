@@ -18,7 +18,8 @@
 #include <string_view>
 #include <vector>
 
-#include "server/coordinator_service.hpp"
+#include "build_info.hpp"
+#include "coordinator_service.hpp"
 #include "strata/distance.hpp"
 
 namespace {
@@ -92,7 +93,8 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::cout << "strata_coordinator listening on " << address << " over " << args.shards.size()
-            << " shard(s)\n";
+            << " shard(s) [" << strata::server::rpc_versions() << "]"
+            << std::endl;  // flush: stdout may be a log file
   server->Wait();
   return 0;
 }

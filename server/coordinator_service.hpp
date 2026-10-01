@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "server/id_codec.hpp"
+#include "id_codec.hpp"
 #include "strata/distance.hpp"
 #include "strata/v1/vector_service.grpc.pb.h"
 

@@ -1,4 +1,4 @@
-#include "server/id_codec.hpp"
+#include "id_codec.hpp"
 
 #include <gtest/gtest.h>
 

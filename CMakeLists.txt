@@ -136,5 +136,12 @@ if(STRATA_BUILD_PYTHON)
 endif()
 
 if(STRATA_BUILD_SERVER)
+  if(STRATA_TSAN)
+    # protobuf adds a TSan-only member to every message when compiled with -fsanitize=thread, so
+    # our generated code and a non-TSan libprotobuf disagree on message layout and crash. TSan on
+    # the server needs gRPC and protobuf built with TSan too (a vcpkg sanitizer triplet).
+    message(WARNING "STRATA_TSAN with STRATA_BUILD_SERVER requires gRPC and protobuf built with "
+                    "ThreadSanitizer; against stock libraries the server tests crash.")
+  endif()
   add_subdirectory(server)
 endif()

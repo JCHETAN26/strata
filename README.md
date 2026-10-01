@@ -34,6 +34,38 @@ ctest --preset debug
 
 Build output goes to `build/<preset>/`.
 
+### gRPC server and sharding coordinator (optional)
+
+The server (`strata_shard`, `strata_coordinator`) is off by default (`STRATA_BUILD_SERVER`), so the
+core library builds without gRPC. Its presets build everything above plus the server and its tests.
+
+```sh
+# macOS: gRPC and protobuf come from Homebrew (vcpkg's gRPC build is too heavy for the dev laptop)
+brew install grpc protobuf abseil
+cmake --preset server && cmake --build --preset server && ctest --preset server
+
+# Linux: gRPC and protobuf come from vcpkg (manifest feature "server")
+cmake --preset linux-server && cmake --build --preset linux-server && ctest --preset linux-server
+```
+
+| Preset | Build type | Notes |
+|--------|------------|-------|
+| `server` | Debug | macOS only: gRPC/protobuf/abseil from Homebrew (`/opt/homebrew`) |
+| `server-asan` | Debug | macOS only: as above with ASan + UBSan. The server tests run with `detect_container_overflow=0`: protobuf's container annotations give false positives when protobuf itself is not ASan-built |
+| `linux-server`, `linux-server-release`, `linux-server-asan` | as named | Linux only: gRPC/protobuf from the vcpkg manifest, GCC 13 |
+
+Homebrew and vcpkg can ship different gRPC and protobuf versions; both binaries print the versions
+they were built against on startup. There is no ThreadSanitizer server preset: protobuf changes
+its message layout under TSan, so TSan needs gRPC and protobuf built with TSan as well (a vcpkg
+sanitizer triplet).
+
+```sh
+# two shards and a coordinator on one machine (listens on all interfaces, no TLS or auth yet)
+build/server/server/strata_shard --dir /tmp/s0 --dim 128 --port 50051 &
+build/server/server/strata_shard --dir /tmp/s1 --dim 128 --port 50052 &
+build/server/server/strata_coordinator --dim 128 --port 50050 --shard localhost:50051 --shard localhost:50052
+```
+
 ## Python
 
 The bindings (nanobind, built by scikit-build-core) expose brute-force search, product

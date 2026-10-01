@@ -19,8 +19,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "server/coordinator_service.hpp"
-#include "server/shard_service.hpp"
+#include "coordinator_service.hpp"
+#include "shard_service.hpp"
 #include "strata/collection.hpp"
 #include "strata/distance.hpp"
 
@@ -43,10 +43,10 @@ struct RunningShard {
 class ShardingTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    const fs::path base =
-        fs::temp_directory_path() /
-        ("strata_sharding_test_" + std::to_string(::testing::UnitTest::GetInstance()->random_seed()) +
-         "_" + std::to_string(reinterpret_cast<std::uintptr_t>(this)));
+    const fs::path base = fs::temp_directory_path() /
+                          ("strata_sharding_test_" +
+                           std::to_string(::testing::UnitTest::GetInstance()->random_seed()) + "_" +
+                           std::to_string(reinterpret_cast<std::uintptr_t>(this)));
     fs::create_directories(base);
     base_dir_ = base;
 
