@@ -46,5 +46,19 @@ TEST(ShardIdCodec, GlobalIdsAreUniqueAndInterleaved) {
   EXPECT_EQ(codec.to_global(1, 1), 4u);
 }
 
+TEST(ShardIdCodec, LocalLimitKeepsGlobalIdsInside32Bits) {
+  for (std::uint32_t n : {1u, 2u, 3u, 4u, 7u, 64u, 1000u}) {
+    const ShardIdCodec codec(n);
+    for (std::uint32_t s = 0; s < n; ++s) {
+      const std::uint64_t limit = codec.local_limit(s);
+      ASSERT_GT(limit, 0u);
+      // The last valid local id maps below the reserved id; the limit itself would not.
+      EXPECT_LT(codec.to_global(s, static_cast<VectorId>(limit - 1)), kUnassignedId);
+      EXPECT_GE(limit * n + s, std::uint64_t{kUnassignedId}) << "n=" << n << " s=" << s;
+    }
+  }
+  EXPECT_EQ(ShardIdCodec(1).local_limit(0), kUnassignedId);
+}
+
 }  // namespace
 }  // namespace strata::server

@@ -19,6 +19,14 @@ namespace strata::server {
 // many vectors the others hold.
 //
 // num_shards == 1 (a lone shard, no coordinator) makes global and local ids identical.
+//
+// The global space is 32 bits (VectorId), shared by all shards, so each shard can address about
+// 2^32 / num_shards local ids. local_limit() gives the exact bound; the coordinator passes it to
+// the shard with every insert, so a shard refuses an insert whose global id would not fit rather
+// than handing out an id that wraps around and collides. kUnassignedId is reserved and is never a
+// vector's id.
+inline constexpr VectorId kUnassignedId = 0xFFFFFFFFu;
+
 class ShardIdCodec {
  public:
   explicit ShardIdCodec(std::uint32_t num_shards) : num_shards_(num_shards == 0 ? 1 : num_shards) {}
@@ -35,6 +43,13 @@ class ShardIdCodec {
 
   [[nodiscard]] VectorId to_local(VectorId global_id) const noexcept {
     return static_cast<VectorId>(global_id / num_shards_);
+  }
+
+  // Exclusive bound on the local ids of `shard_index` whose global ids are valid: every local id
+  // l < local_limit(s) has to_global(s, l) < kUnassignedId, and no larger one does.
+  [[nodiscard]] VectorId local_limit(std::uint32_t shard_index) const noexcept {
+    // Largest valid global id is kUnassignedId - 1, so l * n + s <= kUnassignedId - 1.
+    return static_cast<VectorId>((kUnassignedId - 1 - shard_index) / num_shards_ + 1);
   }
 
  private:

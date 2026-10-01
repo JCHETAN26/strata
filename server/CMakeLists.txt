@@ -39,7 +39,8 @@ protobuf_generate(
 # --- Server library (shard + coordinator services) -----------------------------------------------
 add_library(strata_server STATIC
   shard_service.cpp
-  coordinator_service.cpp)
+  coordinator_service.cpp
+  security.cpp)
 target_link_libraries(strata_server
   PUBLIC strata::strata strata_proto gRPC::grpc++
   PRIVATE strata_options)
@@ -61,8 +62,29 @@ if(STRATA_BUILD_TESTS)
   include(GoogleTest)
   add_executable(strata_server_tests
     tests/id_codec_test.cpp
+    tests/security_test.cpp
     tests/sharding_test.cpp)
   target_link_libraries(strata_server_tests PRIVATE strata_server strata_options GTest::gtest_main)
+
+  # TLS test material, generated at build time by the same script users run (so the script is
+  # tested too): a CA with a localhost server certificate and token, and a second, unrelated CA
+  # whose certificate a client must refuse. Needs the openssl command-line tool.
+  find_program(STRATA_OPENSSL openssl REQUIRED)
+  set(STRATA_TEST_CERTS "${CMAKE_CURRENT_BINARY_DIR}/test_certs")
+  set(STRATA_CERT_SCRIPT "${PROJECT_SOURCE_DIR}/scripts/make_dev_certs.sh")
+  add_custom_command(
+    OUTPUT "${STRATA_TEST_CERTS}/good/server.pem" "${STRATA_TEST_CERTS}/other/server.pem"
+    COMMAND "${CMAKE_COMMAND}" -E rm -rf "${STRATA_TEST_CERTS}"
+    COMMAND "${STRATA_CERT_SCRIPT}" "${STRATA_TEST_CERTS}/good"
+    COMMAND "${STRATA_CERT_SCRIPT}" "${STRATA_TEST_CERTS}/other"
+    DEPENDS "${STRATA_CERT_SCRIPT}"
+    COMMENT "Generating TLS test certificates"
+    VERBATIM)
+  add_custom_target(strata_server_test_certs
+    DEPENDS "${STRATA_TEST_CERTS}/good/server.pem" "${STRATA_TEST_CERTS}/other/server.pem")
+  add_dependencies(strata_server_tests strata_server_test_certs)
+  target_compile_definitions(strata_server_tests PRIVATE
+    STRATA_TEST_CERT_DIR="${STRATA_TEST_CERTS}")
   if(STRATA_SANITIZE)
     # protobuf annotates RepeatedField storage for ASan's container-overflow check. When protobuf
     # itself is not ASan-built (Homebrew, default vcpkg triplets), the annotations are only half
@@ -74,4 +96,12 @@ if(STRATA_BUILD_TESTS)
   else()
     gtest_discover_tests(strata_server_tests)
   endif()
+endif()
+
+# --- Benchmarks ----------------------------------------------------------------------------------
+# Coordinator search latency (async fan-out vs. thread per shard); driven by
+# bench/run_coordinator_bench.py, which expects it in a release build.
+if(STRATA_BUILD_BENCHMARKS)
+  add_executable(strata_coordinator_bench bench/coordinator_bench.cpp)
+  target_link_libraries(strata_coordinator_bench PRIVATE strata_server strata_options)
 endif()

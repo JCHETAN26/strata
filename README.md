@@ -51,6 +51,7 @@ cmake --preset linux-server && cmake --build --preset linux-server && ctest --pr
 | Preset | Build type | Notes |
 |--------|------------|-------|
 | `server` | Debug | macOS only: gRPC/protobuf/abseil from Homebrew (`/opt/homebrew`) |
+| `server-release` | Release | macOS only: as above; for `bench/run_coordinator_bench.py` |
 | `server-asan` | Debug | macOS only: as above with ASan + UBSan. The server tests run with `detect_container_overflow=0`: protobuf's container annotations give false positives when protobuf itself is not ASan-built |
 | `linux-server`, `linux-server-release`, `linux-server-asan` | as named | Linux only: gRPC/protobuf from the vcpkg manifest, GCC 13 |
 
@@ -60,11 +61,54 @@ its message layout under TSan, so TSan needs gRPC and protobuf built with TSan a
 sanitizer triplet).
 
 ```sh
-# two shards and a coordinator on one machine (listens on all interfaces, no TLS or auth yet)
+# two shards and a coordinator on one machine (all three listen on 127.0.0.1 only)
 build/server/server/strata_shard --dir /tmp/s0 --dim 128 --port 50051 &
 build/server/server/strata_shard --dir /tmp/s1 --dim 128 --port 50052 &
 build/server/server/strata_coordinator --dim 128 --port 50050 --shard localhost:50051 --shard localhost:50052
 ```
+
+#### Securing the server
+
+Both binaries listen on `127.0.0.1` by default, so nothing off the machine can reach them.
+`--listen <host>` (e.g. `0.0.0.0`) exposes one, and then it must also have TLS and a shared token,
+or it refuses to start unless given `--insecure`. TLS encrypts the traffic and proves the server's
+identity; the token proves the caller's, since anyone who can open a connection could otherwise
+insert and delete. A token is refused without TLS, because it would travel in plain text.
+
+```sh
+# one-time: a private CA, a server certificate naming every shard host, and a token
+scripts/make_dev_certs.sh certs DNS:shard1.internal DNS:shard2.internal IP:10.0.0.5
+
+# on each shard host
+strata_shard --dir /data/s0 --dim 128 --listen 0.0.0.0 --port 50051 \
+  --tls-cert certs/server.pem --tls-key certs/server.key --token-file certs/token
+
+# the coordinator: TLS + token to the shards (the --shard host must be in the certificate)
+strata_coordinator --dim 128 --shard shard1.internal:50051 --shard shard2.internal:50051 \
+  --shard-ca certs/ca.pem --shard-token-file certs/token
+```
+
+The coordinator's own client-facing port takes the same `--listen`/`--tls-cert`/`--tls-key`/
+`--token-file` flags. Keep `ca.key` off the servers (it only signs certificates) and `server.key`
+and `token` readable only by the service account; the script creates them mode 600. Both
+binaries print `plaintext`, `tls`, or `tls+token` in their startup line. `--max-threads` caps the
+gRPC server's threads, and `--shard-timeout-ms` (default 10000) is the coordinator's deadline for
+each call to a shard.
+
+#### Limits and failure behavior
+
+- **Ids are 32-bit.** With N shards, each shard holds at most about 4.29 billion / N vectors; an
+  insert past that fails with `RESOURCE_EXHAUSTED` rather than wrapping around. `4294967295` is
+  reserved and never an id.
+- **`InsertBatch` is not atomic across shards.** When one shard fails, the others' inserts stand.
+  The call returns OK with `error_code` set, and `ids` holds each input's id, or `4294967295` for
+  inputs not inserted. To finish the batch, resend it with `ids` set to that list: inputs that
+  already have an id are checked against the stored vector, not inserted again, so the retry is
+  idempotent and can be repeated until `error_code` is 0. Don't run two retries of the same batch
+  at once. One gap remains: if a shard inserted vectors but its reply was lost (a timeout), they
+  are reported as not inserted, and a retry inserts them again under new ids.
+- **Shard order is fixed.** A shard's position in the `--shard` list is part of every id it
+  produced, so the list must stay the same across coordinator restarts.
 
 ## Python
 

@@ -1,0 +1,170 @@
+"""Coordinator search latency: async (callback) fan-out vs. one thread per shard per query.
+
+    uv run python bench/run_coordinator_bench.py --dataset sift1m-200k-q1000 --shards 2 4 --runs 3
+
+Runs server/bench/coordinator_bench.cpp (a server-release build) once per process per shard
+count, `--runs` times, with the thermal and busy-machine checks of benchmeta.preflight before each
+and a cool-down between. Each process builds the HNSW shards once and then measures both fan-out
+modes over the same shards in `--rounds` alternating rounds (sequential: one client; concurrent:
+`--clients` clients). Writes:
+
+    results/server/coordinator_latency-<dataset>-<timestamp>.json   raw rounds, metadata, summary
+    results/server/coordinator_latency_<dataset>.md                  table (mean ± stdev)
+
+Mean ± stdev are over all rounds of all runs. Shards, coordinator, and client share one machine
+(and here, a fanless laptop), so the numbers compare the two modes; they are not a deployment's.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+from benchmeta import (
+    REPO_ROOT,
+    git_info,
+    hardware_note,
+    metadata,
+    preflight,
+    thermal_warnings,
+    timestamp_slug,
+    write_new,
+)
+from records import summarize_fields
+
+MODES = ["async", "thread_per_shard"]
+SEQ_FIELDS = ["mean_us", "p50_us", "p95_us", "p99_us"]
+CONC_FIELDS = ["qps", "mean_us", "p50_us", "p95_us", "p99_us"]
+
+
+def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
+    """Per mode and workload, mean/stdev of each field over every round of every run."""
+    summary: dict[str, Any] = {}
+    for mode in MODES:
+        seq = [r[mode]["sequential"] for run in runs for r in run["rounds"]]
+        conc = [r[mode]["concurrent"] for run in runs for r in run["rounds"]]
+        summary[mode] = {
+            "sequential": summarize_fields(seq, SEQ_FIELDS),
+            "concurrent": summarize_fields(conc, CONC_FIELDS),
+        }
+    return summary
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--dataset", default="sift1m-200k-q1000")
+    parser.add_argument("--shards", type=int, nargs="+", default=[2, 4])
+    parser.add_argument("--runs", type=int, default=3)
+    parser.add_argument("--rounds", type=int, default=5)
+    parser.add_argument("--queries", type=int, default=2000)
+    parser.add_argument("--clients", type=int, default=8)
+    parser.add_argument("--ef-search", type=int, default=64)
+    parser.add_argument("--cooldown", type=int, default=60)
+    parser.add_argument("--build-dir", type=Path, default=REPO_ROOT / "build" / "server-release")
+    args = parser.parse_args(argv)
+
+    binary = args.build_dir / "server" / "strata_coordinator_bench"
+    if git_info()["dirty"]:
+        print("warning: uncommitted changes; the record will say so", file=sys.stderr)
+
+    by_shards: dict[int, dict[str, Any]] = {}
+    stopped = False
+    for shards in args.shards:
+        cmd = [
+            str(binary), "--data", str(REPO_ROOT / "data" / args.dataset),
+            "--shards", str(shards), "--rounds", str(args.rounds),
+            "--queries", str(args.queries), "--clients", str(args.clients),
+            "--ef-search", str(args.ef_search),
+        ]  # fmt: skip
+        runs = []
+        for i in range(args.runs):
+            preflight(f"{shards} shards, run {i + 1}")
+            print("$", " ".join(cmd), file=sys.stderr, flush=True)
+            out = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, check=True).stdout
+            raw = json.loads(out)
+            if raw["asserts"]:
+                print("error: built with asserts; use the server-release preset", file=sys.stderr)
+                return 1
+            if raw["recall"]["async"] != raw["recall"]["thread_per_shard"]:
+                print("error: the two fan-out modes returned different results", file=sys.stderr)
+                return 1
+            runs.append(raw)
+            last = raw["rounds"][-1]
+            print(
+                f"{shards} shards, run {i + 1}: sequential p50 "
+                f"async {last['async']['sequential']['p50_us']:.0f} us, "
+                f"thread {last['thread_per_shard']['sequential']['p50_us']:.0f} us",
+                file=sys.stderr,
+                flush=True,
+            )
+            if warning := thermal_warnings():
+                print(f"thermal warning; stopping:\n{warning}", file=sys.stderr)
+                stopped = True
+                break
+            time.sleep(args.cooldown)
+        by_shards[shards] = {"command": cmd, "runs": runs, "summary": summarize(runs)}
+        if stopped:
+            break
+
+    record = {**metadata(), "dataset": args.dataset, "results": by_shards}
+    out_dir = REPO_ROOT / "results" / "server"
+    out = out_dir / f"coordinator_latency-{args.dataset}-{timestamp_slug()}.json"
+    write_new(out, json.dumps(record, indent=2) + "\n")
+    print(f"saved {out.relative_to(REPO_ROOT)}")
+
+    first = next(iter(by_shards.values()))["runs"][0]
+    lines = [
+        f"# Coordinator search latency: async fan-out vs. thread per shard ({args.dataset})",
+        "",
+        "Generated by `bench/run_coordinator_bench.py`. Do not edit by hand.",
+        "",
+        f"- **Hardware:** {hardware_note(record['hardware'])}",
+        f"- Commit: {record['git']['commit'][:10]}{' (dirty)' if record['git']['dirty'] else ''}",
+        f"- {first['num_base']:,} vectors x {first['dim']} dims dealt round-robin to HNSW shards "
+        f"(M={first['M']}, ef_construction={first['ef_construction']}); k={first['k']}, "
+        f"ef_search={first['ef_search']}. Recall@{first['k']} is identical in both modes.",
+        f"- One process per run: shards, two coordinators (one per mode), and the client, over "
+        f"gRPC on loopback. {args.runs} runs x {args.rounds} rounds per shard count; each round "
+        f"measures both modes back to back, alternating which goes first. Mean ± stdev over "
+        f"rounds.",
+        f"- Sequential: one client, {args.queries} queries, one at a time (latency in µs). "
+        f"Concurrent: {args.clients} clients sharing {2 * args.queries} queries.",
+        "- Development machine: shards, coordinator, and client compete for the same cores, so "
+        "this compares the two modes; absolute numbers are indicative.",
+        "",
+        "| shards | workload | metric | thread per shard | async | change |",
+        "|---:|---|---|---:|---:|---:|",
+    ]
+
+    def cell(s: dict[str, float], digits: int = 0) -> str:
+        return f"{s['mean']:.{digits}f} ± {s['stdev']:.{digits}f}"
+
+    for shards, entry in by_shards.items():
+        summary = entry["summary"]
+        recall = entry["runs"][0]["recall"]["async"]
+        rows = [("sequential", f, f.removesuffix("_us") + " (µs)") for f in SEQ_FIELDS] + [
+            ("concurrent", f, "QPS" if f == "qps" else f.removesuffix("_us") + " (µs)")
+            for f in CONC_FIELDS
+        ]
+        for workload, field, label in rows:
+            t = summary["thread_per_shard"][workload][field]
+            a = summary["async"][workload][field]
+            change = (a["mean"] - t["mean"]) / t["mean"] * 100
+            lines.append(
+                f"| {shards} | {workload} | {label} | {cell(t)} | {cell(a)} | {change:+.1f}% |"
+            )
+        lines.append(f"| {shards} | | recall@{first['k']} | {recall:.4f} | {recall:.4f} | |")
+    lines.append("")
+    table = out_dir / f"coordinator_latency_{args.dataset}.md"
+    table.write_text("\n".join(lines))
+    print(f"wrote {table.relative_to(REPO_ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

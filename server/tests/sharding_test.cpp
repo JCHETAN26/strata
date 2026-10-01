@@ -10,12 +10,16 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <memory>
 #include <random>
+#include <span>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -59,17 +63,34 @@ class ShardingTest : public ::testing::Test {
       auto collection = Collection::open(shard->dir, kDim, Metric::kL2, {});
       ASSERT_TRUE(collection.has_value()) << collection.error().message;
       shard->service = std::make_unique<ShardService>(std::move(*collection), kDim, Metric::kL2);
-
-      grpc::ServerBuilder builder;
-      builder.AddListeningPort("127.0.0.1:0", grpc::InsecureServerCredentials(), &shard->port);
-      builder.RegisterService(shard->service.get());
-      shard->server = builder.BuildAndStart();
+      start(*shard);
       ASSERT_NE(shard->server, nullptr);
       addresses.push_back("127.0.0.1:" + std::to_string(shard->port));
       shards_.push_back(std::move(shard));
     }
+    addresses_ = addresses;
 
-    coordinator_ = std::make_unique<CoordinatorService>(addresses, kDim, Metric::kL2);
+    CoordinatorOptions options;
+    options.shard_timeout = std::chrono::seconds(5);
+    coordinator_ = std::make_unique<CoordinatorService>(addresses, kDim, Metric::kL2, options);
+  }
+
+  // Starts (or restarts) a shard's server. Port 0 picks a free port the first time; a restart
+  // reuses it, so the coordinator's channel reconnects to the same address.
+  static void start(RunningShard& shard) {
+    grpc::ServerBuilder builder;
+    int bound = 0;
+    builder.AddListeningPort("127.0.0.1:" + std::to_string(shard.port),
+                             grpc::InsecureServerCredentials(), &bound);
+    builder.RegisterService(shard.service.get());
+    shard.server = builder.BuildAndStart();
+    shard.port = bound;
+  }
+
+  // Takes a shard off the network; its collection (and data) stay.
+  static void stop(RunningShard& shard) {
+    shard.server->Shutdown();
+    shard.server.reset();
   }
 
   void TearDown() override {
@@ -101,6 +122,7 @@ class ShardingTest : public ::testing::Test {
 
   std::unique_ptr<CoordinatorService> coordinator_;
   std::vector<std::unique_ptr<RunningShard>> shards_;
+  std::vector<std::string> addresses_;
   fs::path base_dir_;
 };
 
@@ -236,6 +258,267 @@ TEST_F(ShardingTest, InsertBatchMatchesSingleInserts) {
   v1::StatsResponse stats;
   ASSERT_TRUE(coordinator_->Stats(nullptr, &stats_request, &stats).ok());
   EXPECT_EQ(stats.size(), kCount);
+}
+
+// `count` random vectors, row-major.
+std::vector<float> random_rows(std::uint32_t count, std::uint32_t seed) {
+  std::mt19937 rng(seed);
+  std::normal_distribution<float> dist(0.0f, 1.0f);
+  std::vector<float> flat(static_cast<std::size_t>(count) * kDim);
+  for (float& x : flat) {
+    x = dist(rng);
+  }
+  return flat;
+}
+
+// Row i of a row-major matrix of kDim columns.
+std::span<const float> row(const std::vector<float>& flat, std::size_t i) {
+  return {flat.data() + i * kDim, kDim};
+}
+
+v1::InsertBatchRequest batch_request(const std::vector<float>& flat, std::uint32_t count) {
+  v1::InsertBatchRequest request;
+  request.mutable_values()->Add(flat.begin(), flat.end());
+  request.set_count(count);
+  return request;
+}
+
+std::size_t count_unassigned(const v1::InsertBatchResponse& response) {
+  return static_cast<std::size_t>(
+      std::count(response.ids().begin(), response.ids().end(), kUnassignedId));
+}
+
+TEST_F(ShardingTest, InsertBatchReportsPartialFailureAndRetriesWithoutDuplicates) {
+  constexpr std::uint32_t kCount = 30;
+  const std::vector<float> flat = random_rows(kCount, 7);
+
+  // Shard 1 is down: its third of the batch fails, the other two shards' inserts succeed.
+  stop(*shards_[1]);
+  v1::InsertBatchRequest request = batch_request(flat, kCount);
+  v1::InsertBatchResponse first;
+  ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &request, &first).ok());
+  ASSERT_EQ(first.ids_size(), static_cast<int>(kCount));
+  EXPECT_NE(first.error_code(), 0) << "a partial failure must be reported";
+  EXPECT_NE(first.error_message().find("shard 1"), std::string::npos) << first.error_message();
+  EXPECT_EQ(count_unassigned(first), kCount / kNumShards);
+
+  // Bring the shard back and wait until the coordinator reaches it again (its channel reconnects
+  // after a short backoff). Retrying earlier would also work: fresh inputs are dealt round-robin
+  // anew on every attempt, so they would just land on the healthy shards.
+  start(*shards_[1]);
+  ASSERT_NE(shards_[1]->server, nullptr);
+  {
+    v1::StatsRequest ping;
+    v1::StatsResponse pong;
+    const auto give_up = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    while (!coordinator_->Stats(nullptr, &ping, &pong).ok()) {
+      ASSERT_LT(std::chrono::steady_clock::now(), give_up) << "shard 1 never came back";
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+  }
+
+  // Retry with the ids the first attempt returned, as many times as it takes. Every attempt is
+  // safe to repeat: inputs that have ids are verified, not inserted again.
+  v1::InsertBatchResponse latest = first;
+  for (int attempt = 0; attempt < 100 && latest.error_code() != 0; ++attempt) {
+    v1::InsertBatchRequest retry = batch_request(flat, kCount);
+    retry.mutable_ids()->CopyFrom(latest.ids());
+    v1::InsertBatchResponse response;
+    ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &retry, &response).ok());
+    // Ids a previous attempt reported never change or disappear.
+    for (int i = 0; i < response.ids_size(); ++i) {
+      if (latest.ids(i) != kUnassignedId) {
+        ASSERT_EQ(response.ids(i), latest.ids(i));
+      }
+    }
+    latest = response;
+    if (latest.error_code() != 0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
+  ASSERT_EQ(latest.error_code(), 0) << latest.error_message();
+  EXPECT_EQ(count_unassigned(latest), 0u);
+
+  // Exactly kCount vectors exist: nothing was inserted twice.
+  v1::StatsRequest stats_request;
+  v1::StatsResponse stats;
+  grpc::Status stats_status = coordinator_->Stats(nullptr, &stats_request, &stats);
+  ASSERT_TRUE(stats_status.ok()) << stats_status.error_message();
+  EXPECT_EQ(stats.size(), kCount);
+
+  // Each id holds its own input: searching for input i finds latest.ids(i) at distance 0.
+  for (std::uint32_t i = 0; i < kCount; ++i) {
+    v1::SearchRequest search;
+    const auto r = row(flat, i);
+    search.mutable_values()->Add(r.begin(), r.end());
+    search.set_k(1);
+    v1::SearchResponse found;
+    ASSERT_TRUE(coordinator_->Search(nullptr, &search, &found).ok());
+    ASSERT_EQ(found.neighbors_size(), 1);
+    EXPECT_EQ(found.neighbors(0).id(), latest.ids(static_cast<int>(i)));
+    EXPECT_EQ(found.neighbors(0).distance(), 0.0f);
+  }
+
+  // Retrying a completed batch again is a no-op.
+  v1::InsertBatchRequest again = batch_request(flat, kCount);
+  again.mutable_ids()->CopyFrom(latest.ids());
+  v1::InsertBatchResponse again_response;
+  ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &again, &again_response).ok());
+  EXPECT_EQ(again_response.error_code(), 0);
+  EXPECT_TRUE(
+      std::equal(again_response.ids().begin(), again_response.ids().end(), latest.ids().begin()));
+  ASSERT_TRUE(coordinator_->Stats(nullptr, &stats_request, &stats).ok());
+  EXPECT_EQ(stats.size(), kCount);
+}
+
+TEST_F(ShardingTest, RetryIdsAreVerifiedAgainstTheStoredVectors) {
+  constexpr std::uint32_t kCount = 6;
+  std::vector<float> flat = random_rows(kCount, 11);
+  v1::InsertBatchRequest request = batch_request(flat, kCount);
+  v1::InsertBatchResponse inserted;
+  ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &request, &inserted).ok());
+  ASSERT_EQ(inserted.error_code(), 0);
+
+  v1::StatsRequest stats_request;
+  v1::StatsResponse stats;
+
+  // A retry that pairs an id with a different vector is refused, and inserts nothing.
+  {
+    std::vector<float> changed = flat;
+    changed[2 * kDim] += 1.0f;
+    v1::InsertBatchRequest retry = batch_request(changed, kCount);
+    retry.mutable_ids()->CopyFrom(inserted.ids());
+    v1::InsertBatchResponse response;
+    ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &retry, &response).ok());
+    EXPECT_EQ(response.error_code(), static_cast<int>(grpc::StatusCode::INVALID_ARGUMENT));
+    EXPECT_NE(response.error_message().find("different vector"), std::string::npos)
+        << response.error_message();
+  }
+  // An id that was never assigned is refused.
+  {
+    v1::InsertBatchRequest retry = batch_request(flat, kCount);
+    retry.mutable_ids()->CopyFrom(inserted.ids());
+    retry.set_ids(0, 3000);
+    v1::InsertBatchResponse response;
+    ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &retry, &response).ok());
+    EXPECT_EQ(response.error_code(), static_cast<int>(grpc::StatusCode::INVALID_ARGUMENT));
+  }
+  ASSERT_TRUE(coordinator_->Stats(nullptr, &stats_request, &stats).ok());
+  EXPECT_EQ(stats.size(), kCount);
+
+  // A retry naming an id deleted since is accepted and does not bring the vector back.
+  v1::DeleteRequest del;
+  del.set_id(inserted.ids(3));
+  v1::DeleteResponse del_response;
+  ASSERT_TRUE(coordinator_->Delete(nullptr, &del, &del_response).ok());
+  v1::InsertBatchRequest retry = batch_request(flat, kCount);
+  retry.mutable_ids()->CopyFrom(inserted.ids());
+  v1::InsertBatchResponse response;
+  ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &retry, &response).ok());
+  EXPECT_EQ(response.error_code(), 0) << response.error_message();
+  ASSERT_TRUE(coordinator_->Stats(nullptr, &stats_request, &stats).ok());
+  EXPECT_EQ(stats.size(), kCount);
+  EXPECT_EQ(stats.live_size(), kCount - 1);
+}
+
+TEST_F(ShardingTest, ShardRejectsABadRetryBeforeInsertingAnything) {
+  // Directly at a shard: validation failures are the call's status, and nothing is inserted.
+  ShardService& shard = *shards_[0]->service;
+  constexpr std::uint32_t kCount = 4;
+  const std::vector<float> flat = random_rows(kCount, 13);
+  v1::InsertBatchRequest request = batch_request(flat, kCount);
+  v1::InsertBatchResponse inserted;
+  ASSERT_TRUE(shard.InsertBatch(nullptr, &request, &inserted).ok());
+  ASSERT_EQ(inserted.error_code(), 0);
+
+  // Input 0 retried with its id plus three new inputs, but input 1 claims input 0's id: refused.
+  v1::InsertBatchRequest bad = batch_request(flat, kCount);
+  bad.add_ids(inserted.ids(0));
+  bad.add_ids(inserted.ids(0));
+  bad.add_ids(kUnassignedId);
+  bad.add_ids(kUnassignedId);
+  v1::InsertBatchResponse response;
+  grpc::Status status = shard.InsertBatch(nullptr, &bad, &response);
+  EXPECT_EQ(status.error_code(), grpc::StatusCode::INVALID_ARGUMENT);
+
+  // Wrong lengths are refused too.
+  v1::InsertBatchRequest short_values = batch_request(flat, kCount + 1);
+  EXPECT_EQ(shard.InsertBatch(nullptr, &short_values, &response).error_code(),
+            grpc::StatusCode::INVALID_ARGUMENT);
+  v1::InsertBatchRequest short_ids = batch_request(flat, kCount);
+  short_ids.add_ids(kUnassignedId);
+  EXPECT_EQ(shard.InsertBatch(nullptr, &short_ids, &response).error_code(),
+            grpc::StatusCode::INVALID_ARGUMENT);
+
+  v1::StatsRequest stats_request;
+  v1::StatsResponse stats;
+  ASSERT_TRUE(shard.Stats(nullptr, &stats_request, &stats).ok());
+  EXPECT_EQ(stats.size(), kCount);
+}
+
+TEST_F(ShardingTest, ShardRefusesIdsAtOrBeyondTheLimit) {
+  // The coordinator passes each shard the bound that keeps its global ids inside 32 bits. A real
+  // bound is ~4 billion / N; a tiny one exercises the same check.
+  ShardService& shard = *shards_[0]->service;
+  const std::vector<float> flat = random_rows(5, 17);
+
+  v1::InsertBatchRequest request = batch_request(flat, 5);
+  request.set_id_limit(3);
+  v1::InsertBatchResponse response;
+  ASSERT_TRUE(shard.InsertBatch(nullptr, &request, &response).ok());
+  EXPECT_EQ(response.error_code(), static_cast<int>(grpc::StatusCode::RESOURCE_EXHAUSTED));
+  const std::vector<std::uint32_t> ids(response.ids().begin(), response.ids().end());
+  EXPECT_EQ(ids, (std::vector<std::uint32_t>{0, 1, 2, kUnassignedId, kUnassignedId}));
+
+  v1::InsertRequest one;
+  const auto first_row = row(flat, 0);
+  one.mutable_values()->Add(first_row.begin(), first_row.end());
+  one.set_id_limit(3);
+  v1::InsertResponse one_response;
+  EXPECT_EQ(shard.Insert(nullptr, &one, &one_response).error_code(),
+            grpc::StatusCode::RESOURCE_EXHAUSTED);
+  one.set_id_limit(0);  // no bound: a lone shard uses the whole 32-bit space
+  EXPECT_TRUE(shard.Insert(nullptr, &one, &one_response).ok());
+  EXPECT_EQ(one_response.id(), 3u);
+}
+
+TEST_F(ShardingTest, AsyncAndThreadPerShardFanoutAgree) {
+  constexpr std::uint32_t kCount = 120;
+  const std::vector<float> flat = random_rows(kCount, 19);
+  v1::InsertBatchRequest request = batch_request(flat, kCount);
+  v1::InsertBatchResponse inserted;
+  ASSERT_TRUE(coordinator_->InsertBatch(nullptr, &request, &inserted).ok());
+  ASSERT_EQ(inserted.error_code(), 0);
+
+  CoordinatorOptions threaded;
+  threaded.search_fanout = SearchFanout::kThreadPerShard;
+  CoordinatorService baseline(addresses_, kDim, Metric::kL2, threaded);
+
+  const std::vector<float> queries = random_rows(10, 23);
+  for (std::size_t q = 0; q < 10; ++q) {
+    v1::SearchRequest search;
+    const auto r = row(queries, q);
+    search.mutable_values()->Add(r.begin(), r.end());
+    search.set_k(10);
+    v1::SearchResponse async_result;
+    v1::SearchResponse thread_result;
+    ASSERT_TRUE(coordinator_->Search(nullptr, &search, &async_result).ok());
+    ASSERT_TRUE(baseline.Search(nullptr, &search, &thread_result).ok());
+    ASSERT_EQ(async_result.neighbors_size(), 10);
+    ASSERT_EQ(async_result.SerializeAsString(), thread_result.SerializeAsString());
+  }
+}
+
+TEST_F(ShardingTest, SearchFailsCleanlyWhenAShardIsDown) {
+  stop(*shards_[2]);
+  const std::vector<float> query = random_rows(1, 29);
+  v1::SearchRequest search;
+  search.mutable_values()->Add(query.begin(), query.end());
+  search.set_k(5);
+  v1::SearchResponse response;
+  grpc::Status status = coordinator_->Search(nullptr, &search, &response);
+  EXPECT_EQ(status.error_code(), grpc::StatusCode::UNAVAILABLE);
+  EXPECT_NE(status.error_message().find("shard 2"), std::string::npos) << status.error_message();
 }
 
 }  // namespace

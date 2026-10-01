@@ -135,6 +135,14 @@
       ]
     },
     {
+      "name": "server-release",
+      "displayName": "macOS Release + gRPC server (gRPC/protobuf from Homebrew)",
+      "inherits": [
+        "release",
+        "mac-server-base"
+      ]
+    },
+    {
       "name": "server-asan",
       "displayName": "macOS Debug + gRPC server + ASan/UBSan (gRPC/protobuf from Homebrew)",
       "inherits": [
@@ -218,6 +226,10 @@
       "configurePreset": "server"
     },
     {
+      "name": "server-release",
+      "configurePreset": "server-release"
+    },
+    {
       "name": "server-asan",
       "configurePreset": "server-asan"
     },
@@ -298,6 +310,11 @@
       "name": "server",
       "inherits": "debug",
       "configurePreset": "server"
+    },
+    {
+      "name": "server-release",
+      "inherits": "release",
+      "configurePreset": "server-release"
     },
     {
       "name": "server-asan",

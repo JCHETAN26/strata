@@ -6,13 +6,19 @@ package strata.v1;
 // service, so a client cannot tell (and does not need to know) whether it is talking to one node
 // or a fan-out coordinator in front of many. Ids returned by Search and accepted by Delete are
 // global ids: on a single shard they equal the local ids; behind a coordinator they encode the
-// shard as well (see server/coordinator.hpp).
+// shard as well (see server/id_codec.hpp).
+//
+// Ids are 32-bit. The value 4294967295 (0xFFFFFFFF) is never a vector's id: InsertBatch uses it to
+// mark an input that was not inserted. Behind a coordinator with N shards the global id space is
+// still 32 bits, so each shard can hold about 4.29 billion / N vectors; an insert that would need
+// a larger id fails with RESOURCE_EXHAUSTED instead of producing an id that wraps around.
 
 service VectorService {
   // Adds one vector and returns the id assigned to it.
   rpc Insert(InsertRequest) returns (InsertResponse);
 
-  // Adds many vectors in one round trip, in order; the returned ids line up with the inputs.
+  // Adds many vectors in one round trip. Not atomic: see InsertBatchResponse for how a partial
+  // failure is reported and InsertBatchRequest.ids for how to retry one without duplicates.
   rpc InsertBatch(InsertBatchRequest) returns (InsertBatchResponse);
 
   // Returns the k nearest neighbors to the query, nearest first.
@@ -34,6 +40,10 @@ message Neighbor {
 message InsertRequest {
   // Must have exactly `dimension` elements (see StatsResponse).
   repeated float values = 1 [packed = true];
+  // Set by the coordinator, not by clients: an exclusive upper bound on the id this shard may
+  // assign, so the global id derived from it stays inside 32 bits. 0 means no bound beyond the
+  // 32-bit id space.
+  uint32 id_limit = 2;
 }
 
 message InsertResponse {
@@ -44,10 +54,35 @@ message InsertBatchRequest {
   // Row-major: `count` vectors of `dimension` each, so values.size() == count * dimension.
   repeated float values = 1 [packed = true];
   uint32 count = 2;
+  // For retrying a partially failed batch: empty, or exactly `count` entries, one per input.
+  // An entry is the id a previous attempt returned for that input, or 4294967295 if it was not
+  // inserted. Inputs that carry an id are checked, not inserted again: the id must exist and hold
+  // exactly this vector (or have been deleted since), otherwise the request fails with
+  // INVALID_ARGUMENT before anything is inserted. So resending the same batch with the ids from
+  // the last response inserts only what is still missing, however many times it is retried.
+  repeated uint32 ids = 3 [packed = true];
+  // Set by the coordinator, not by clients; as in InsertRequest.
+  uint32 id_limit = 4;
 }
 
+// InsertBatch is not atomic. A request that fails validation (wrong length, wrong dimension, bad
+// retry ids) returns an error status and inserts nothing. Otherwise the call returns OK and this
+// message says, per input, what happened. Inserts that succeeded are durable even when others
+// failed, so check error_code: OK (0) means every input was inserted. (Behind a coordinator, retry
+// ids are verified by each shard, in parallel with the other shards' inserts, so a bad retry id
+// is reported here in error_code rather than as the call's status.)
+//
+// One case this cannot catch: if a shard inserted vectors but its reply never reached the
+// coordinator (a timeout or a dropped connection), those inputs are reported as not inserted, and
+// a retry inserts them again under new ids. Closing that gap needs a request key stored with the
+// insert in the shard's write-ahead log.
 message InsertBatchResponse {
+  // One entry per input, in input order: its id, or 4294967295 if it was not inserted.
   repeated uint32 ids = 1 [packed = true];
+  // When some inputs were not inserted: the gRPC status code and message of the first failure.
+  // 0 (OK) when every input was inserted.
+  int32 error_code = 2;
+  string error_message = 3;
 }
 
 message SearchRequest {

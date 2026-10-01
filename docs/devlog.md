@@ -1672,3 +1672,57 @@ openssl@3, c-ares, and ca-certificates system-wide. This can affect other projec
 
 Remaining known gaps: no TLS/auth and listening on 0.0.0.0; non-atomic `InsertBatch`; 32-bit
 global ids; one thread per shard per query; not yet built on Linux.
+
+## 2026-10-01: Server hardening: localhost default, async fan-out, TLS + token, InsertBatch retries
+
+**Exposure.** Both binaries listen on 127.0.0.1 unless `--listen` says otherwise. A non-loopback
+listen needs TLS and a shared token, or `--insecure`; a token without TLS is refused (it would
+travel in plain text, and gRPC won't attach call credentials to an insecure channel anyway). The
+binaries check this before opening the collection, so a refused start does no work.
+
+**Fan-out.** Search, Stats, and the per-shard InsertBatch calls now use gRPC's callback API: all
+shard calls start at once and complete on gRPC's threads, so a query holds no thread per shard
+(the old Search started one `std::async` thread per shard per query; Stats and InsertBatch were
+sequential). I chose callbacks over a thread pool: a pool of blocking calls would cap in-flight
+shard calls at its size and queue the rest, and its size would need tuning per shard count. The
+configurable sizes are the gRPC server's thread cap (`--max-threads`) and the per-shard-call
+deadline (`--shard-timeout-ms`, default 10 s; before, a hung shard hung the request forever).
+The thread-per-shard Search is kept behind `SearchFanout::kThreadPerShard`, only as the baseline
+the benchmark measures against.
+- The countdown the callbacks share lives in a `shared_ptr` each callback holds. With a
+  `std::latch` on the handler's stack, the waiter could return and destroy it while the last
+  callback was still inside `count_down`.
+- Found by a test: after a shard restarts, gRPC's default reconnect backoff (up to 120 s) keeps
+  failing calls fast with the cached "connection refused". The coordinator's channels now back
+  off 100 ms to 2 s.
+
+**TLS + token.** `scripts/make_dev_certs.sh` makes a CA, a server certificate with the given
+SANs, and a 64-hex-character token (works with OpenSSL 3 and macOS LibreSSL; the build runs it to
+make the test certificates, so the script is tested too). Shards: `--tls-cert/--tls-key/
+--token-file`; coordinator: `--shard-ca/--shard-token-file` plus the same server flags for its own
+port. The token check is an `AuthMetadataProcessor` (constant-time compare; the token is consumed
+so handlers never see it). Tests cover: valid token accepted; missing token and wrong token
+UNAUTHENTICATED; plaintext client UNAVAILABLE; a client trusting a different CA refuses the
+certificate (the token is never sent); the coordinator over TLS works and with a wrong token
+surfaces UNAUTHENTICATED. Not done: mutual TLS (client certificates) and token rotation without
+a restart.
+
+**InsertBatch partial failure, now explicit.** Validation failures are the call's status and
+insert nothing. Otherwise the call returns OK and `ids` lists every input's id or 4294967295,
+with `error_code`/`error_message` for the first failure. A retry sends `ids` back: inputs with an
+id are verified against the stored vector (bitwise; a since-deleted id is accepted and not
+resurrected), all before inserting anything on that shard, and only the rest are inserted. The
+retry is idempotent and repeatable. A shard stopped mid-batch, restarted, and retried until
+complete ends with exactly the batch's vectors (test). Remaining gaps, documented in the proto and
+README: a lost reply (shard committed, reply timed out) still makes a retry insert duplicates,
+which needs a request key in the WAL to close; and two concurrent retries of one batch both insert
+the missing inputs.
+
+**32-bit ids.** Global ids share 32 bits across shards (each shard holds about 4.29 billion / N),
+and 4294967295 is reserved. Before, `to_global` would silently wrap. Now the coordinator passes
+each shard `id_limit = codec.local_limit(shard)`, and the shard refuses an insert that would reach
+it with RESOURCE_EXHAUSTED. A concurrent insert that slips past the pre-check is undone with a
+tombstone. Responses with out-of-range ids are rejected as INTERNAL.
+
+**Also:** Python tests re-run after the Homebrew openssl/c-ares upgrade: 142 passed (the live API
+test ran, the usage cap having reset). New `server-release` preset for the benchmark.

@@ -3,6 +3,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include <cstddef>
+#include <span>
 #include <utility>
 
 #include "strata/collection.hpp"
@@ -36,6 +37,10 @@ class ShardService final : public v1::VectorService::Service {
                      v1::StatsResponse* response) override;
 
  private:
+  // Inserts one vector, refusing with RESOURCE_EXHAUSTED if its id would reach `id_limit` (0: no
+  // limit). See InsertRequest.id_limit.
+  grpc::Status insert_one(std::span<const float> vector, VectorId id_limit, VectorId* id);
+
   Collection collection_;
   std::size_t dim_;
   Metric metric_;

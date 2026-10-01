@@ -3,6 +3,11 @@
 //   strata_shard --dir <path> --dim <n> [--metric l2|inner_product|cosine]
 //                [--index flat|hnsw] [--port 50051]
 //                [--hnsw-m 16] [--hnsw-ef-construction 200]
+//                [--listen 127.0.0.1] [--tls-cert <pem> --tls-key <pem>] [--token-file <path>]
+//                [--insecure] [--max-threads <n>]
+//
+// Listens on 127.0.0.1 unless --listen says otherwise; see server/security.hpp for the rules on
+// exposing it (TLS and a shared token, or an explicit --insecure).
 //
 // The collection is durable in --dir: it recovers from the snapshot and WAL on start, so a shard
 // can be killed and restarted without losing acknowledged writes.
@@ -21,6 +26,7 @@
 #include <utility>
 
 #include "build_info.hpp"
+#include "security.hpp"
 #include "shard_service.hpp"
 #include "strata/collection.hpp"
 #include "strata/distance.hpp"
@@ -34,7 +40,7 @@ struct Args {
   std::size_t dim = 0;
   strata::Metric metric = strata::Metric::kL2;
   strata::IndexKind index = strata::IndexKind::kFlat;
-  int port = 50051;
+  strata::server::ListenConfig listen{.port = 50051};
   std::size_t hnsw_m = 16;
   std::size_t hnsw_ef_construction = 200;
 };
@@ -50,6 +56,9 @@ std::optional<Args> parse_args(int argc, char** argv) {
       return argv[++i];
     };
     try {
+      if (strata::server::parse_listen_flag(flag, next, args.listen)) {
+        continue;
+      }
       if (flag == "--dir") {
         args.dir = next();
       } else if (flag == "--dim") {
@@ -71,8 +80,6 @@ std::optional<Args> parse_args(int argc, char** argv) {
           std::cerr << "unknown index kind: " << v << "\n";
           return std::nullopt;
         }
-      } else if (flag == "--port") {
-        args.port = std::stoi(next());
       } else if (flag == "--hnsw-m") {
         args.hnsw_m = static_cast<std::size_t>(std::stoul(next()));
       } else if (flag == "--hnsw-ef-construction") {
@@ -88,7 +95,8 @@ std::optional<Args> parse_args(int argc, char** argv) {
   }
   if (args.dir.empty() || args.dim == 0) {
     std::cerr << "usage: strata_shard --dir <path> --dim <n> [--metric l2|inner_product|cosine] "
-                 "[--index flat|hnsw] [--port 50051] [--hnsw-m 16] [--hnsw-ef-construction 200]\n";
+                 "[--index flat|hnsw] [--port 50051] [--hnsw-m 16] [--hnsw-ef-construction 200]\n"
+              << strata::server::kListenUsage;
     return std::nullopt;
   }
   return args;
@@ -102,6 +110,11 @@ int main(int argc, char** argv) {
     return 1;
   }
   const Args& args = *parsed;
+  // Refuse an unsafe exposure before doing any work (opening may replay a long WAL).
+  if (auto refused = strata::server::exposure_error(args.listen)) {
+    std::cerr << *refused << "\n";
+    return 1;
+  }
 
   strata::CollectionOptions options;
   options.index = args.index;
@@ -116,20 +129,21 @@ int main(int argc, char** argv) {
 
   strata::server::ShardService service(std::move(*collection), args.dim, args.metric);
 
-  const std::string address = "0.0.0.0:" + std::to_string(args.port);
-  grpc::ServerBuilder builder;
-  builder.AddListeningPort(address, grpc::InsecureServerCredentials());
-  builder.RegisterService(&service);
-  std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+  int port = 0;
+  auto server = strata::server::start_server(args.listen, &service, &port);
   if (!server) {
-    std::cerr << "failed to bind " << address << "\n";
+    std::cerr << server.error().message << "\n";
     return 1;
   }
+  const std::string address = strata::server::host_port(args.listen.host, port);
+  const char* security = !args.listen.token_file.empty()      ? "tls+token"
+                         : !args.listen.tls_cert_file.empty() ? "tls"
+                                                              : "plaintext";
   std::cout << "strata_shard listening on " << address << " (dir=" << args.dir
             << ", dim=" << args.dim
-            << ", index=" << (args.index == strata::IndexKind::kHnsw ? "hnsw" : "flat") << ") ["
-            << strata::server::rpc_versions() << "]"
+            << ", index=" << (args.index == strata::IndexKind::kHnsw ? "hnsw" : "flat") << ", "
+            << security << ") [" << strata::server::rpc_versions() << "]"
             << std::endl;  // flush: stdout may be a log file
-  server->Wait();
+  (*server)->Wait();
   return 0;
 }
