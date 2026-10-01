@@ -28,3 +28,13 @@ __pycache__/
 .vscode/
 .idea/
 .cache/
+
+# AWS benchmark session (aws/)
+aws/.ssh/
+aws/.certs/
+aws/.artifacts/
+aws/terraform/.terraform/
+aws/terraform/*.tfstate
+aws/terraform/*.tfstate.*
+aws/terraform/*.tfplan
+aws/terraform/.terraform.tfstate.lock.info

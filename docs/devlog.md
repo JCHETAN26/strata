@@ -1743,3 +1743,49 @@ modes alternated within each round; recall@10 identical in both modes):
   servers + 2 coordinators on 8 cores, 4 of them efficiency cores. I added an "async better in N of
   M rounds" column (generated) so the table shows this instead of a hand note. Tail latency needs
   re-measuring on dedicated hardware, with shards on separate machines (Phase 9).
+
+## 2026-10-01: AWS session prepared (nothing created)
+
+**Read from the account (all read-only, free):**
+- On-demand prices from the Pricing API; c7i.8xlarge is $1.428/h in both us-east-1 and us-east-2.
+- Seven days of spot history: c7i.8xlarge is $0.34–0.46/h in us-east-2, $0.49–0.57/h in
+  us-east-1.
+- **vCPU quota of 32** (on-demand and spot) in both regions. That decided the shape of the
+  session: one c7i.8xlarge uses all 32, so the cluster (28 vCPU) runs as a second stage after
+  teardown. `up.sh` checks the quota and refuses a stage that would exceed it.
+
+**Plan:** `docs/aws-plan.md`. About $20 on-demand (about $6 on spot, not recommended: an interruption
+mid-10M-build costs more than it saves).
+
+**Infrastructure:** `aws/`. Terraform for a dedicated VPC, SSH from the operator's IP only, the
+instances per stage, and 14 h auto-termination. Scripts to set up, run each part in tmux, collect,
+tear down, and verify nothing remains.
+- `terraform validate` and `plan` for all three stages ran against the account with scratch
+  state; no apply.
+- The plan caught a wrong Canonical owner ID in the AMI lookup (my typo).
+
+**Bench changes so the session can run:**
+- `--build-threads` for hnswlib, FAISS, and the curve runner (10M single-threaded builds would take
+  hours per library).
+- `--name` on the curve runner, so AWS tables don't overwrite the Mac ones.
+- BIGANN-10M in `prepare_datasets.py`, via an HTTP range request into the 1B file. The published
+  ground truth is spot-checked against exact search; the check was tested on a 20k-row sample,
+  including that it catches a corrupted distance.
+- `--snapshot` on the search harness, so perf and thread scaling measure search, not build.
+- `bench/run_search_scaling.py`, which pins each run to N distinct physical cores.
+- EC2 instance type, topology, and kernel in every record (IMDSv2).
+- A `linux-profile` preset.
+- `strata_shard --sync none` for bulk loads.
+- `strata_load`, a standalone load client, with `bench/run_sharding_bench.py`.
+
+**Found by the local dry run** (`LOCAL=1 aws/scripts/run_sharding.sh`, the whole cluster flow on
+the Mac):
+- Closed-loop throughput was computed from a start time 100 ms after the workers had started;
+  short runs gave negative QPS.
+- The first open-loop design (256 sleeping worker threads) measured the load generator: workers
+  woke up to 5 ms late. Replaced by one dispatcher thread that issues async calls on schedule
+  (sleep, then spin the last millisecond). Its lateness is now reported per row and warned about
+  above 1 ms.
+
+**Noticed:** the GitHub repo is already public, so instances clone it without credentials;
+`buildplan.md` still listed that as open.

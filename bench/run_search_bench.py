@@ -30,6 +30,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-queries", type=int, default=0, help="0 = all queries")
     parser.add_argument("--kernel", default="best", choices=["best", "scalar"])
     parser.add_argument("--threads", type=int, default=1)
+    parser.add_argument("--build-threads", type=int, default=1, help="parallel HNSW build")
+    parser.add_argument(
+        "--snapshot", type=Path, help="HNSW: load the index from here if present, else build+save"
+    )
     parser.add_argument("--M", type=int, default=16)
     parser.add_argument("--ef-construction", type=int, default=200)
     parser.add_argument(
@@ -68,7 +72,10 @@ def main(argv: list[str] | None = None) -> int:
             "--ef-construction", str(args.ef_construction),
             "--selection", args.selection,
             "--ef-search", args.ef_search,
+            "--build-threads", str(args.build_threads),
         ]  # fmt: skip
+        if args.snapshot:
+            cmd += ["--snapshot", str(args.snapshot)]
     if args.index == "pq":
         cmd += ["--pq-m", str(args.pq_m), "--rerank", args.rerank]
     print("$", " ".join(cmd), file=sys.stderr)

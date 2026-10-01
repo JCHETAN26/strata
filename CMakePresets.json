@@ -114,6 +114,17 @@
       ]
     },
     {
+      "name": "linux-profile",
+      "displayName": "Linux Release + frame pointers and debug info, for perf (GCC 13)",
+      "inherits": [
+        "release",
+        "linux-base"
+      ],
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-g -fno-omit-frame-pointer"
+      }
+    },
+    {
       "name": "mac-server-base",
       "hidden": true,
       "condition": {
@@ -220,6 +231,10 @@
     {
       "name": "linux-tsan",
       "configurePreset": "linux-tsan"
+    },
+    {
+      "name": "linux-profile",
+      "configurePreset": "linux-profile"
     },
     {
       "name": "server",

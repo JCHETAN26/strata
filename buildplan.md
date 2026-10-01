@@ -230,14 +230,16 @@ answer groundedness on HotpotQA.
 
 - [x] Linux build and tests on GCC 13, AVX2 verified natively (IdeaPad, 2026-09-25; predates HNSW)
 - [ ] Rebuild and test on Linux with HNSW and everything since (first thing on the Oracle machine)
+- [x] AWS session prepared, not run: plan with costs (`docs/aws-plan.md`), Terraform and scripts (`aws/`)
 - [ ] Full runs on SIFT1M and GloVe-100, averaged over multiple runs — AWS
 - [ ] 10M-vector run — AWS
 - [ ] Filtered-search crossover at 1M and 10M, including 1-3% selectivity (fallback rate) — AWS
 - [ ] Thread scaling 1 → N cores, and multi-machine sharding scaling — AWS
 - [ ] x86 AVX2 results (AWS) + final ARM NEON results (Oracle machine)
 - [ ] README: one-line summary, recall-QPS chart vs. FAISS/hnswlib at the top, architecture diagram,
-      results tables with hardware noted
-- [ ] Design doc: graph parameters, compression, filtering strategies, sharding trade-offs
+      results tables with hardware noted — draft with development numbers done; swap in AWS results
+- [ ] Design doc: graph parameters, compression, filtering strategies, sharding trade-offs —
+      draft (`docs/design.md`) with development numbers done; swap in AWS results
 - [ ] Fill in resume bullets with real numbers
 - [ ] Make the repo public
 

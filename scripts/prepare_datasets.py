@@ -19,6 +19,12 @@ Each dataset is written to data/<name>/:
 Usage:
     uv run python scripts/prepare_datasets.py siftsmall
     uv run python scripts/prepare_datasets.py sift1m glove100
+    uv run python scripts/prepare_datasets.py bigann10m      # AWS: 1.3 GB download, 5.1 GB on disk
+
+bigann10m is the first 10M vectors of BIGANN (SIFT1B), the big-ann-benchmarks "BIGANN-10M" set:
+the base is read with an HTTP range request from the 1B-vector file (uint8, converted to float32),
+with its public 10K queries and published 10M ground truth, which is spot-checked here against an
+exact search for a few queries.
 """
 
 from __future__ import annotations
@@ -32,7 +38,9 @@ import tarfile
 import tempfile
 import urllib.request
 from dataclasses import dataclass
+from http.client import HTTPResponse
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -47,9 +55,16 @@ HEADER_DTYPE = np.dtype("<u4")
 class Dataset:
     name: str
     url: str
-    kind: str  # "texmex" (tar.gz of .fvecs/.ivecs) or "hdf5" (ann-benchmarks)
+    kind: str  # "texmex" (tar.gz of .fvecs/.ivecs), "hdf5" (ann-benchmarks), or "bigann"
     metric: str  # "l2" or "angular"
     texmex_prefix: str = ""
+    # kind == "bigann": the base is the first num_base rows of `url` (u8bin), plus these files.
+    query_url: str = ""
+    groundtruth_url: str = ""
+    num_base: int = 0
+
+
+BIGANN = "https://dl.fbaipublicfiles.com/billion-scale-ann-benchmarks"
 
 
 DATASETS: dict[str, Dataset] = {
@@ -71,6 +86,15 @@ DATASETS: dict[str, Dataset] = {
         url="http://ann-benchmarks.com/glove-100-angular.hdf5",
         kind="hdf5",
         metric="angular",
+    ),
+    "bigann10m": Dataset(
+        name="bigann10m",
+        url=f"{BIGANN}/bigann/base.1B.u8bin",
+        kind="bigann",
+        metric="l2",
+        query_url=f"{BIGANN}/bigann/query.public.10K.u8bin",
+        groundtruth_url=f"{BIGANN}/GT_10M/bigann-10M",
+        num_base=10_000_000,
     ),
 }
 
@@ -154,10 +178,119 @@ def convert_hdf5(path: Path) -> dict[str, npt.NDArray[np.generic]]:
         }
 
 
+def _open(url: str, byte_range: tuple[int, int] | None = None) -> HTTPResponse:
+    headers = {"User-Agent": "strata-dataset-fetch/0.1"}
+    if byte_range:
+        headers["Range"] = f"bytes={byte_range[0]}-{byte_range[1]}"
+    return urllib.request.urlopen(urllib.request.Request(url, headers=headers))
+
+
+def _read_u8bin_header(url: str) -> tuple[int, int]:
+    with _open(url, (0, 7)) as response:
+        n, d = np.frombuffer(response.read(), dtype=HEADER_DTYPE)
+    return int(n), int(d)
+
+
+def prepare_bigann(dataset: Dataset, out_dir: Path, verify_queries: int = 20) -> dict[str, Any]:
+    """Streams the first num_base rows of the 1B-vector base (uint8) into base.fbin as float32,
+    in chunks, so memory stays at a few hundred MB; then queries and ground truth."""
+    total, dim = _read_u8bin_header(dataset.url)
+    n = dataset.num_base
+    if n > total:
+        raise ValueError(f"{dataset.url} holds {total} vectors, fewer than {n}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    sha = hashlib.sha256()
+    rows_per_chunk = 1 << 16
+    print(f"downloading {n:,} x {dim} bytes from {dataset.url}", file=sys.stderr)
+    with (
+        _open(dataset.url, (8, 8 + n * dim - 1)) as response,
+        (out_dir / "base.fbin").open("wb") as out,
+    ):
+        np.array([n, dim], dtype=HEADER_DTYPE).tofile(out)
+        done = 0
+        while done < n:
+            rows = min(rows_per_chunk, n - done)
+            raw = response.read(rows * dim)
+            if len(raw) != rows * dim:
+                raise OSError(f"short read at row {done}: expected {rows * dim} bytes")
+            sha.update(raw)
+            np.frombuffer(raw, dtype=np.uint8).astype("<f4").tofile(out)
+            done += rows
+            if done % (1 << 20) < rows_per_chunk:
+                print(f"  {done:,} / {n:,}", file=sys.stderr, flush=True)
+
+    with _open(dataset.query_url) as response:
+        q = np.frombuffer(response.read(), dtype=np.uint8, offset=8)
+    nq, qd = _read_u8bin_header(dataset.query_url)
+    queries = q.reshape(nq, qd).astype(np.float32)
+    write_bin(out_dir / "query.fbin", queries)
+
+    # big-ann-benchmarks ground truth: header (nq, k), nq*k uint32 ids, then nq*k float32 distances.
+    with _open(dataset.groundtruth_url) as response:
+        blob = response.read()
+    gq, gk = (int(x) for x in np.frombuffer(blob[:8], dtype=HEADER_DTYPE))
+    ids = np.frombuffer(blob, dtype="<u4", count=gq * gk, offset=8).reshape(gq, gk)
+    distances = np.frombuffer(blob, dtype="<f4", count=gq * gk, offset=8 + 4 * gq * gk)
+    groundtruth = ids.astype(np.int32)
+    write_bin(out_dir / "groundtruth.ibin", groundtruth)
+
+    _spot_check_groundtruth(out_dir, queries, ids, distances.reshape(gq, gk), verify_queries)
+    return {
+        "source_sha256": sha.hexdigest(),
+        "base_shape": [n, dim],
+        "query_shape": list(queries.shape),
+        "groundtruth_shape": list(groundtruth.shape),
+        "query_url": dataset.query_url,
+        "groundtruth_url": dataset.groundtruth_url,
+        "source_rows": f"first {n} of {total}",
+        "groundtruth_spot_check_queries": verify_queries,
+    }
+
+
+def _spot_check_groundtruth(
+    out_dir: Path,
+    queries: npt.NDArray[np.float32],
+    ids: npt.NDArray[np.uint32],
+    distances: npt.NDArray[np.float32],
+    count: int,
+    k: int = 10,
+) -> None:
+    """Exact search for the first `count` queries over base.fbin (memory-mapped, in blocks); the
+    k-th distance must match the published ground truth (squared L2, so integer-exact for BIGANN).
+    Comparing distances rather than ids tolerates ties."""
+    if count == 0:
+        return
+    base = np.memmap(out_dir / "base.fbin", dtype="<f4", mode="r", offset=8)
+    n, dim = (int(x) for x in np.fromfile(out_dir / "base.fbin", dtype=HEADER_DTYPE, count=2))
+    base = base.reshape(n, dim)
+    q = queries[:count].astype(np.float64)
+    best = np.full((count, k), np.inf)
+    block = 1 << 20
+    for start in range(0, n, block):
+        chunk = np.asarray(base[start : start + block], dtype=np.float64)
+        d = (q**2).sum(1)[:, None] - 2 * q @ chunk.T + (chunk**2).sum(1)[None, :]
+        best = np.sort(np.concatenate([best, np.partition(d, k, axis=1)[:, :k]], axis=1), 1)[:, :k]
+    exact_kth = np.round(best[:, k - 1])
+    published_kth = np.round(distances[:count, k - 1].astype(np.float64))
+    if not np.array_equal(exact_kth, published_kth):
+        bad = np.nonzero(exact_kth != published_kth)[0]
+        raise ValueError(f"ground truth disagrees with exact search for queries {bad.tolist()}")
+    print(f"  ground truth matches exact search on {count} queries", file=sys.stderr)
+
+
 def prepare(dataset: Dataset, data_dir: Path, force: bool) -> Path:
     out_dir = data_dir / dataset.name
     if (out_dir / "meta.json").exists() and not force:
         print(f"{dataset.name}: already present in {out_dir} (use --force to rebuild)")
+        return out_dir
+
+    if dataset.kind == "bigann":
+        if out_dir.exists():
+            shutil.rmtree(out_dir)
+        info = prepare_bigann(dataset, out_dir)
+        meta = {"name": dataset.name, "source_url": dataset.url, "metric": dataset.metric, **info}
+        (out_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+        print(f"{dataset.name}: wrote {out_dir}")
         return out_dir
 
     with tempfile.TemporaryDirectory() as tmp:

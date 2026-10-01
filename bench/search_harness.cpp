@@ -16,6 +16,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 #include <optional>
@@ -63,6 +64,11 @@ struct Options {
   // Threads for building the HNSW graph. 1 = the sequential, deterministic build; more = the
   // parallel add_batch. (--threads is for searching.)
   std::size_t build_threads = 1;
+  // If set: load the HNSW index from this snapshot when it exists, otherwise build and save it
+  // there. For runs that measure search only (thread scaling, perf profiles), so they do not pay
+  // for, or profile, a build. Recorded in build_params, so such records never match build-time
+  // comparisons.
+  std::string snapshot;
   std::vector<std::size_t> ef_search{10, 20, 40, 80, 160, 320};
   // PQ
   std::size_t pq_m = 16;
@@ -83,7 +89,7 @@ struct Options {
       << "                     [--max-queries N] [--warmup 1] [--kernel best|scalar]\n"
       << "                     [--threads 1]\n"
       << "       hnsw only:    [--M 16] [--ef-construction 200] [--selection heuristic|simple]\n"
-      << "                     [--build-threads 1]\n"
+      << "                     [--build-threads 1] [--snapshot PATH]\n"
       << "                     [--ef-search 10,20,40,80,160,320]\n"
       << "       pq only:      [--pq-m 16] [--rerank 0,10,20,50,100,200,500]\n"
       << "       hnsw deletes: [--delete-fractions 0,0.25,0.5,0.9] [--compare-rebuild 1]\n";
@@ -149,6 +155,8 @@ Options parse_args(int argc, char** argv) {
       opt.m = parse_size(flag, value);
     } else if (flag == "--ef-construction") {
       opt.ef_construction = parse_size(flag, value);
+    } else if (flag == "--snapshot") {
+      opt.snapshot = value;
     } else if (flag == "--build-threads") {
       opt.build_threads = parse_size(flag, value);
       if (opt.build_threads == 0) {
@@ -523,23 +531,46 @@ int main(int argc, char** argv) {
   } else if (opt.index == "hnsw") {
     const auto selection = opt.selection == "simple" ? strata::NeighborSelection::kSimple
                                                      : strata::NeighborSelection::kHeuristic;
-    auto index = strata::HnswIndex::create(
-        dim, *metric, {.M = opt.m, .ef_construction = opt.ef_construction, .selection = selection});
-    if (!index) {
-      std::cerr << "error: " << index.error().message << "\n";
-      return 1;
+    const bool load = !opt.snapshot.empty() && std::filesystem::exists(opt.snapshot);
+    if (load) {
+      auto loaded = strata::HnswIndex::load(opt.snapshot);
+      if (!loaded) {
+        std::cerr << "error: " << loaded.error().message << "\n";
+        return 1;
+      }
+      if (loaded->size() != dataset->base.rows() || loaded->dim() != dim ||
+          loaded->params().M != opt.m || loaded->params().ef_construction != opt.ef_construction) {
+        std::cerr << "error: snapshot " << opt.snapshot << " does not match the dataset or M / "
+                  << "ef_construction; delete it to rebuild\n";
+        return 1;
+      }
+      hnsw.emplace(std::move(*loaded));
+    } else {
+      auto index = strata::HnswIndex::create(
+          dim, *metric,
+          {.M = opt.m, .ef_construction = opt.ef_construction, .selection = selection});
+      if (!index) {
+        std::cerr << "error: " << index.error().message << "\n";
+        return 1;
+      }
+      std::optional<strata::ThreadPool> build_pool;
+      if (opt.build_threads > 1) {
+        build_pool.emplace(opt.build_threads);
+      }
+      auto added = build_pool ? index->add_batch(dataset->base, *build_pool)
+                              : index->add_batch(dataset->base);
+      if (!added) {
+        std::cerr << "error: " << added.error().message << "\n";
+        return 1;
+      }
+      if (!opt.snapshot.empty()) {
+        if (auto saved = index->save(opt.snapshot); !saved) {
+          std::cerr << "error: " << saved.error().message << "\n";
+          return 1;
+        }
+      }
+      hnsw.emplace(std::move(*index));
     }
-    std::optional<strata::ThreadPool> build_pool;
-    if (opt.build_threads > 1) {
-      build_pool.emplace(opt.build_threads);
-    }
-    auto added =
-        build_pool ? index->add_batch(dataset->base, *build_pool) : index->add_batch(dataset->base);
-    if (!added) {
-      std::cerr << "error: " << added.error().message << "\n";
-      return 1;
-    }
-    hnsw.emplace(std::move(*index));
     graph_json = hnsw_graph_json(*hnsw);
     // build_threads is recorded only for parallel builds, so sequential records keep matching
     // earlier ones.
@@ -549,6 +580,9 @@ int main(int argc, char** argv) {
         opt.selection + "\"" +
         (opt.build_threads > 1 ? ", \"build_threads\": " + std::to_string(opt.build_threads)
                                : std::string()) +
+        (opt.snapshot.empty()
+             ? std::string()
+             : std::string(", \"snapshot\": ") + (load ? "\"loaded\"" : "\"built\"")) +
         "}";
     for (std::size_t ef : opt.ef_search) {
       sweep.push_back(

@@ -1,9 +1,50 @@
 # Strata
 
-Distributed vector search engine written from scratch in C++20 (HNSW, SIMD, product quantization,
-filtered search, sharding), with a retrieval-augmented generation layer on top.
+A vector search engine written from scratch in C++20 (HNSW, SIMD distance kernels, product
+quantization, filtered search, durable storage, gRPC sharding), with a retrieval-augmented
+generation layer on top that answers questions from documents with cited sources.
 
-> Status: Phases 0–6 done except the hand-written HNSW core and the parts that build on it. See `docs/devlog.md`. See [`buildplan.md`](buildplan.md) for the roadmap.
+> **Draft. The numbers below are development results** from a fanless MacBook Air (M2): recall
+> is final, while speed is indicative only, because the laptop throttles under load. They will be
+> replaced by x86 results from a dedicated AWS session ([`docs/aws-plan.md`](docs/aws-plan.md))
+> and ARM results from an Oracle Cloud machine. Every number comes from a script in `bench/` and
+> links to its generated table.
+
+## Results at a glance (development, M2)
+
+| | result | source |
+|---|---|---|
+| HNSW vs hnswlib / FAISS, SIFT1M, ef_search=40 | recall@10 **0.928** / 0.929 / 0.934 (same M=16, ef_construction=200); QPS 10.7k / 6.2k\* / 12.9k | [table](results/hnsw/hnsw_vs_reference.md) |
+| SIMD (NEON vs scalar), brute force on SIFT1M | **9.2x** | [tables](results/tables.md) |
+| Parallel HNSW build, 200k vectors | **3.2x** with 4 threads, same recall and graph statistics | [table](results/hnsw_build/build_scaling_sift1m-200k-q1000.md) |
+| Snapshot load vs rebuild, 200k vectors | **0.39 s** vs 25.6 s | [table](results/storage/hnsw_persist_sift1m-200k-q1000.md) |
+| Product quantization, SIFT10K, m=16 | **17.6x** smaller index; recall@10 0.996 re-ranking 50 candidates | [design §5](docs/design.md#5-compression-product-quantization) |
+| Filtered search: pre-filter vs graph crossover | **1.0–1.3%** selectivity (random to correlated filters); auto picks per filter, falls back on a budget | [table](results/hnsw_filter/filter_sift1m-200k-q1000.md) |
+| Sharded search, async fan-out vs thread per shard | median latency **−8% / −10%** (2 / 4 shards); throughput **+17% / +23%** with 8 clients | [table](results/server/coordinator_latency_sift1m-200k-q1000.md) |
+| Hybrid retrieval, HotpotQA (5.2M passages) | nDCG@10: BM25 0.633 (matches Anserini), dense 0.699, **RRF 0.730** | [RAG results](docs/rag-results.md) |
+| Multi-hop QA, HotpotQA subset | answer F1 0.517 → **0.669** with joint two-hop reranking (gold passages: 0.739) | [RAG results](docs/rag-results.md) |
+
+\* hnswlib has no NEON path, so on ARM it computes distances in scalar code; the x86 run is the
+fair speed comparison.
+
+![Recall vs QPS on SIFT1M (Mac development results)](results/plots/hnsw_vs_reference_sift1m.png)
+
+## How it fits together
+
+```
+                 Python: bindings (nanobind), RAG layer (BM25 + dense RRF, rerank, Claude answers)
+                                   │
+ client ──gRPC/TLS──► coordinator ─┼─► shard 0: Collection ─► HnswIndex | BruteForceIndex
+                      (scatter,    ├─► shard 1:   ├─ WAL (every write, CRC'd, LSN-ordered)
+                       merge top-k)└─► shard N:   └─ snapshot (atomic, versioned)
+                                                  distance kernels: scalar | NEON | AVX2
+```
+
+- **[`docs/design.md`](docs/design.md):** the design choices and trade-offs (graph parameters,
+  compression, filtering strategies, sharding, storage), with the numbers behind them.
+- **[`docs/explainers/hnsw.md`](docs/explainers/hnsw.md):** the HNSW core, function by function.
+- **[`docs/devlog.md`](docs/devlog.md):** decisions and what went wrong, in order.
+- **[`buildplan.md`](buildplan.md):** the roadmap.
 
 ## Build
 
@@ -31,6 +72,7 @@ ctest --preset debug
 | `tsan`    | Debug      | ThreadSanitizer; run before committing concurrency changes   |
 | `rosetta-avx2` | Debug | macOS only: x86_64 + AVX2 build run under Rosetta 2, to test AVX2 kernels on a Mac (correctness only, never timing) |
 | `linux-debug`, `linux-release`, `linux-asan`, `linux-tsan` | as above | Linux only: the same builds with GCC 13 (`/usr/bin/g++-13`) |
+| `linux-profile` | Release | Linux only: release flags plus `-g -fno-omit-frame-pointer`, for `perf` call graphs |
 
 Build output goes to `build/<preset>/`.
 
@@ -218,6 +260,7 @@ Python tooling uses [uv](https://docs.astral.sh/uv/) with Python 3.11.
 uv sync                        # builds the strata package too (needs VCPKG_ROOT)
 uv run python scripts/prepare_datasets.py siftsmall       # SIFT10K, ~5 MB
 uv run python scripts/prepare_datasets.py sift1m glove100 # ~500 MB and ~460 MB downloads
+uv run python scripts/prepare_datasets.py bigann10m      # BIGANN-10M: 1.3 GB download, 5.1 GB
 make test-python     # env -u PYTHONPATH PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest
 ```
 
@@ -252,7 +295,20 @@ uv run python bench/make_tables.py        # writes results/tables.md
 uv run python bench/plot_recall_qps.py    # writes results/plots/recall_qps_<dataset>.png
 uv run python bench/plot_pq_memory.py     # writes results/plots/pq_memory_<dataset>.png
 uv run python bench/plot_filter.py        # writes results/plots/filter_<dataset>.png
+
+# HNSW suites (each writes raw JSON plus a generated table; see each script's docstring)
+uv run python bench/run_hnsw_curves.py --datasets siftsmall sift1m   # vs hnswlib and FAISS
+uv run python bench/run_hnsw_build_scaling.py --threads 1,2,4        # parallel build
+uv run python bench/run_search_scaling.py --threads 1,2,4,8          # search thread scaling
+uv run python bench/run_hnsw_filter_bench.py                         # filtered-search crossover
+uv run python bench/run_hnsw_delete_bench.py                         # recall under deletion
+uv run python bench/run_hnsw_persist_bench.py                        # snapshot save/load
+
+# Server (server-release preset)
+uv run python bench/run_coordinator_bench.py --shards 2 4            # async vs thread fan-out
+uv run python bench/run_sharding_bench.py --help                     # multi-machine (aws/)
 ```
 
-HNSW is compiled in only when `src/index/hnsw.cpp` exists; until then `--index hnsw` is
-unavailable and `tests/hnsw_test.cpp` (the HNSW spec) is not built.
+The final x86 runs, the 10M run, thread scaling to 16 cores, and multi-machine sharding run in
+one AWS session: plan and costs in [`docs/aws-plan.md`](docs/aws-plan.md), runbook in
+[`aws/README.md`](aws/README.md).

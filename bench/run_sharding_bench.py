@@ -1,0 +1,219 @@
+"""Multi-machine sharding: throughput scaling and tail latency, measured from a separate client.
+
+    # on the client machine, once per shard count (aws/scripts/run_sharding.sh drives this)
+    uv run python bench/run_sharding_bench.py measure --label aws --shards 2 \\
+        --target 10.0.1.20:50050 --dataset sift1m --ids /tmp/ids-2.u32 \\
+        --ca certs/ca.pem --token-file certs/token --cluster-info cluster.json
+    uv run python bench/run_sharding_bench.py report --label aws
+
+measure runs the load client (server/bench/load_client.cpp) against the coordinator:
+- closed loop at each --concurrency, --runs times: throughput (capacity) and latency at full load;
+- open loop at each --load-fraction of the measured capacity: latency at a fixed arrival rate,
+  measured from each query's due time, so tail latency is not understated by coordinated omission.
+Raw output goes to results/server/sharding/<label>/n<shards>.json with the client's hardware
+and --cluster-info (instance types and roles of the machines, recorded by the orchestrator).
+
+report writes results/server/sharding_<label>.md: capacity and scaling efficiency vs. one shard,
+and latency percentiles at each load fraction, per shard count.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import statistics
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+from benchmeta import REPO_ROOT, hardware_note, metadata
+from records import summarize_fields
+
+OUT = REPO_ROOT / "results" / "server"
+
+
+def load_client(args: argparse.Namespace, *extra: str) -> dict[str, Any]:
+    cmd = [
+        str(args.load_binary), "query", "--target", args.target,
+        "--data", str(REPO_ROOT / "data" / args.dataset), "--ids", str(args.ids),
+        "--queries", str(args.queries), "--warmup", str(args.warmup),
+        "--k", str(args.k), "--ef-search", str(args.ef_search), *extra,
+    ]  # fmt: skip
+    if args.ca:
+        cmd += ["--ca", str(args.ca)]
+    if args.token_file:
+        cmd += ["--token-file", str(args.token_file)]
+    print("$", " ".join(cmd), file=sys.stderr, flush=True)
+    result: dict[str, Any] = json.loads(
+        subprocess.run(cmd, stdout=subprocess.PIPE, text=True, check=True).stdout
+    )
+    if result["errors"]:
+        print(f"warning: {result['errors']} failed queries", file=sys.stderr)
+    if result["send_lateness_p99_us"] > 1000:
+        print(
+            f"warning: the client sent late (p99 {result['send_lateness_p99_us']:.0f} us): the "
+            "client machine is overloaded, so this run's latency is not the server's",
+            file=sys.stderr,
+        )
+    return result
+
+
+def measure(args: argparse.Namespace) -> int:
+    closed: dict[str, list[dict[str, Any]]] = {}
+    for c in args.concurrency:
+        closed[str(c)] = [load_client(args, "--concurrency", str(c)) for _ in range(args.runs)]
+        qps = statistics.fmean(r["qps"] for r in closed[str(c)])
+        print(f"{args.shards} shards, concurrency {c}: {qps:.0f} QPS", file=sys.stderr)
+    capacity = max(statistics.fmean(r["qps"] for r in runs) for runs in closed.values())
+
+    open_loop: dict[str, list[dict[str, Any]]] = {}
+    for fraction in args.load_fractions:
+        rate = capacity * fraction
+        open_loop[str(fraction)] = [
+            load_client(args, "--rate", f"{rate:.1f}") for _ in range(args.runs)
+        ]
+        p99 = statistics.fmean(r["p99_us"] for r in open_loop[str(fraction)])
+        print(f"{args.shards} shards, {fraction:.0%} load: p99 {p99:.0f} us", file=sys.stderr)
+
+    cluster = json.loads(args.cluster_info.read_text()) if args.cluster_info else None
+    record = {
+        **metadata(),
+        "shards": args.shards,
+        "dataset": args.dataset,
+        "cluster": cluster,
+        "capacity_qps": capacity,
+        "closed_loop": closed,
+        "open_loop": open_loop,
+        "params": {
+            "queries": args.queries,
+            "warmup": args.warmup,
+            "k": args.k,
+            "ef_search": args.ef_search,
+            "runs": args.runs,
+        },
+    }
+    out = OUT / "sharding" / args.label / f"n{args.shards}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(record, indent=2) + "\n")
+    print(f"saved {out.relative_to(REPO_ROOT)}")
+    return 0
+
+
+def report(args: argparse.Namespace) -> int:
+    records = sorted(
+        (json.loads(p.read_text()) for p in (OUT / "sharding" / args.label).glob("n*.json")),
+        key=lambda r: r["shards"],
+    )
+    if not records:
+        raise SystemExit(f"no records under results/server/sharding/{args.label}")
+    first = records[0]
+
+    def cell(s: dict[str, float], digits: int = 0) -> str:
+        return f"{s['mean']:.{digits}f} ± {s['stdev']:.{digits}f}"
+
+    cluster = first.get("cluster") or {}
+    lines = [
+        f"# Sharding scaling and tail latency ({first['dataset']}, {args.label})",
+        "",
+        "Generated by `bench/run_sharding_bench.py`. Do not edit by hand.",
+        "",
+        f"- **Client:** {hardware_note(first['hardware'])}",
+        f"- **Cluster:** {cluster.get('description', 'not recorded')}",
+        f"- Commit: {first['git']['commit'][:10]}{' (dirty)' if first['git']['dirty'] else ''}",
+        f"- k={first['params']['k']}, ef_search={first['params']['ef_search']}; "
+        f"{first['params']['queries']} timed queries per run after "
+        f"{first['params']['warmup']} warm-up, {first['params']['runs']} runs per point, "
+        "mean ± stdev over runs.",
+        "- Capacity is the best closed-loop throughput over the concurrencies tried. Open-loop "
+        "latency is measured from each query's due time at a fixed fraction of that shard "
+        "count's capacity, so a slow query delays the ones behind it (no coordinated omission). "
+        '"Client late" is how far behind schedule the client sent (should be ~0; if not, the '
+        "client machine, not the server, limited that row).",
+        "",
+        "## Throughput",
+        "",
+        "| shards | recall@k | capacity (QPS) | speedup vs 1 | efficiency |",
+        "|---:|---:|---:|---:|---:|",
+    ]
+    base_capacity = first["capacity_qps"] if first["shards"] == 1 else None
+    for r in records:
+        recall = statistics.fmean(
+            run["recall"] for runs in r["closed_loop"].values() for run in runs
+        )
+        best = max(
+            r["closed_loop"].values(), key=lambda runs: statistics.fmean(x["qps"] for x in runs)
+        )
+        qps = summarize_fields(best, ["qps"])["qps"]
+        if base_capacity:
+            speedup = r["capacity_qps"] / base_capacity
+            scale = f"{speedup:.2f}x | {speedup / r['shards']:.0%}"
+        else:
+            scale = "| "
+        lines.append(f"| {r['shards']} | {recall:.4f} | {cell(qps)} | {scale} |")
+
+    lines += [
+        "",
+        "## Latency (µs)",
+        "",
+        "| shards | load | p50 | p90 | p99 | p99.9 | achieved QPS | client late, p99 |",
+        "|---:|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    fields = ["p50_us", "p90_us", "p99_us", "p999_us", "qps", "send_lateness_p99_us"]
+    for r in records:
+        for c, runs in r["closed_loop"].items():
+            s = summarize_fields(runs, fields)
+            lines.append(
+                f"| {r['shards']} | closed, {c} in flight | {cell(s['p50_us'])} "
+                f"| {cell(s['p90_us'])} | {cell(s['p99_us'])} | {cell(s['p999_us'])} "
+                f"| {cell(s['qps'])} | |"
+            )
+        for fraction, runs in r["open_loop"].items():
+            s = summarize_fields(runs, fields)
+            lines.append(
+                f"| {r['shards']} | open, {float(fraction):.0%} of capacity "
+                f"| {cell(s['p50_us'])} | {cell(s['p90_us'])} | {cell(s['p99_us'])} "
+                f"| {cell(s['p999_us'])} | {cell(s['qps'])} "
+                f"| {cell(s['send_lateness_p99_us'], 1)} |"
+            )
+    lines.append("")
+    table = OUT / f"sharding_{args.label}.md"
+    table.write_text("\n".join(lines))
+    print(f"wrote {table.relative_to(REPO_ROOT)}")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    sub = parser.add_subparsers(dest="command", required=True)
+    m = sub.add_parser("measure")
+    m.add_argument("--label", required=True)
+    m.add_argument("--shards", type=int, required=True)
+    m.add_argument("--target", required=True, help="coordinator host:port")
+    m.add_argument("--dataset", default="sift1m")
+    m.add_argument("--ids", type=Path, required=True, help="id file from `strata_load insert`")
+    m.add_argument("--ca", type=Path)
+    m.add_argument("--token-file", type=Path)
+    m.add_argument("--concurrency", type=lambda s: [int(x) for x in s.split(",")],
+                   default=[1, 8, 32, 64])  # fmt: skip
+    m.add_argument("--load-fractions", type=lambda s: [float(x) for x in s.split(",")],
+                   default=[0.25, 0.5, 0.75])  # fmt: skip
+    m.add_argument("--queries", type=int, default=20000)
+    m.add_argument("--warmup", type=int, default=2000)
+    m.add_argument("--k", type=int, default=10)
+    m.add_argument("--ef-search", type=int, default=64)
+    m.add_argument("--runs", type=int, default=3)
+    m.add_argument("--cluster-info", type=Path, help="JSON describing the machines")
+    m.add_argument(
+        "--load-binary",
+        type=Path,
+        default=REPO_ROOT / "build" / "linux-server-release" / "server" / "strata_load",
+    )
+    r = sub.add_parser("report")
+    r.add_argument("--label", required=True)
+    args = parser.parse_args(argv)
+    return measure(args) if args.command == "measure" else report(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

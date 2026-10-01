@@ -99,9 +99,12 @@ if(STRATA_BUILD_TESTS)
 endif()
 
 # --- Benchmarks ----------------------------------------------------------------------------------
-# Coordinator search latency (async fan-out vs. thread per shard); driven by
-# bench/run_coordinator_bench.py, which expects it in a release build.
+# Coordinator search latency (async fan-out vs. thread per shard), driven by
+# bench/run_coordinator_bench.py; and the load client for multi-machine runs. Release builds.
 if(STRATA_BUILD_BENCHMARKS)
   add_executable(strata_coordinator_bench bench/coordinator_bench.cpp)
   target_link_libraries(strata_coordinator_bench PRIVATE strata_server strata_options)
+  # Standalone load client for multi-machine runs (aws/scripts/run_sharding.sh).
+  add_executable(strata_load bench/load_client.cpp)
+  target_link_libraries(strata_load PRIVATE strata_server strata_options)
 endif()

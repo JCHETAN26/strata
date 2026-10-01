@@ -54,7 +54,66 @@ def hardware_info() -> dict[str, Any]:
         info["cpu_flags_avx2"] = " avx2 " in cpuinfo
         governor = Path("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
         info["cpu_governor"] = governor.read_text().strip() if governor.exists() else None
+        info["kernel"] = platform.release()
+        info["topology"] = _lscpu_topology()
+        info["ec2"] = ec2_info()
     return info
+
+
+def _lscpu_topology() -> dict[str, Any] | None:
+    """Sockets, physical cores, and threads per core, from `lscpu`: on a cloud VM the logical CPU
+    count includes SMT siblings, which matters for thread-scaling results."""
+    out = _run(["lscpu"])
+    if not out:
+        return None
+    fields = dict(line.split(":", 1) for line in out.splitlines() if ":" in line)
+    fields = {k.strip(): v.strip() for k, v in fields.items()}
+
+    def number(key: str) -> int | None:
+        value = fields.get(key, "")
+        return int(value) if value.isdigit() else None
+
+    sockets = number("Socket(s)")
+    cores = number("Core(s) per socket")
+    return {
+        "sockets": sockets,
+        "cores_per_socket": cores,
+        "threads_per_core": number("Thread(s) per core"),
+        "physical_cores": sockets * cores if sockets and cores else None,
+        "l3_cache": fields.get("L3 cache"),
+        "flags_avx512f": " avx512f " in f" {fields.get('Flags', '')} ",
+    }
+
+
+def ec2_info(timeout: float = 0.5) -> dict[str, str] | None:
+    """Instance type, AZ, and AMI from the EC2 instance metadata service (IMDSv2); None when not
+    on EC2. The instance type is part of every AWS result's record."""
+    import urllib.request
+
+    base = "http://169.254.169.254/latest"
+    try:
+        token_request = urllib.request.Request(
+            f"{base}/api/token",
+            method="PUT",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "60"},
+        )
+        with urllib.request.urlopen(token_request, timeout=timeout) as response:
+            token = response.read().decode()
+        info = {}
+        for key, path in [
+            ("instance_type", "meta-data/instance-type"),
+            ("availability_zone", "meta-data/placement/availability-zone"),
+            ("ami_id", "meta-data/ami-id"),
+            ("instance_id", "meta-data/instance-id"),
+        ]:
+            request = urllib.request.Request(
+                f"{base}/{path}", headers={"X-aws-ec2-metadata-token": token}
+            )
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                info[key] = response.read().decode()
+        return info
+    except OSError:
+        return None
 
 
 # Run in a separate interpreter: importing torch here would load its bundled OpenMP runtime into
@@ -204,6 +263,16 @@ def hardware_note(hardware: dict[str, Any]) -> str:
         return (
             f"{cpu} (fanless development machine): recall is valid; QPS is indicative only. "
             "Final speed comparisons run on dedicated hardware (Phase 9)."
+        )
+    ec2 = hardware.get("ec2")
+    if ec2:
+        topology = hardware.get("topology") or {}
+        cores = topology.get("physical_cores")
+        smt = topology.get("threads_per_core")
+        shape = f", {cores} physical cores x {smt} threads" if cores and smt else ""
+        return (
+            f"AWS {ec2['instance_type']} ({cpu}{shape}, {hardware.get('memory_gib')} GiB, "
+            f"{ec2['availability_zone']}), kernel {hardware.get('kernel')}"
         )
     return cpu
 

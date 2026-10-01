@@ -5,7 +5,9 @@
     uv run python bench/run_reference_bench.py --dataset siftsmall --library faiss --index flat
 
 Methodology, matched to the Strata harness where possible:
-- Build and search both use one thread (hnswlib set_num_threads(1), faiss.omp_set_num_threads(1)).
+- Search uses one thread (hnswlib set_num_threads(1), faiss.omp_set_num_threads(1)). So does the
+  build, unless --build-threads N (for 10M-vector sets, where single-threaded builds take hours);
+  then build_params records build_threads, as the Strata harness does.
 - QPS comes from one batched call over all queries, so Python call overhead is excluded.
 - Latency percentiles come from per-query calls and INCLUDE Python call overhead (a few µs); they
   overstate library latency for very fast queries. Compare QPS, not latency, across languages.
@@ -40,21 +42,26 @@ class Adapter:
 
 
 class HnswlibAdapter(Adapter):
-    def __init__(self, metric: str, dim: int, m: int, ef_construction: int) -> None:
+    def __init__(
+        self, metric: str, dim: int, m: int, ef_construction: int, build_threads: int = 1
+    ) -> None:
         import hnswlib
 
         space = {"l2": "l2", "angular": "cosine", "cosine": "cosine", "ip": "ip"}[metric]
         self.index = hnswlib.Index(space=space, dim=dim)
-        self.m, self.ef_construction = m, ef_construction
+        self.m, self.ef_construction, self.build_threads = m, ef_construction, build_threads
         self.build_params = {"M": m, "ef_construction": ef_construction}
+        if build_threads > 1:
+            self.build_params["build_threads"] = build_threads
         self.sweep_name = "ef_search"
 
     def build(self, base: np.ndarray) -> None:
         self.index.init_index(
             max_elements=len(base), M=self.m, ef_construction=self.ef_construction, random_seed=42
         )
-        self.index.set_num_threads(1)
+        self.index.set_num_threads(self.build_threads)
         self.index.add_items(base)
+        self.index.set_num_threads(1)  # search is single-threaded
 
     def set_search_param(self, value: int) -> None:
         self.index.set_ef(value)
@@ -65,9 +72,18 @@ class HnswlibAdapter(Adapter):
 
 
 class FaissAdapter(Adapter):
-    def __init__(self, kind: str, metric: str, dim: int, m: int, ef_construction: int) -> None:
+    def __init__(
+        self,
+        kind: str,
+        metric: str,
+        dim: int,
+        m: int,
+        ef_construction: int,
+        build_threads: int = 1,
+    ) -> None:
         import faiss
 
+        self.build_threads = build_threads
         faiss.omp_set_num_threads(1)
         self.normalize = metric in ("angular", "cosine")
         faiss_metric = faiss.METRIC_L2 if metric == "l2" else faiss.METRIC_INNER_PRODUCT
@@ -75,6 +91,8 @@ class FaissAdapter(Adapter):
             self.index = faiss.IndexHNSWFlat(dim, m, faiss_metric)
             self.index.hnsw.efConstruction = ef_construction
             self.build_params = {"M": m, "ef_construction": ef_construction}
+            if build_threads > 1:
+                self.build_params["build_threads"] = build_threads
             self.sweep_name = "ef_search"
         else:
             self.index = faiss.IndexFlat(dim, faiss_metric)
@@ -89,7 +107,11 @@ class FaissAdapter(Adapter):
         return x
 
     def build(self, base: np.ndarray) -> None:
+        import faiss
+
+        faiss.omp_set_num_threads(self.build_threads)
         self.index.add(self._prep(base))
+        faiss.omp_set_num_threads(1)  # search is single-threaded
 
     def set_search_param(self, value: int) -> None:
         self.index.hnsw.efSearch = value
@@ -109,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-queries", type=int, default=0)
     parser.add_argument("--M", type=int, default=16)
     parser.add_argument("--ef-construction", type=int, default=200)
+    parser.add_argument("--build-threads", type=int, default=1, help="threads for the build only")
     parser.add_argument("--ef-search", default="10,20,40,80,160,320")
     args = parser.parse_args(argv)
     if args.library == "hnswlib" and args.index != "hnsw":
@@ -127,9 +150,11 @@ def main(argv: list[str] | None = None) -> int:
 
     adapter: Adapter
     if args.library == "hnswlib":
-        adapter = HnswlibAdapter(metric, dim, args.M, args.ef_construction)
+        adapter = HnswlibAdapter(metric, dim, args.M, args.ef_construction, args.build_threads)
     else:
-        adapter = FaissAdapter(args.index, metric, dim, args.M, args.ef_construction)
+        adapter = FaissAdapter(
+            args.index, metric, dim, args.M, args.ef_construction, args.build_threads
+        )
 
     t0 = time.perf_counter()
     adapter.build(base)

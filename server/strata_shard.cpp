@@ -2,7 +2,7 @@
 //
 //   strata_shard --dir <path> --dim <n> [--metric l2|inner_product|cosine]
 //                [--index flat|hnsw] [--port 50051]
-//                [--hnsw-m 16] [--hnsw-ef-construction 200]
+//                [--hnsw-m 16] [--hnsw-ef-construction 200] [--sync fsync|none]
 //                [--listen 127.0.0.1] [--tls-cert <pem> --tls-key <pem>] [--token-file <path>]
 //                [--insecure] [--max-threads <n>]
 //
@@ -10,7 +10,9 @@
 // exposing it (TLS and a shared token, or an explicit --insecure).
 //
 // The collection is durable in --dir: it recovers from the snapshot and WAL on start, so a shard
-// can be killed and restarted without losing acknowledged writes.
+// can be killed and restarted without losing acknowledged writes. --sync none skips the fsync
+// after each insert (still durable against a process crash, not against power loss); bulk loads
+// for benchmarks use it, since one fsync per vector caps ingest at a few hundred per second.
 
 #include <grpcpp/grpcpp.h>
 
@@ -43,6 +45,7 @@ struct Args {
   strata::server::ListenConfig listen{.port = 50051};
   std::size_t hnsw_m = 16;
   std::size_t hnsw_ef_construction = 200;
+  strata::SyncMode sync = strata::SyncMode::kFsync;
 };
 
 std::optional<Args> parse_args(int argc, char** argv) {
@@ -84,6 +87,16 @@ std::optional<Args> parse_args(int argc, char** argv) {
         args.hnsw_m = static_cast<std::size_t>(std::stoul(next()));
       } else if (flag == "--hnsw-ef-construction") {
         args.hnsw_ef_construction = static_cast<std::size_t>(std::stoul(next()));
+      } else if (flag == "--sync") {
+        const std::string v = next();
+        if (v == "fsync") {
+          args.sync = strata::SyncMode::kFsync;
+        } else if (v == "none") {
+          args.sync = strata::SyncMode::kNone;
+        } else {
+          std::cerr << "unknown sync mode: " << v << "\n";
+          return std::nullopt;
+        }
       } else {
         std::cerr << "unknown flag: " << flag << "\n";
         return std::nullopt;
@@ -95,7 +108,8 @@ std::optional<Args> parse_args(int argc, char** argv) {
   }
   if (args.dir.empty() || args.dim == 0) {
     std::cerr << "usage: strata_shard --dir <path> --dim <n> [--metric l2|inner_product|cosine] "
-                 "[--index flat|hnsw] [--port 50051] [--hnsw-m 16] [--hnsw-ef-construction 200]\n"
+                 "[--index flat|hnsw] [--port 50051] [--hnsw-m 16] [--hnsw-ef-construction 200] "
+                 "[--sync fsync|none]\n"
               << strata::server::kListenUsage;
     return std::nullopt;
   }
@@ -120,6 +134,7 @@ int main(int argc, char** argv) {
   options.index = args.index;
   options.hnsw.M = args.hnsw_m;
   options.hnsw.ef_construction = args.hnsw_ef_construction;
+  options.sync = args.sync;
 
   auto collection = strata::Collection::open(args.dir, args.dim, args.metric, options);
   if (!collection) {

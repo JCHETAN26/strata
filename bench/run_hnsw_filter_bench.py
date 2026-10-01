@@ -66,6 +66,7 @@ def run_bench(args: argparse.Namespace, kind: str, phase: str, out: Path, thresh
         "--kind", kind, "--phase", phase, "--selectivities", args.selectivities,
         "--ef-search", args.ef_search, "--runs", str(args.runs),
         "--max-queries", str(args.max_queries), "--threshold", str(threshold),
+        "--build-threads", str(args.build_threads),
     ]  # fmt: skip
     print("$", " ".join(cmd), file=sys.stderr, flush=True)
     raw = json.loads(subprocess.run(cmd, stdout=subprocess.PIPE, text=True, check=True).stdout)
@@ -347,6 +348,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cooldown", type=int, default=60)
     parser.add_argument("--build-dir", type=Path, default=REPO_ROOT / "build" / "release")
     parser.add_argument("--report-only", action="store_true")
+    parser.add_argument(
+        "--build-threads", type=int, default=4, help="threads for the one-time index build"
+    )
     parser.add_argument("--label", help="re-measurement: separate outputs, comparison report")
     parser.add_argument("--threshold", type=float, help="fixed auto threshold (needs --label)")
     args = parser.parse_args(argv)
