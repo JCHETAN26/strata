@@ -44,8 +44,16 @@ commit them.
 
 - Every long step runs in tmux on the instance. If the laptop disconnects, nothing stops: rerun
   the same script to reattach to the progress polling.
-- To watch a step directly:
-  `ssh -i aws/.ssh/strata-bench ubuntu@<ip> tmux attach -t <part>` (detach with `Ctrl-b d`).
+- To watch a step directly (detach with `Ctrl-b d`; the step keeps running):
+  ```sh
+  IP=$(terraform -chdir=aws/terraform output -raw main_public_ip)
+  ssh -t -i aws/.ssh/strata-bench -o UserKnownHostsFile=aws/.ssh/known_hosts ubuntu@$IP tmux attach -t <part>
+  ```
+- Status of every step (0 = finished successfully, a missing file = not finished yet):
+  ```sh
+  ssh -i aws/.ssh/strata-bench -o UserKnownHostsFile=aws/.ssh/known_hosts ubuntu@$IP \
+    'for p in setup ann 10m threads filter perf; do printf "%-8s %s\n" $p "$(cat ~/logs/$p.exit 2>/dev/null || echo running/pending)"; done'
+  ```
 - `aws/scripts/collect.sh` copies results back at any point.
 - Each instance terminates itself 18 h after boot (`max_lifetime_hours`) as a safety net.
 
