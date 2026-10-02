@@ -25,6 +25,14 @@ or root identity.
   - into the tagged subnet, security group, key pair, and placement group;
   - with gp3 root volumes of at most 150 GB.
 - **Modify, delete, terminate:** only resources tagged `Project=strata-bench`.
+- **`ModifyInstanceAttribute`, for exactly two things Terraform does**, on tagged instances only
+  (scoped with `ec2:Attribute/<Name>`, which AWS populates with the requested value):
+  - after launch, set the shutdown behavior to `terminate`. Never `stop`, which keeps the
+    auto-termination safety net.
+  - before terminating, turn termination protection **off**. Never on, so nothing can block
+    teardown.
+
+  Instance type, user data, security groups, and other attributes stay denied.
 - **Tags:** tagging is allowed at creation, and retagging only on tagged resources. The
   `Project` tag itself can never be removed, so nothing can escape these conditions.
 - **Nothing else:** no IAM, S3, or other services, and no other regions.
@@ -41,15 +49,28 @@ wildcards, so the file holds nothing account-specific.
   instance types, spot, other regions, untagged resources, another project's instances or key
   pair, removing the `Project` tag, IAM, and S3. Rerun it after any edit.
 
-**The simulator only evaluates the context you give it.** The first apply showed what that
+**Run `dryrun_launch.sh` before every apply.** The simulator only evaluates the context you give
+it. The first apply showed what that
 misses: I had modeled the image's `ec2:Owner` as Canonical's account ID, and the simulator agreed
-with my model. **`dryrun_launch.sh` checks the real thing.** It asks EC2 (`--dry-run`, nothing
-launched) whether this user may launch the main instance exactly as Terraform would, and decodes
-any refusal into the condition values AWS evaluated. Run it after every policy change, before an
-apply:
+with my model. **`dryrun_launch.sh` checks the real thing**, for the whole session, through
+`--dry-run` (nothing is created, changed, or deleted). It covers:
+
+- **A.** The launches: main, shard, client, and the placement group. Also refusals for a type
+  outside the plan, spot, and a 500 GB root volume.
+- **B.** Everything Terraform does after launch: the attribute changes, and the instance and
+  root-volume tags. Also refusals for shutdown `stop`, termination protection on, user data, and
+  removing the `Project` tag.
+- **C.** Every read Terraform and the scripts make.
+- **D.** The whole teardown: termination protection off, terminate, and every network delete.
+- **E.** Scope: another project's key pair, an untagged VPC, another region.
+
+The call list comes from the pinned provider's source (v5.100.0, `ec2_instance.go`; see the
+script's header) and must be re-derived when the provider version changes. Any unexpected result
+is decoded into the condition values AWS evaluated. Sections B and D need an instance in
+Terraform's state, so run it after a launch, before destroying.
 
 ```sh
-AWS_PROFILE=strata aws/iam/dryrun_launch.sh      # needs the network applied; ends "OK: ... would succeed"
+AWS_PROFILE=strata aws/iam/dryrun_launch.sh      # needs the network applied; must end "OK: every checked call ..."
 ```
 
 Also not checkable without running as the user: whether every API call the Terraform AWS provider

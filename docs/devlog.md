@@ -1914,3 +1914,32 @@ simply the first resource AWS evaluated.
 
 **Leftovers:** the 7 network resources are in Terraform's state and free. The rerun reuses them,
 and teardown removes them. No cleanup is needed before rerunning.
+
+## 2026-10-02: Second apply: launched, then refused ModifyInstanceAttribute; whole-session dry run
+
+**What happened:** with the AMI fix on the user, the apply launched i-0d5e7907f0932b3a0
+(c7i.8xlarge), then failed: `ec2:ModifyInstanceAttribute` was not allowed. Terraform marked the
+instance tainted.
+
+**Why:** in the pinned AWS provider (v5.100.0, `internal/service/ec2/ec2_instance.go`), create
+runs the update function on the new instance. Its `instance_initiated_shutdown_behavior` block has
+no `IsNewResource` guard, so it calls `ModifyInstanceAttribute` even though RunInstances had
+already set `terminate` (the live instance confirms it). Reading the code also showed a worse gap:
+**delete always calls `ModifyInstanceAttribute(DisableApiTermination=false)` before terminating**.
+So `terraform destroy`, and with it `teardown.sh`, would also have failed, leaving a billing
+instance Terraform couldn't remove.
+
+**Fix:** decoded dry runs against the live instance showed AWS populates
+`ec2:Attribute/<Name>` with the requested value. Two statements allow `ModifyInstanceAttribute` on
+tagged instances only for shutdown behavior = `terminate` and termination protection = `false`.
+Stop, termination protection on, instance type, and user data stay denied.
+- Access Analyzer reports no findings.
+- `simulate_policy.sh` passes 46 of 46.
+- The policy is 5,595 of 6,144 bytes.
+
+**`dryrun_launch.sh` now checks the whole session** through `--dry-run`, against real resources:
+launches, post-launch calls, all reads, the whole teardown, and calls that must be refused. The
+call list comes from the provider source. Run under the policy still attached to the user, it
+gave 54 as expected and exactly the 2 problems the new statements fix, one on the create path
+and one on the teardown path. The fix itself is proven once the user's policy is updated and the
+script rerun while the instance still exists.

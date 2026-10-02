@@ -80,6 +80,17 @@ case_ implicitDeny "launch into another subnet"               ec2:RunInstances "
 case_ allowed      "terminate a strata-bench instance"        ec2:TerminateInstances "$A:instance/i-1" $R $RT
 case_ implicitDeny "terminate another project's instance"     ec2:TerminateInstances "$A:instance/i-2" $R aws:ResourceTag/Project=kafka
 case_ implicitDeny "stop an instance (not needed)"            ec2:StopInstances "$A:instance/i-1" $R $RT
+# ModifyInstanceAttribute: contexts as AWS evaluated them for a dry run on a live instance
+# (2026-10-02). Terraform sets the shutdown behavior after launch and turns termination
+# protection off before terminating; nothing else.
+MIA=ec2:ModifyInstanceAttribute
+case_ allowed      "set shutdown behavior to terminate (create)"  $MIA "$A:instance/i-1" $R $RT ec2:Attribute=InstanceInitiatedShutdownBehavior ec2:Attribute/InstanceInitiatedShutdownBehavior=terminate
+case_ implicitDeny "set shutdown behavior to stop"                $MIA "$A:instance/i-1" $R $RT ec2:Attribute=InstanceInitiatedShutdownBehavior ec2:Attribute/InstanceInitiatedShutdownBehavior=stop
+case_ allowed      "turn termination protection off (destroy)"    $MIA "$A:instance/i-1" $R $RT ec2:Attribute=DisableApiTermination ec2:Attribute/DisableApiTermination=false
+case_ implicitDeny "turn termination protection on"               $MIA "$A:instance/i-1" $R $RT ec2:Attribute=DisableApiTermination ec2:Attribute/DisableApiTermination=true
+case_ implicitDeny "change instance type"                         $MIA "$A:instance/i-1" $R $RT ec2:Attribute=InstanceType ec2:Attribute/InstanceType=p5.48xlarge
+case_ implicitDeny "change user data"                             $MIA "$A:instance/i-1" $R $RT ec2:Attribute=UserData
+case_ implicitDeny "set shutdown behavior on an untagged instance" $MIA "$A:instance/i-9" $R aws:ResourceTag/Project=other ec2:Attribute/InstanceInitiatedShutdownBehavior=terminate
 case_ allowed      "delete the bench VPC"                     ec2:DeleteVpc "$A:vpc/vpc-1" $R $RT
 case_ implicitDeny "delete an untagged VPC"                   ec2:DeleteVpc "$A:vpc/vpc-2" $R
 case_ implicitDeny "delete another project's key pair"        ec2:DeleteKeyPair "$A:key-pair/kafka" $R
