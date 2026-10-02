@@ -23,3 +23,22 @@ case $stage in
     ;;
 esac
 log "collected results from the $stage stage into results/ (logs: results/aws/logs/)"
+
+# Guard: nothing secret may reach results/, which gets committed to a public repo. The instances
+# have no IAM role (so no AWS credentials exist on them), and no script writes keys or the
+# cluster token into results; this check makes that a verified fact rather than an assumption.
+# A hit is moved to aws/.quarantine/ (gitignored) and the script fails.
+patterns='BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|aws_secret_access_key|aws_session_token|sk-ant-[A-Za-z0-9_-]{10,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|X-aws-ec2-metadata-token: [A-Za-z0-9_=-]{20,}'
+hits=$(grep -rIlE "$patterns" "$REPO_ROOT/results" 2>/dev/null || true)
+if [[ -f "$AWS_DIR/.certs/token" ]]; then
+  hits+=$'\n'$(grep -rIlF "$(tr -d '[:space:]' < "$AWS_DIR/.certs/token")" "$REPO_ROOT/results" 2>/dev/null || true)
+fi
+hits=$(printf '%s\n' "$hits" | sed '/^$/d' | sort -u)
+if [[ -n "$hits" ]]; then
+  mkdir -p "$AWS_DIR/.quarantine"
+  while read -r f; do
+    mv "$f" "$AWS_DIR/.quarantine/$(echo "${f#"$REPO_ROOT"/}" | tr / _)"
+    log "SECRET-LIKE CONTENT: moved ${f#"$REPO_ROOT"/} to aws/.quarantine/"
+  done <<< "$hits"
+  die "collected files looked like they held credentials (moved out of results/); inspect before committing anything"
+fi

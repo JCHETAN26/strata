@@ -1,6 +1,7 @@
 # AWS benchmark session: plan
 
-Status: **prepared, not run.** Nothing has been created in AWS. Prices and quotas below were read
+Status: **prepared, not run.** Nothing has been created in AWS. The session runs as a dedicated
+least-privilege IAM user ([`aws/iam/`](../aws/iam/README.md)). Prices and quotas below were read
 from the account on 2026-10-01 (AWS Pricing API, 7-day spot price history, Service Quotas); the
 Terraform was validated and planned (no apply). The runbook is [`aws/README.md`](../aws/README.md).
 
@@ -41,8 +42,8 @@ then to each machine), so it needs no compiler and starts in minutes.
 
 - **vCPU quota: 32** (on-demand and spot, standard families, in both us-east-1 and us-east-2).
   The main instance alone uses 32, so the cluster cannot run at the same time. `up.sh` checks
-  the quota and refuses a stage that would exceed it. *Optional:* requesting 64 (free; approval
-  can take a day) would allow the cluster to use c7i.2xlarge shards, which have more cores per shard.
+  the quota and refuses a stage that would exceed it. **Decided: no quota increase**; the two
+  stages run one after the other.
 - No existing instances, volumes, or non-default VPCs in either region, so the leftover check
   (`check_clean.sh`) has a clean baseline. One unrelated key pair exists (another project's).
 - The GitHub repository is public, so the instances clone it at the pinned commit without
@@ -71,7 +72,7 @@ then to each machine), so it needs no compiler and starts in minutes.
 - **Region us-east-2 (Ohio):** the same on-demand price as us-east-1, cheaper and steadier spot,
   and both types are offered in every AZ. One AZ (us-east-2a) for everything; the cluster is in a
   *cluster placement group*, so latency measures Strata, not cross-rack distance.
-- **On-demand, not spot (recommended).** Spot would save about $14 of a ~$20 session. An
+- **On-demand, not spot (decided).** Spot would save about $14 of a ~$20 session. An
   interruption during the 10M builds or the filter sweep would lose up to an hour of work, plus
   setup again. It would also split one part's runs across two machines, which spoils the variance
   comparisons. `market = "spot"` is a one-variable switch if you prefer it.
@@ -122,6 +123,21 @@ Suggested, but not created by these scripts: an AWS Budgets alert at $40 (free) 
   hnswlib and FAISS QPS come from one batched Python call, so Python overhead is amortized; their
   per-query latencies include Python overhead and are not compared. On x86, hnswlib uses its
   AVX/SSE paths. This removes the Mac caveat, where hnswlib had no NEON path.
+- **SIMD per library (c7i has AVX-512).** The libraries will not run the same vector width, and
+  each result records which instruction set its distance code actually used
+  (`bench/simd_info.py`). The comparison table shows it in a SIMD column, with a "not like for
+  like" warning above any table where widths differ. Expected on the c7i, checked from the pinned
+  versions ahead of time:
+
+  | library | expected | how it is chosen | how it is recorded |
+  |---|---|---|---|
+  | Strata | **AVX2 + FMA (256-bit)** | compile time (`-mavx2 -mfma`); no AVX-512 kernels | the harness's kernel, plus a disassembly check (an x86 build has 0 AVX-512 instructions) |
+  | FAISS 1.15.1 | **AVX-512** (likely the Sapphire Rapids level) | one wheel with runtime dispatch (`DD`) | `faiss.SIMDConfig.get_level_name()`: the level it dispatched to |
+  | hnswlib 0.8.0 | **AVX-512** | no wheel: compiled on the instance with `-march=native` (whole extension tuned for the CPU), then runtime dispatch | AVX-512 instruction count in the built extension, plus the CPU's flags |
+
+  So on x86, Strata will run narrower vectors than both references. Its speed gap, or lead, has to
+  be read with that in mind. An AVX-512 kernel for Strata would make the comparison like for like;
+  it is not in this plan.
 - **Recorded with every result:**
   - instance type, AZ, and AMI (IMDSv2);
   - CPU model, physical cores, SMT, L3 size, AVX-512 flag, kernel, and CPU governor;
@@ -132,9 +148,8 @@ Suggested, but not created by these scripts: an AWS Budgets alert at $40 (free) 
 
 1. **perf hardware counters.** Below full-socket sizes, EC2 exposes only a subset of PMU events.
    Part E checks for them and falls back to `cpu-clock` sampling, which still gives the call
-   graph and annotated hot loops, but not cache-miss counts. If cache misses are wanted and
-   missing, 30 minutes on c7i.metal-24xl would cost about $2.15 (a variable change and a rerun of
-   part E). That is your call after seeing part E.
+   graph and annotated hot loops, but not cache-miss counts. **Decided: no bare-metal rerun.** If
+   counters are missing, the profile says so and stays sampling-only.
 2. **hnswlib build flags.** If PyPI has no wheel for the platform, hnswlib compiles from source on
    the instance (build-essential is installed for that). Its setup chooses SIMD flags at build
    time. The record keeps its version; the setup log shows the compile line.

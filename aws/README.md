@@ -7,7 +7,11 @@ that nothing remains.
 
 ## Prerequisites (laptop)
 
-- AWS CLI configured (`aws sts get-caller-identity` works), Terraform ≥ 1.6, `rsync`, `ssh`.
+- The dedicated IAM user `strata-terraform` with the least-privilege policy (setup in
+  [`iam/README.md`](iam/README.md)), selected with `export AWS_PROFILE=strata-terraform`. Not an
+  admin identity.
+- AWS CLI working (`aws sts get-caller-identity` shows `user/strata-terraform`), Terraform ≥ 1.6,
+  `rsync`, `ssh`.
 - The commit to benchmark pushed to GitHub, with a clean working tree. The scripts refuse
   otherwise, so every result records a commit anyone can check out.
 - Optional: an AWS Budgets alert (e.g. $40) set up in the console.

@@ -38,6 +38,7 @@ from benchmeta import (
 )
 from plot_recall_qps import plot_dataset
 from records import latest_records, load_records
+from simd_info import WIDTH, describe
 
 LIBRARIES = [("strata", "hnsw"), ("hnswlib", "hnsw"), ("faiss", "hnsw"), ("strata", "brute_force")]
 # Brute force on SIFT1M runs at ~50 QPS on the M2; a query subset keeps each run under a minute.
@@ -107,6 +108,17 @@ def fmt(summary: dict[str, float], digits: int) -> str:
     return f"{summary['mean']:.{digits}f} ± {summary['stdev']:.{digits}f}"
 
 
+def simd_label(record: dict[str, Any]) -> str:
+    """The instruction set a record's distance code ran with (bench/simd_info.py). Strata records
+    from before SIMD was recorded still name their kernel."""
+    info = record.get("raw", {}).get("simd")
+    if info is None and record["library"] == "strata":
+        kernel = record["build_params"].get("kernel")
+        isa = {"avx2": "AVX2", "neon": "NEON", "scalar": "scalar"}.get(kernel or "")
+        info = {"isa": isa, "width_bits": WIDTH.get(isa or "")} if isa else None
+    return describe(info)
+
+
 def write_table(by_dataset: dict[str, list[dict[str, Any]]], args: argparse.Namespace) -> None:
     every = [r for records in by_dataset.values() for r in records]
     commits = sorted(
@@ -144,8 +156,17 @@ def write_table(by_dataset: dict[str, list[dict[str, Any]]], args: argparse.Name
     ]
     for dataset, records in by_dataset.items():
         lines += [f"## {dataset}", ""]
-        lines += ["| library | build (s) | queries | ef_search | recall@10 | QPS |"]
-        lines += ["|---|---:|---:|---:|---:|---:|"]
+        widths = {simd_label(r) for r in records if r["index"] == "hnsw"}
+        if len({w.split(" (")[-1] for w in widths if w != "not recorded"}) > 1:
+            lines += [
+                f"**Not like for like on this CPU:** the HNSW libraries ran distance code of "
+                f"different vector widths ({', '.join(sorted(widths))}; SIMD column). Speed "
+                "differences include that, not only the algorithm and implementation. Recall is "
+                "unaffected.",
+                "",
+            ]
+        lines += ["| library | SIMD | build (s) | queries | ef_search | recall@10 | QPS |"]
+        lines += ["|---|---|---:|---:|---:|---:|---:|"]
         for record in records:
             name = f"{record['library']} {record['index'].replace('_', ' ')}"
             for i, point in enumerate(record["points"]):
@@ -153,8 +174,9 @@ def write_table(by_dataset: dict[str, list[dict[str, Any]]], args: argparse.Name
                 ef = point["search_params"].get("ef_search", "")
                 build = f"{record['build_seconds']:.1f}" if i == 0 else ""
                 queries = str(record["num_queries"]) if i == 0 else ""
+                simd = simd_label(record) if i == 0 else ""
                 lines.append(
-                    f"| {name if i == 0 else ''} | {build} | {queries} | {ef} "
+                    f"| {name if i == 0 else ''} | {simd} | {build} | {queries} | {ef} "
                     f"| {fmt(s['recall'], 4)} | {fmt(s['qps'], 0)} |"
                 )
         lines.append("")

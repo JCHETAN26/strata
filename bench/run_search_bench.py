@@ -19,6 +19,7 @@ from typing import Any
 
 from benchmeta import REPO_ROOT, git_info
 from records import save_record
+from simd_info import strata_simd
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -103,7 +104,10 @@ def main(argv: list[str] | None = None) -> int:
         command=cmd,
         points=[{"search_params": p["search_params"], "runs": p["runs"]} for p in raw["points"]],
         # Everything the harness reported except the points, which are stored above.
-        raw={key: value for key, value in raw.items() if key != "points"},
+        raw={
+            **{key: value for key, value in raw.items() if key != "points"},
+            "simd": strata_simd(raw["kernel"], harness),
+        },
     )
     record = json.loads(path.read_text())
     for point in record["points"]:

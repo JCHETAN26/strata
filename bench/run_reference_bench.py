@@ -24,6 +24,7 @@ from typing import Any
 import numpy as np
 from benchmeta import REPO_ROOT
 from records import save_record
+from simd_info import library_simd
 
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from prepare_datasets import read_bin
@@ -215,7 +216,13 @@ def main(argv: list[str] | None = None) -> int:
         num_queries=len(queries),
         command=sys.argv,
         points=points,
-        raw={"library_version": versions[args.library], "qps_method": "batched call"},
+        raw={
+            "library_version": versions[args.library],
+            "qps_method": "batched call",
+            # The instruction set its distance code ran with (FAISS: the imported variant;
+            # hnswlib: what its runtime dispatch picks on this CPU). See bench/simd_info.py.
+            "simd": library_simd(args.library),
+        },
     )
     print(f"saved {path.relative_to(REPO_ROOT)}")
     return 0

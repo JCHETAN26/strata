@@ -29,12 +29,44 @@ __pycache__/
 .idea/
 .cache/
 
-# AWS benchmark session (aws/)
+# AWS benchmark session (aws/): session SSH key, cluster TLS keys and token, built binaries
 aws/.ssh/
 aws/.certs/
 aws/.artifacts/
-aws/terraform/.terraform/
-aws/terraform/*.tfstate
-aws/terraform/*.tfstate.*
-aws/terraform/*.tfplan
-aws/terraform/.terraform.tfstate.lock.info
+aws/.quarantine/
+
+# Terraform, anywhere in the repo. State and plan files hold resource details and any sensitive
+# values passed in; tfvars are where people put secrets; crash logs can contain both.
+# (.terraform.lock.hcl stays tracked: it pins provider versions.)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+*.tfplan
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Credentials and private keys, anywhere
+.aws/
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ecdsa*
+id_ed25519*
+.netrc
+kaggle.json
+
+# Claude Code: per-user local settings (may hold allowlists, env, or tokens)
+.claude/settings.local.json
+.claude/*.local.json

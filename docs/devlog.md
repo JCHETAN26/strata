@@ -1789,3 +1789,59 @@ the Mac):
 
 **Noticed:** the GitHub repo is already public, so instances clone it without credentials;
 `buildplan.md` still listed that as open.
+
+## 2026-10-02: Before the AWS session: secrets audit, ignore rules, IAM policy, SIMD labels
+
+**Decisions recorded:** no bare-metal perf rerun, on-demand instances, no quota increase.
+
+**Secrets audit of the public repo** (the full history: 94 commits on every branch; the remote has
+only `main` and `linux-arm-check`, no other refs):
+- gitleaks 8.30.1 (checksum-verified, run from the scratchpad, not installed): **no leaks**. It
+  scans 93 commits; the 94th is a merge, whose changes are already in the commits it merged.
+- Direct searches of every diff in history for AWS key IDs (AKIA/ASIA),
+  `aws_secret_access_key`, Anthropic keys (`sk-ant-`), GitHub and Slack tokens, HuggingFace
+  tokens, private-key blocks, Kaggle keys, and `ANTHROPIC_API_KEY=` with a value: **0 matches**.
+- Every path ever committed was checked for `.env`, `.claude/`, settings files, keys, `.aws/`,
+  tfstate, tfvars, `kaggle.json`, `.netrc`. The only hit is `.env.example`, whose only version has
+  an empty `ANTHROPIC_API_KEY=`.
+- `results/kaggle/environment.json` holds hardware, CUDA details, and three allowlisted
+  `KAGGLE_*` values (run type, image digest, URL base): nothing secret.
+- Commit messages: no matches.
+
+**Ignore rules:**
+- Terraform state, plans, tfvars, crash logs, overrides, CLI config, `.aws/`, private keys
+  (`*.pem`, `*.key`, ...), `kaggle.json`, `.netrc`, and Claude Code local settings are now
+  ignored everywhere in the repo, not just under `aws/terraform/`.
+- `git check-ignore` confirmed 19 sample paths are ignored and the provider lock file,
+  `.env.example`, and `*.tfvars.example` are not. No tracked file matches an ignore rule.
+
+**Credentials can't flow into the repo from aws/:**
+- The instances get no IAM role, so no AWS credentials exist on them.
+- Keys, the cluster token, and state stay in ignored directories.
+- `collect.sh` now scans everything copied back for private keys, AWS/Anthropic/GitHub token
+  formats, IMDS tokens, and the session's cluster token. Any hit is moved to `aws/.quarantine/`
+  (ignored) and the script fails. It was tested on the real `results/` (no false positives) and on
+  planted secrets (both caught, the clean file left alone).
+
+**IAM:** `aws/iam/strata-terraform-policy.json`, least privilege for Terraform and the scripts.
+- Describe calls only in us-east-2.
+- Creates only with `Project=strata-bench` at creation.
+- Changes and deletes only on tagged resources.
+- Launches only c7i.8xlarge/2xlarge/xlarge, on-demand, IMDSv2, Canonical images, gp3 ≤ 150 GB.
+- The `Project` tag can't be removed.
+
+Access Analyzer reports no findings, and `aws/iam/simulate_policy.sh` runs 37 allow and deny cases
+through the IAM simulator, all as expected. Whether every provider call is listed can only be
+confirmed by running as the user (plan first).
+
+**SIMD labels:** c7i CPUs have AVX-512, and the three libraries won't use the same width there.
+- Strata: AVX2 + FMA, compile time.
+- FAISS 1.15.1: one wheel with runtime dispatch, reported by `faiss.SIMDConfig.get_level_name()`.
+  I first assumed separate per-level builds; inspecting the wheel showed otherwise.
+- hnswlib 0.8.0: sdist only, so it compiles on the instance with `-march=native` and dispatches
+  to AVX-512.
+
+`bench/simd_info.py` records what each one actually ran: its kernel or dispatched level, plus a
+disassembly count of 512-bit and 256-bit register instructions, checked here on x86 binaries
+(Strata's x86 build: 0 AVX-512 instructions; the FAISS wheel's libfaiss: AVX-512 present). The
+comparison table now has a SIMD column and warns when widths differ.
