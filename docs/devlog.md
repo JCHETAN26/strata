@@ -1943,3 +1943,20 @@ call list comes from the provider source. Run under the policy still attached to
 gave 54 as expected and exactly the 2 problems the new statements fix, one on the create path
 and one on the teardown path. The fix itself is proven once the user's policy is updated and the
 script rerun while the instance still exists.
+
+## 2026-10-02: AWS setup, second rerun: Python headers missing for hnswlib
+
+The server, coordinator benchmark, and load client compiled with GCC 13 on the first try. Then
+`uv pip install` failed building hnswlib 0.8.0 (no wheel, so it compiles on the machine):
+`Python.h: No such file or directory`. The venv uses Ubuntu's system Python 3.12, whose headers
+are in `python3-dev`, which setup didn't install. Fixed by installing it on main and client.
+
+Testing the fix on the instance found the next failure before it happened: uv 0.12 refuses to
+create a venv over an existing one (`A virtual environment already exists`), and the failed run
+left `.venv` behind. Setup now recreates both venvs each run.
+
+Both hnswlib builds were checked on the c7i with `bench/simd_info.py`:
+- native (`-march=native`): AVX-512, 120 zmm instructions;
+- AVX2-only (`HNSWLIB_NO_NATIVE=1`, `-mavx2 -mfma`): 0 zmm, 552 ymm.
+
+Both pass `verify()`.

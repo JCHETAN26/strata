@@ -38,6 +38,10 @@ python_env() {
   fi
   export PATH="$HOME/.local/bin:$PATH"
   cd ~/strata
+  # Recreated every run: uv refuses to create a venv over an existing one, and a failed setup
+  # leaves one behind. The interpreter is the system Python 3.12, whose headers (python3-dev)
+  # hnswlib needs: it has no wheel and compiles on the machine.
+  rm -rf .venv
   uv venv -q --python 3.12 .venv
   uv export -q --frozen --only-group bench --no-emit-project --no-hashes -o /tmp/bench-req.txt
   uv pip install -q --python .venv/bin/python -r /tmp/bench-req.txt
@@ -52,6 +56,7 @@ python_env() {
 python_env_avx2() {
   export PATH="$HOME/.local/bin:$PATH"
   cd ~/strata
+  rm -rf .venv-avx2
   uv venv -q --python 3.12 .venv-avx2
   grep -v '^hnswlib==' /tmp/bench-req.txt > /tmp/bench-req-no-hnswlib.txt
   uv pip install -q --python .venv-avx2/bin/python -r /tmp/bench-req-no-hnswlib.txt
@@ -96,7 +101,8 @@ case $role in
 
   client)
     [[ -n "$commit" ]] || { echo "client needs COMMIT"; exit 2; }
-    apt_install build-essential git curl rsync tmux  # a compiler: hnswlib may build from source
+    # A compiler and Python headers: hnswlib builds from source.
+    apt_install build-essential python3-dev git curl rsync tmux
     mkdir -p ~/bin ~/certs
     clone_repo
     python_env
@@ -107,7 +113,7 @@ case $role in
   main)
     [[ -n "$commit" ]] || { echo "main needs COMMIT"; exit 2; }
     apt_install build-essential gcc-13 g++-13 cmake ninja-build git curl zip unzip tar pkg-config \
-      autoconf automake libtool perl bison flex linux-libc-dev rsync tmux jq \
+      autoconf automake libtool perl bison flex linux-libc-dev rsync tmux jq python3-dev \
       linux-tools-common "linux-tools-$(uname -r)" linux-tools-aws util-linux
     # perf: allow unprivileged profiling and kernel symbols for this session.
     sudo sysctl -q -w kernel.perf_event_paranoid=-1 kernel.kptr_restrict=0
