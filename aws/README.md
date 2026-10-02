@@ -1,14 +1,14 @@
 # AWS benchmark session: runbook
 
 What runs, why these instances, and what it costs: [`docs/aws-plan.md`](../docs/aws-plan.md).
-About $20 on-demand for the whole session. Everything is created by Terraform in a dedicated VPC
+About $24 on-demand for the whole session. Everything is created by Terraform in a dedicated VPC
 in us-east-2, tagged `Project=strata-bench`, and removed by `teardown.sh`, which then verifies
 that nothing remains.
 
 ## Prerequisites (laptop)
 
 - The dedicated IAM user `strata-terraform` with the least-privilege policy (setup in
-  [`iam/README.md`](iam/README.md)), selected with `export AWS_PROFILE=strata-terraform`. Not an
+  [`iam/README.md`](iam/README.md)), selected with `export AWS_PROFILE=strata` (the profile name used here). Not an
   admin identity.
 - AWS CLI working (`aws sts get-caller-identity` shows `user/strata-terraform`), Terraform ≥ 1.6,
   `rsync`, `ssh`.
@@ -22,7 +22,7 @@ that nothing remains.
 # 0. See what would be created (no cost): checks credentials, vCPU quota, and your IP, then plans
 aws/scripts/up.sh main
 
-# 1. Main stage: one c7i.8xlarge, parts A-E (~11 h, ~$16)
+# 1. Main stage: one c7i.8xlarge, parts A-E (~14.5 h, ~$20.5)
 aws/scripts/up.sh main --apply          # asks you to type "main"
 aws/scripts/run_main.sh                 # setup, then ann, 10m, threads, filter, perf
 #    (or a subset: aws/scripts/run_main.sh ann threads). Rerunnable: finished parts are skipped.
@@ -47,7 +47,7 @@ commit them.
 - To watch a step directly:
   `ssh -i aws/.ssh/strata-bench ubuntu@<ip> tmux attach -t <part>` (detach with `Ctrl-b d`).
 - `aws/scripts/collect.sh` copies results back at any point.
-- Each instance terminates itself 14 h after boot (`max_lifetime_hours`) as a safety net.
+- Each instance terminates itself 18 h after boot (`max_lifetime_hours`) as a safety net.
 
 ## Files
 

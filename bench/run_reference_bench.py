@@ -24,7 +24,7 @@ from typing import Any
 import numpy as np
 from benchmeta import REPO_ROOT
 from records import save_record
-from simd_info import library_simd
+from simd_info import library_simd, restrict_faiss_to_avx2
 
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from prepare_datasets import read_bin
@@ -134,9 +134,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ef-construction", type=int, default=200)
     parser.add_argument("--build-threads", type=int, default=1, help="threads for the build only")
     parser.add_argument("--ef-search", default="10,20,40,80,160,320")
+    parser.add_argument(
+        "--simd",
+        default="native",
+        choices=["native", "avx2"],
+        help="native: the widest SIMD the library and CPU support; avx2: held to AVX2 (FAISS "
+        "via its SIMD level, hnswlib must be a build without AVX-512). Verified either way.",
+    )
     args = parser.parse_args(argv)
     if args.library == "hnswlib" and args.index != "hnsw":
         parser.error("hnswlib only provides --index hnsw")
+    if args.simd == "avx2":
+        restrict_faiss_to_avx2()  # before FAISS is imported
 
     data_dir = REPO_ROOT / "data" / args.dataset
     import json
@@ -156,6 +165,17 @@ def main(argv: list[str] | None = None) -> int:
         adapter = FaissAdapter(
             args.index, metric, dim, args.M, args.ef_construction, args.build_threads
         )
+    if args.simd == "avx2":
+        restrict_faiss_to_avx2()  # and again now that FAISS is loaded
+        adapter.build_params["simd"] = "avx2"
+
+    # Fail before the (long) build if the library is not running the requested configuration.
+    simd = library_simd(args.library, args.simd)
+    if simd["problems"]:
+        for problem in simd["problems"]:
+            print(f"error: SIMD check failed ({args.simd}): {problem}", file=sys.stderr)
+        return 1
+    print(f"{args.library}: SIMD {simd['isa']} ({args.simd}, verified)", file=sys.stderr)
 
     t0 = time.perf_counter()
     adapter.build(base)
@@ -219,9 +239,9 @@ def main(argv: list[str] | None = None) -> int:
         raw={
             "library_version": versions[args.library],
             "qps_method": "batched call",
-            # The instruction set its distance code ran with (FAISS: the imported variant;
-            # hnswlib: what its runtime dispatch picks on this CPU). See bench/simd_info.py.
-            "simd": library_simd(args.library),
+            # The instruction set its distance code ran with, the configuration requested, and
+            # the check that they agree. See bench/simd_info.py.
+            "simd": simd,
         },
     )
     print(f"saved {path.relative_to(REPO_ROOT)}")

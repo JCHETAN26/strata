@@ -198,5 +198,8 @@ the graph (random to correlated filters, recall targets 0.95 and 0.99). The defa
 - **Tombstones are never compacted.**
 - **The bulk load into a shard is single-threaded** (insert by insert through the WAL), which
   limits sharded runs to about 1M vectors for now.
+- **No AVX-512 kernels** (future work). On AVX-512 x86 CPUs, FAISS and hnswlib can use 512-bit
+  vectors while Strata uses 256-bit. The x86 comparison is therefore run twice: at AVX2 for all
+  three (the like-for-like result), and with the references at AVX-512, labeled as such.
 - **No ThreadSanitizer run of the server** against stock gRPC builds (protobuf changes its layout
   under TSan).

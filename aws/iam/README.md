@@ -58,10 +58,10 @@ aws iam put-user-policy --user-name strata-terraform --policy-name strata-bench 
 aws iam create-access-key --user-name strata-terraform     # shown once
 
 # store the key in a named profile: ~/.aws/credentials, never in this repo
-aws configure --profile strata-terraform                   # region us-east-2
+aws configure --profile strata                             # region us-east-2
 
 # every session command then runs as that user
-export AWS_PROFILE=strata-terraform
+export AWS_PROFILE=strata
 aws sts get-caller-identity                                # should show user/strata-terraform
 
 # after the session

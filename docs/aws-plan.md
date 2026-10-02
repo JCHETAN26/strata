@@ -5,7 +5,9 @@ least-privilege IAM user ([`aws/iam/`](../aws/iam/README.md)). Prices and quotas
 from the account on 2026-10-01 (AWS Pricing API, 7-day spot price history, Service Quotas); the
 Terraform was validated and planned (no apply). The runbook is [`aws/README.md`](../aws/README.md).
 
-The session produces the final x86 numbers for Phase 9. Every result comes from a script in
+The session produces the final x86 numbers for Phase 9. Decisions: on-demand, no quota
+increase, no bare-metal perf rerun, and FAISS and hnswlib compared at AVX2 (primary) and at
+AVX-512 (second). There is no AVX-512 Strata kernel for now. Every result comes from a script in
 `bench/`, records the instance type, CPU, kernel, commit, and library versions, and is written
 next to the Mac development results under names that do not overwrite them.
 
@@ -17,8 +19,8 @@ Two stages, run one after the other (the account's vCPU quota is 32, see below).
 
 | part | what | how | outputs |
 |---|---|---|---|
-| **A** | Recall@10 vs QPS, Strata vs hnswlib vs FAISS (HNSW) plus brute force, **SIFT1M** and **GloVe-100** | `run_hnsw_curves.py`: same M=16 and ef_construction=200 for all, ef_search 10–320, **5 runs per point**, single-threaded build and search pinned to one physical core | `results/hnsw/hnsw_vs_reference_x86.md`, plots `results/plots/hnsw_vs_reference_x86_*.png`, raw records `results/search/<dataset>/` |
-| **B** | The same at **10M vectors** (BIGANN-10M) | Builds use 16 threads for every library (single-threaded 10M builds take hours each); search single-threaded; 3 runs per point | `results/hnsw/hnsw_vs_reference_10m.md` + plot |
+| **A** | Recall@10 vs QPS, Strata vs hnswlib vs FAISS (HNSW) plus brute force, **SIFT1M** and **GloVe-100** | `run_hnsw_curves.py`: same M=16 and ef_construction=200 for all, ef_search 10–320, **5 runs per point**, single-threaded build and search pinned to one physical core. **Two comparisons** (see SIMD below): primary, all at AVX2; second, hnswlib and FAISS at AVX-512 | primary `results/hnsw/hnsw_vs_reference_x86.md`; second `hnsw_vs_reference_x86_avx512.md`; plots `results/plots/`; raw records `results/search/<dataset>/` |
+| **B** | The same at **10M vectors** (BIGANN-10M), both comparisons | Builds use 16 threads for every library (single-threaded 10M builds take hours each); search single-threaded; 3 runs per point | `results/hnsw/hnsw_vs_reference_10m.md` (AVX2), `hnsw_vs_reference_10m_avx512.md` |
 | **C** | **Thread scaling 1–16** | Search: `run_search_scaling.py`, 1, 2, 4, 8, 12, 16 threads, each run pinned to that many *distinct physical cores*, plus 32 (all hardware threads) as the SMT point; one index loaded from a snapshot. Build: `run_hnsw_build_scaling.py` at 1, 2, 4, 8, 16 threads. 3 interleaved rounds each | `results/search_scaling/scaling_sift1m.md`, `results/hnsw_build/build_scaling_sift1m.md` |
 | **D** | **Filtered search crossover at 1M and 10M**, including the **1–3% sweep** and auto's **fallback rate** | `run_hnsw_filter_bench.py` at 0.1, 0.5, 1, 1.3, 1.5, 2, 2.5, 3, 5, 10, 50% selectivity, random and cluster-correlated filters; derives the crossover, then measures auto at it (how often it pre-filters, how often the graph falls back) | `results/hnsw_filter/filter_sift1m.md`, `filter_bigann10m.md`, plots |
 | **E** | **Linux `perf` profile of search** (search_layer) | `linux-profile` build (release + frame pointers); index from a snapshot, so only search is profiled; `perf stat` (cycles, IPC, cache and TLB misses), `perf record --call-graph fp`, `perf annotate` of the hottest symbols; SIFT1M and 10M | `results/profiles/aws/` |
@@ -72,7 +74,7 @@ then to each machine), so it needs no compiler and starts in minutes.
 - **Region us-east-2 (Ohio):** the same on-demand price as us-east-1, cheaper and steadier spot,
   and both types are offered in every AZ. One AZ (us-east-2a) for everything; the cluster is in a
   *cluster placement group*, so latency measures Strata, not cross-rack distance.
-- **On-demand, not spot (decided).** Spot would save about $14 of a ~$20 session. An
+- **On-demand, not spot (decided).** Spot would save about $17 of a ~$24 session. An
   interruption during the 10M builds or the filter sweep would lose up to an hour of work, plus
   setup again. It would also split one part's runs across two machines, which spoils the variance
   comparisons. `market = "spot"` is a one-variable switch if you prefer it.
@@ -85,23 +87,24 @@ x86 and the measured sizes; the contingency covers slower-than-expected steps an
 | item | hours | $ |
 |---|---:|---:|
 | Setup: toolchain, vcpkg (gRPC from source is the slow part), builds + tests, datasets | 1.0 | 1.43 |
-| A: SIFT1M + GloVe-100, 3 libraries, single-threaded builds, 5 runs per point | 2.0 | 2.86 |
-| B: BIGANN-10M, 3 libraries, 16-thread builds, 3 runs per point | 1.5 | 2.14 |
+| A: SIFT1M + GloVe-100, 3 libraries at AVX2, then hnswlib + FAISS again at AVX-512; single-threaded builds, 5 runs per point | 3.3 | 4.71 |
+| B: BIGANN-10M, the same two comparisons, 16-thread builds, 3 runs per point | 2.5 | 3.57 |
 | C: search scaling (7 thread counts × 3 rounds) + build scaling (5 × 3 rounds) | 1.0 | 1.43 |
 | D: filter crossover, 11 selectivities × 2 filter kinds, at 1M and 10M | 2.75 | 3.93 |
 | E: perf at 1M and 10M | 0.5 | 0.71 |
-| Main contingency (+30%) | 2.6 | 3.71 |
-| **Main stage (c7i.8xlarge)** | **11.4** | **16.21** |
+| Main contingency (+30%) | 3.3 | 4.73 |
+| **Main stage (c7i.8xlarge)** | **14.4** | **20.51** |
 | F: cluster setup, three bulk loads (1M HNSW inserts per shard count), measurements, with contingency | 2.5 | 3.12 |
-| EBS gp3 (150 GB main ~12 h; 6 × 30 GB cluster ~2.5 h) | | 0.24 |
-| Public IPv4 addresses ($0.005/h each) | | 0.14 |
+| EBS gp3 (150 GB main ~15 h; 6 × 30 GB cluster ~2.5 h) | | 0.30 |
+| Public IPv4 addresses ($0.005/h each) | | 0.15 |
 | Data out (results to the laptop, < 1 GB); in-AZ traffic between instances is free | | < 0.10 |
-| **Total, on-demand** | | **≈ 20** |
-| Total if both stages used spot (same hours) | | ≈ 6 |
+| **Total, on-demand** | | **≈ 24** |
+| Total if both stages used spot (same hours) | | ≈ 7 |
 
 Safety nets, all in the Terraform:
-- **Auto-termination:** each instance schedules its own shutdown 14 h after boot, and shutdown
-  means terminate. A forgotten teardown costs at most about $20 more, not days.
+- **Auto-termination:** each instance schedules its own shutdown 18 h after boot, and shutdown
+  means terminate. This covers the main stage's ~14.4 h with margin. A forgotten teardown costs at
+  most about $26 more, not days.
 - **Tags:** everything is tagged `Project=strata-bench`, so `check_clean.sh` can find leftovers.
 - **Teardown check:** `teardown.sh` ends with that check and fails if anything remains.
 
@@ -123,21 +126,29 @@ Suggested, but not created by these scripts: an AWS Budgets alert at $40 (free) 
   hnswlib and FAISS QPS come from one batched Python call, so Python overhead is amortized; their
   per-query latencies include Python overhead and are not compared. On x86, hnswlib uses its
   AVX/SSE paths. This removes the Mac caveat, where hnswlib had no NEON path.
-- **SIMD per library (c7i has AVX-512).** The libraries will not run the same vector width, and
-  each result records which instruction set its distance code actually used
-  (`bench/simd_info.py`). The comparison table shows it in a SIMD column, with a "not like for
-  like" warning above any table where widths differ. Expected on the c7i, checked from the pinned
-  versions ahead of time:
-
-  | library | expected | how it is chosen | how it is recorded |
-  |---|---|---|---|
-  | Strata | **AVX2 + FMA (256-bit)** | compile time (`-mavx2 -mfma`); no AVX-512 kernels | the harness's kernel, plus a disassembly check (an x86 build has 0 AVX-512 instructions) |
-  | FAISS 1.15.1 | **AVX-512** (likely the Sapphire Rapids level) | one wheel with runtime dispatch (`DD`) | `faiss.SIMDConfig.get_level_name()`: the level it dispatched to |
-  | hnswlib 0.8.0 | **AVX-512** | no wheel: compiled on the instance with `-march=native` (whole extension tuned for the CPU), then runtime dispatch | AVX-512 instruction count in the built extension, plus the CPU's flags |
-
-  So on x86, Strata will run narrower vectors than both references. Its speed gap, or lead, has to
-  be read with that in mind. An AVX-512 kernel for Strata would make the comparison like for like;
-  it is not in this plan.
+- **SIMD: two comparisons (c7i has AVX-512, Strata has AVX2 kernels only).**
+  - **Primary, like for like: all three libraries at AVX2 (256-bit).**
+    - Strata uses its AVX2 + FMA kernels.
+    - FAISS is held to AVX2 by setting both `FAISS_SIMD_LEVEL=AVX2` and
+      `SIMDConfig.set_level(AVX2)`. FAISS's optimization-level variable (`FAISS_OPT_LEVEL`) alone
+      would not work: in faiss-cpu 1.15 it chooses among separate per-level builds that the wheel
+      doesn't ship, so the single runtime-dispatch build would still pick AVX-512.
+    - hnswlib is built in a second env (`.venv-avx2`) with `HNSWLIB_NO_NATIVE=1` and
+      `-mavx2 -mfma`, Strata's flags, so it has no AVX-512 path to dispatch to.
+  - **Second comparison, labeled as not like for like:** hnswlib (built with `-march=native`) and
+    FAISS (its auto-detected level) at AVX-512, against the same Strata runs at AVX2.
+  - **Verified, never assumed** (`bench/simd_info.py`):
+    - Setup checks both configurations on the instance before any benchmark.
+    - Every run checks its own configuration and refuses to run if it doesn't hold:
+      - FAISS at AVX2 must report and dispatch AVX2. An unsupported `FAISS_SIMD_LEVEL` silently
+        becomes scalar, which is why the check exists.
+      - hnswlib at AVX2 must have 256-bit code and zero AVX-512 instructions.
+      - At native, hnswlib must have its AVX-512 path, and FAISS must run the level it
+        auto-detects.
+      - Strata must run AVX2 kernels with no AVX-512 code.
+    - The result is recorded with each run and shown in the table's SIMD column.
+  - **Future work:** an AVX-512 Strata kernel would turn the second comparison into a like-for-like
+    one at 512 bits.
 - **Recorded with every result:**
   - instance type, AZ, and AMI (IMDSv2);
   - CPU model, physical cores, SMT, L3 size, AVX-512 flag, kernel, and CPU governor;

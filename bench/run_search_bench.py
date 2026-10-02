@@ -19,7 +19,7 @@ from typing import Any
 
 from benchmeta import REPO_ROOT, git_info
 from records import save_record
-from simd_info import strata_simd
+from simd_info import strata_simd, verify_strata
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -91,6 +91,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"warning: {msg}", file=sys.stderr)
     if git_info()["dirty"]:
         print("warning: working tree has uncommitted changes", file=sys.stderr)
+    simd = strata_simd(raw["kernel"], harness)
+    if problems := verify_strata(simd):
+        for problem in problems:
+            print(f"error: SIMD check failed: {problem}", file=sys.stderr)
+        return 1
 
     path = save_record(
         dataset=args.dataset,
@@ -106,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         # Everything the harness reported except the points, which are stored above.
         raw={
             **{key: value for key, value in raw.items() if key != "points"},
-            "simd": strata_simd(raw["kernel"], harness),
+            "simd": simd,
         },
     )
     record = json.loads(path.read_text())

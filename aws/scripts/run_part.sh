@@ -29,15 +29,23 @@ case $part in
   ann)
     # Single-threaded build and search (ann-benchmarks style), pinned to one physical core. Five
     # runs per point. The 10 s pause replaces the Mac's 60 s cool-down (no thermal limit here).
+    # Primary, like for like: everything at AVX2 (.venv-avx2 has hnswlib built without AVX-512;
+    # FAISS is held to AVX2). Second: hnswlib and FAISS at AVX-512, reusing the Strata runs.
+    taskset -c "$one_core" .venv-avx2/bin/python bench/run_hnsw_curves.py \
+      --datasets sift1m glove100 --runs 5 --cooldown 10 --simd avx2 --name hnsw_vs_reference_x86
     taskset -c "$one_core" $py bench/run_hnsw_curves.py --datasets sift1m glove100 \
-      --runs 5 --cooldown 10 --name hnsw_vs_reference_x86
+      --runs 5 --cooldown 10 --simd native --skip-strata --name hnsw_vs_reference_x86_avx512
     ;;
 
   10m)
     # A single-threaded build of 10M vectors takes hours per library; all three build with 16
-    # threads (recorded in each record's build_params). Search is still one thread.
+    # threads (recorded in each record's build_params). Search is still one thread. Same two
+    # comparisons as part A.
+    taskset -c "$sixteen" .venv-avx2/bin/python bench/run_hnsw_curves.py --datasets bigann10m \
+      --runs 3 --cooldown 10 --build-threads 16 --simd avx2 --name hnsw_vs_reference_10m
     taskset -c "$sixteen" $py bench/run_hnsw_curves.py --datasets bigann10m \
-      --runs 3 --cooldown 10 --build-threads 16 --name hnsw_vs_reference_10m
+      --runs 3 --cooldown 10 --build-threads 16 --simd native --skip-strata \
+      --name hnsw_vs_reference_10m_avx512
     ;;
 
   threads)

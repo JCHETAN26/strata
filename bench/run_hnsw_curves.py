@@ -57,14 +57,18 @@ def run(args: argparse.Namespace) -> None:
     sweep = ["--ef-search", args.ef_search, "--runs", str(args.runs)]
     for dataset in args.datasets:
         bench = ["--dataset", dataset]
-        steps = [
+        simd = ["--simd", args.simd]
+        strata_steps = [
             ["run_search_bench.py", *bench, "--index", "hnsw", *hnsw_args, *sweep],
-            ["run_reference_bench.py", *bench, "--library", "hnswlib", *hnsw_args, *sweep],
-            ["run_reference_bench.py", *bench, "--library", "faiss", "--index", "hnsw",
-             *hnsw_args, *sweep],
             ["run_search_bench.py", *bench, "--index", "brute_force", "--runs", str(args.runs),
              "--max-queries", str(BRUTE_FORCE_MAX_QUERIES.get(dataset, 0))],
         ]  # fmt: skip
+        reference_steps = [
+            ["run_reference_bench.py", *bench, "--library", "hnswlib", *hnsw_args, *sweep, *simd],
+            ["run_reference_bench.py", *bench, "--library", "faiss", "--index", "hnsw",
+             *hnsw_args, *sweep, *simd],
+        ]  # fmt: skip
+        steps = reference_steps if args.skip_strata else [*strata_steps, *reference_steps]
         for script, *step_args in steps:
             cmd = [sys.executable, "-u", str(BENCH / script), *step_args]
             preflight(" ".join(step_args[:4]))
@@ -89,6 +93,8 @@ def matches(record: dict[str, Any], dataset: str, args: argparse.Namespace) -> b
     if params.get("M") != args.M or params.get("ef_construction") != args.ef_construction:
         return False
     if params.get("build_threads", 1) != args.build_threads:
+        return False
+    if record["library"] != "strata" and params.get("simd", "native") != args.simd:
         return False
     return key != ("strata", "hnsw") or params.get("selection") == "heuristic"
 
@@ -154,6 +160,22 @@ def write_table(by_dataset: dict[str, list[dict[str, Any]]], args: argparse.Name
         f"- Commits: {'; '.join(commits)}",
         "",
     ]
+    if args.simd == "avx2":
+        lines += [
+            "**Like for like (the primary comparison):** all three run 256-bit SIMD. Strata uses "
+            "its AVX2 + FMA kernels; FAISS is held to AVX2 (`FAISS_SIMD_LEVEL` and "
+            "`SIMDConfig.set_level`); hnswlib is built with `-mavx2 -mfma` instead of "
+            "`-march=native`, so it has no AVX-512 path. Each run verifies this "
+            "(`bench/simd_info.py`) and refuses to run otherwise.",
+            "",
+        ]
+    elif any(r["hardware"]["machine"] in ("x86_64", "amd64") for r in every):
+        lines += [
+            "**Second comparison, not like for like:** hnswlib and FAISS at the widest SIMD this "
+            "CPU offers them (AVX-512), against Strata's AVX2 kernels (it has no AVX-512 kernels "
+            "yet). The like-for-like comparison is the AVX2 table.",
+            "",
+        ]
     for dataset, records in by_dataset.items():
         lines += [f"## {dataset}", ""]
         widths = {simd_label(r) for r in records if r["index"] == "hnsw"}
@@ -200,6 +222,18 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=1,
         help="parallel builds for every library (10M sets); search stays single-threaded",
+    )
+    parser.add_argument(
+        "--simd",
+        default="native",
+        choices=["native", "avx2"],
+        help="SIMD for hnswlib and FAISS: native (widest available) or avx2 (like for like with "
+        "Strata on x86; hnswlib must be the AVX2 build, see aws/scripts/setup_machine.sh)",
+    )
+    parser.add_argument(
+        "--skip-strata",
+        action="store_true",
+        help="run only the references (a second comparison reusing the Strata records)",
     )
     parser.add_argument(
         "--name",

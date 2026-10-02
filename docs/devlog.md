@@ -1845,3 +1845,39 @@ confirmed by running as the user (plan first).
 disassembly count of 512-bit and 256-bit register instructions, checked here on x86 binaries
 (Strata's x86 build: 0 AVX-512 instructions; the FAISS wheel's libfaiss: AVX-512 present). The
 comparison table now has a SIMD column and warns when widths differ.
+
+## 2026-10-02: x86 comparison at AVX2 (primary) and AVX-512 (second); no AVX-512 kernel yet
+
+**Decision:** no AVX-512 Strata kernel for now (noted as future work in `buildplan.md` and
+`docs/design.md`). The x86 comparison runs twice:
+- **Primary, like for like:** all three libraries at AVX2.
+- **Second, labeled not like for like:** hnswlib and FAISS at AVX-512, against the same Strata runs.
+
+**Holding FAISS to AVX2:**
+- The optimization-level variable `FAISS_OPT_LEVEL` turned out not to work for faiss-cpu 1.15.1.
+  It chooses among separate per-level builds, which that wheel no longer ships; its single build
+  dispatches at runtime and would still pick AVX-512.
+- What works is `FAISS_SIMD_LEVEL=AVX2` before import plus `SIMDConfig.set_level(AVX2)` after.
+- Tested on the Mac: an unsupported level in `FAISS_SIMD_LEVEL` silently becomes NONE (scalar),
+  and an empty value aborts the process, while `set_level` raises. So the level is always verified
+  after it's set.
+
+**Holding hnswlib to AVX2:** its runtime dispatch picks AVX-512 whenever it is compiled in, so the
+like-for-like runs use a second env, `.venv-avx2`. There hnswlib is built from source with
+`HNSWLIB_NO_NATIVE=1` and `-mavx2 -mfma` (Strata's flags), with uv's cache bypassed so the
+`-march=native` wheel can't be reused.
+
+**Verification (`bench/simd_info.py`):**
+- `verify()` checks a library against the requested configuration:
+  - AVX2: FAISS reports and dispatches AVX2; hnswlib has 256-bit code and zero AVX-512
+    instructions.
+  - Native: FAISS runs its auto-detected level; hnswlib has an AVX-512 path on an AVX-512 CPU.
+- `verify_strata()` requires Strata's AVX2 kernels and no AVX-512 code on x86.
+- Every run refuses to start if its check fails, and setup checks both configurations before any
+  benchmark.
+- On the Mac, the AVX2 requests are refused cleanly and the native checks pass. The hnswlib AVX2
+  build itself can only be exercised on x86, where setup verifies it.
+
+**Cost and schedule:** the second comparison reruns hnswlib and FAISS in parts A and B. The main
+stage is now ~14.4 h with contingency (~$20.5) and the session about $24. The auto-termination
+safety net went from 14 h to 18 h; at 14 h it would have cut the main stage off.

@@ -45,6 +45,48 @@ python_env() {
   cd ~
 }
 
+# A second env for the like-for-like (AVX2) comparison. Identical packages, except hnswlib is
+# compiled the way Strata is: -mavx2 -mfma instead of its default -march=native, so it has no
+# AVX-512 path for its runtime dispatch to pick. --no-cache: a cached -march=native wheel must
+# not be reused. FAISS needs no separate build; bench/simd_info.py holds it to AVX2 at run time.
+python_env_avx2() {
+  export PATH="$HOME/.local/bin:$PATH"
+  cd ~/strata
+  uv venv -q --python 3.12 .venv-avx2
+  grep -v '^hnswlib==' /tmp/bench-req.txt > /tmp/bench-req-no-hnswlib.txt
+  uv pip install -q --python .venv-avx2/bin/python -r /tmp/bench-req-no-hnswlib.txt
+  HNSWLIB_NO_NATIVE=1 CFLAGS="-O3 -mavx2 -mfma" CXXFLAGS="-O3 -mavx2 -mfma" \
+    uv pip install -q --python .venv-avx2/bin/python --no-cache --no-binary hnswlib \
+    "$(grep '^hnswlib==' /tmp/bench-req.txt | cut -d' ' -f1)"
+  cd ~
+}
+
+# Both comparisons' configurations, verified before any benchmark runs (bench/simd_info.py).
+verify_simd() {
+  cd ~/strata
+  .venv/bin/python - <<'PY'
+import sys; sys.path.insert(0, "bench")
+import faiss  # noqa: F401
+import simd_info as s
+for lib in ("hnswlib", "faiss"):
+    info = s.library_simd(lib, "native")
+    print(f"native  {lib:8s} {s.describe(info)}  problems={info['problems']}")
+    assert not info["problems"], info["problems"]
+PY
+  .venv-avx2/bin/python - <<'PY'
+import sys; sys.path.insert(0, "bench")
+import simd_info as s
+s.restrict_faiss_to_avx2()
+import faiss  # noqa: F401
+s.restrict_faiss_to_avx2()
+for lib in ("hnswlib", "faiss"):
+    info = s.library_simd(lib, "avx2")
+    print(f"avx2    {lib:8s} {s.describe(info)}  problems={info['problems']}")
+    assert not info["problems"], info["problems"]
+PY
+  cd ~
+}
+
 case $role in
   node)
     mkdir -p ~/bin ~/certs
@@ -98,6 +140,9 @@ case $role in
     cd ~
 
     python_env
+    python_env_avx2
+    log "verifying SIMD configurations (native and AVX2-restricted)"
+    verify_simd
     log "datasets"
     (cd ~/strata && .venv/bin/python scripts/prepare_datasets.py sift1m glove100 bigann10m)
     log "main ready"

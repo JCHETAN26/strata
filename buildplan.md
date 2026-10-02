@@ -152,6 +152,7 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 - [ ] Parallel index build — finish order 2
 - [x] Profile hotspots on the Mac (`sample`; `results/profiles/`)
 - [ ] Profile on Linux with `perf`, including `search_layer`'s own loop — deferred to the AWS session
+- [ ] *Future:* AVX-512 distance kernels (x86 AWS runs compare hnswlib and FAISS at AVX2 like for like, and at AVX-512 against Strata's AVX2 as a labeled second comparison)
 - [x] Record the effect of each optimization separately (`results/ab/`, SIMD and thread results)
 
 **Measure:** SIMD speedup vs. scalar; QPS scaling across cores; updated recall-QPS curve.

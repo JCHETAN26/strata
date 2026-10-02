@@ -21,6 +21,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -95,7 +96,32 @@ def faiss_simd() -> dict[str, Any]:
            "NONE": "scalar"}.get(level, level)  # fmt: skip
     info = _label(isa, how) if isa in WIDTH else {"isa": isa, "width_bits": None, "how": how}
     info.update({"faiss_level": level, "compile_options": options})
+    if config is not None:
+        info["dispatched_level"] = int(config.get_dispatched_level())
+        info["auto_detected_level"] = int(config.auto_detect_simd_level())
+        info["level"] = int(config.get_level())
     return info
+
+
+def restrict_faiss_to_avx2() -> None:
+    """Holds FAISS to AVX2. Call before `import faiss` (sets the environment) and again after
+    (sets the level). Both are needed for faiss-cpu 1.15: its runtime-dispatching build reads
+    FAISS_SIMD_LEVEL at load time; FAISS_OPT_LEVEL only chooses among separate per-level builds,
+    which that wheel does not ship, so on its own it would change nothing. An unsupported level
+    in FAISS_SIMD_LEVEL silently becomes NONE (scalar), and set_level() raises, so the result is
+    always checked afterwards with verify()."""
+    import os
+
+    os.environ["FAISS_SIMD_LEVEL"] = "AVX2"
+    os.environ["FAISS_OPT_LEVEL"] = "AVX2"  # older multi-build wheels
+    if "faiss" in sys.modules:
+        import faiss
+
+        if hasattr(faiss, "SIMDConfig"):
+            try:
+                faiss.SIMDConfig.set_level(faiss.SIMDLevel_AVX2)
+            except RuntimeError as e:
+                raise SystemExit(f"error: FAISS cannot be held to AVX2 here: {e}") from None
 
 
 def hnswlib_simd(cpu: dict[str, Any]) -> dict[str, Any]:
@@ -117,11 +143,71 @@ def hnswlib_simd(cpu: dict[str, Any]) -> dict[str, Any]:
     return info
 
 
-def library_simd(library: str) -> dict[str, Any]:
+def library_simd(library: str, requested: str = "native") -> dict[str, Any]:
+    """What `library` runs with, the configuration that was requested ("native": the widest the
+    library and CPU support; "avx2": held to AVX2), and whether the two agree."""
     cpu = cpu_simd()
     info = faiss_simd() if library == "faiss" else hnswlib_simd(cpu)
     info["cpu"] = cpu
+    info["requested"] = requested
+    info["problems"] = verify(library, requested, info)
     return info
+
+
+def verify(library: str, requested: str, info: dict[str, Any]) -> list[str]:
+    """Checks that a library really runs the requested configuration. Empty list: it does.
+
+    avx2:   FAISS dispatched (and reports) AVX2; hnswlib's extension has 256-bit code and no
+            512-bit (zmm) instructions at all, so its dispatch cannot pick AVX-512.
+    native: FAISS runs the level it auto-detects for this CPU; hnswlib, on a CPU with AVX-512,
+            has an AVX-512 path (built with -march=native), which its dispatch then picks.
+    """
+    cpu = info.get("cpu") or cpu_simd()
+    x86 = cpu.get("arch") in ("x86_64", "amd64")
+    problems = []
+    if requested == "avx2":
+        if not x86:
+            return [f"AVX2 restriction requested on {cpu.get('arch')}: x86 only"]
+        if library == "faiss":
+            if info.get("faiss_level") != "AVX2":
+                problems.append(f"FAISS runs {info.get('faiss_level')}, not AVX2")
+            if "dispatched_level" in info and info["dispatched_level"] != info.get("level"):
+                problems.append("FAISS's dispatched level differs from its configured level")
+        else:
+            d = info.get("disassembly")
+            if d is None:
+                problems.append("cannot disassemble hnswlib to check it")
+            elif d["zmm_instructions"]:
+                problems.append(f"hnswlib has {d['zmm_instructions']} AVX-512 instructions")
+            elif not d["ymm_instructions"]:
+                problems.append("hnswlib has no 256-bit code: built without AVX (SSE only)")
+    elif requested == "native":
+        if library == "faiss":
+            if "auto_detected_level" in info and info["level"] != info["auto_detected_level"]:
+                problems.append("FAISS is not running the level it detects for this CPU")
+        elif x86 and cpu.get("avx512f"):
+            d = info.get("disassembly") or {}
+            if not d.get("zmm_instructions"):
+                problems.append(
+                    "hnswlib has no AVX-512 path on an AVX-512 CPU (not -march=native?)"
+                )
+    else:
+        problems.append(f"unknown SIMD configuration {requested!r}")
+    return problems
+
+
+def verify_strata(info: dict[str, Any]) -> list[str]:
+    """Strata on x86 must run its AVX2 kernels and contain no AVX-512 code."""
+    cpu = cpu_simd()
+    if cpu.get("arch") not in ("x86_64", "amd64"):
+        return []
+    problems = []
+    if info.get("isa") != "AVX2":
+        problems.append(f"Strata runs {info.get('isa')} kernels, not AVX2 (built without -mavx2?)")
+    d = info.get("disassembly") or {}
+    if d.get("zmm_instructions"):
+        problems.append(f"Strata's binary has {d['zmm_instructions']} AVX-512 instructions")
+    return problems
 
 
 def describe(info: dict[str, Any] | None) -> str:

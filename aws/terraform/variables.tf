@@ -93,8 +93,9 @@ variable "cluster_volume_gb" {
 variable "max_lifetime_hours" {
   description = <<-EOT
     Safety net: each instance schedules its own shutdown this many hours after boot, and shutdown
-    terminates it. Covers a forgotten teardown. Main stage plan: ~11 h; cluster: ~2 h.
+    terminates it. Covers a forgotten teardown. Main stage plan: ~14.5 h with contingency (the
+    references run twice, at AVX2 and at AVX-512); cluster: ~2.5 h.
   EOT
   type        = number
-  default     = 14
+  default     = 18
 }
