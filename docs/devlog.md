@@ -1881,3 +1881,36 @@ like-for-like runs use a second env, `.venv-avx2`. There hnswlib is built from s
 **Cost and schedule:** the second comparison reruns hnswlib and FAISS in parts A and B. The main
 stage is now ~14.4 h with contingency (~$20.5) and the session about $24. The auto-termination
 safety net went from 14 h to 18 h; at 14 h it would have cut the main stage off.
+
+## 2026-10-02: First apply refused at RunInstances: the AMI condition was wrong
+
+**What happened:** the main-stage apply created the network (VPC, subnet, internet gateway,
+route table and association, security group, key pair: 7 resources, none billed), then failed
+with UnauthorizedOperation for `ec2:RunInstances` on the Canonical AMI.
+
+**Diagnosis:**
+- An EC2 `--dry-run` of the same launch as the strata-terraform user reproduced the refusal
+  without launching anything.
+- `sts decode-authorization-message`, run with an admin profile, showed the context AWS evaluated
+  for the image: `ec2:Owner = "amazon"`, with the owner account 099720109477 present only as the
+  resource's account.
+- For a verified provider's public AMI, `ec2:Owner` is the alias `amazon`, so my condition
+  `ec2:Owner = 099720109477` could never match.
+- My simulator case had passed because I supplied that wrong value as the context. The simulator
+  evaluates whatever context it is given; it can't detect a wrong model of the context.
+
+**Fix:** `ec2:Owner = amazon` AND `aws:ResourceAccount = 099720109477`. The first alone would
+allow any Amazon or verified-provider image (Amazon Linux, Windows, ...); the second narrows it to
+Canonical.
+- Access Analyzer reports no findings.
+- `simulate_policy.sh` now uses the real context: 39 of 39 pass, including that Amazon Linux stays
+  denied.
+
+**New check:** `aws/iam/dryrun_launch.sh` runs Terraform's exact launch as `--dry-run` with the
+strata profile and decodes any refusal. It caught nothing new yet because the fix isn't on the
+IAM user yet. Running it after updating the policy is the only proof that the remaining launch
+conditions (instance type, market, IMDSv2, volume, tags) hold for real requests. The image was
+simply the first resource AWS evaluated.
+
+**Leftovers:** the 7 network resources are in Terraform's state and free. The rerun reuses them,
+and teardown removes them. No cleanup is needed before rerunning.

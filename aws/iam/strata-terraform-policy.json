@@ -187,7 +187,10 @@
       "Action": "ec2:RunInstances",
       "Resource": "arn:aws:ec2:us-east-2::image/*",
       "Condition": {
-        "StringEquals": { "ec2:Owner": "099720109477" }
+        "StringEquals": {
+          "ec2:Owner": "amazon",
+          "aws:ResourceAccount": "099720109477"
+        }
       }
     },
     {

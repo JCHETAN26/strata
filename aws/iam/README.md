@@ -18,7 +18,10 @@ or root identity.
   - c7i.8xlarge, c7i.2xlarge, or c7i.xlarge (the plan's three types);
   - on-demand;
   - with IMDSv2 required;
-  - from Canonical's images (owner 099720109477);
+  - from Canonical's images: `ec2:Owner = amazon` and `aws:ResourceAccount = 099720109477`.
+    For a verified provider's public AMI, AWS evaluates `ec2:Owner` as the alias `amazon`, not
+    the owner's account ID (decoded from a real refusal). The account condition then narrows
+    "Amazon or verified providers" to Canonical alone;
   - into the tagged subnet, security group, key pair, and placement group;
   - with gp3 root volumes of at most 150 GB.
 - **Modify, delete, terminate:** only resources tagged `Project=strata-bench`.
@@ -32,13 +35,25 @@ wildcards, so the file holds nothing account-specific.
 ## Checked
 
 - **IAM Access Analyzer `validate-policy`:** no errors, warnings, or suggestions.
-- **`simulate_policy.sh`:** 37 cases through the IAM policy simulator (read-only), all as
-  expected. It covers everything the session must do, and a list of things it must not: other
+- **`simulate_policy.sh`:** 39 cases through the IAM policy simulator (read-only), all as
+  expected. The image cases use the context AWS actually evaluated. Run it with a profile that may
+  call the simulator; the strata user deliberately may not. It covers everything the session must do, and a list of things it must not: other
   instance types, spot, other regions, untagged resources, another project's instances or key
   pair, removing the `Project` tag, IAM, and S3. Rerun it after any edit.
 
-Not checkable without creating the user: whether every API call the Terraform AWS provider makes
-is listed. The policy relies on the provider tagging resources *at creation* (`TagSpecifications`),
+**The simulator only evaluates the context you give it.** The first apply showed what that
+misses: I had modeled the image's `ec2:Owner` as Canonical's account ID, and the simulator agreed
+with my model. **`dryrun_launch.sh` checks the real thing.** It asks EC2 (`--dry-run`, nothing
+launched) whether this user may launch the main instance exactly as Terraform would, and decodes
+any refusal into the condition values AWS evaluated. Run it after every policy change, before an
+apply:
+
+```sh
+AWS_PROFILE=strata aws/iam/dryrun_launch.sh      # needs the network applied; ends "OK: ... would succeed"
+```
+
+Also not checkable without running as the user: whether every API call the Terraform AWS provider
+makes is listed. The policy relies on the provider tagging resources *at creation* (`TagSpecifications`),
 which provider v5 does for every resource type used here. If a call is missing, the error names
 it (`UnauthorizedOperation ... ec2:SomeAction`). Add that one action to the matching statement and
 rerun `simulate_policy.sh`. Run `aws/scripts/up.sh main` (plan only) first: it exercises every

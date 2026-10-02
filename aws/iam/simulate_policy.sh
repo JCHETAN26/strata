@@ -67,8 +67,14 @@ case_ implicitDeny "launch in us-east-1"                      ec2:RunInstances "
 case_ allowed      "root volume gp3, 150 GB, tagged"          ec2:RunInstances "$A:volume/*" $R $T ec2:VolumeType=gp3 ec2:VolumeSize=150
 case_ implicitDeny "root volume 2000 GB"                      ec2:RunInstances "$A:volume/*" $R $T ec2:VolumeType=gp3 ec2:VolumeSize=2000
 case_ implicitDeny "root volume io2"                          ec2:RunInstances "$A:volume/*" $R $T ec2:VolumeType=io2 ec2:VolumeSize=100
-case_ allowed      "Canonical Ubuntu image"                   ec2:RunInstances "arn:aws:ec2:us-east-2::image/ami-0fa99aa8f97f9e30b" $R ec2:Owner=099720109477
-case_ implicitDeny "someone else's image"                     ec2:RunInstances "arn:aws:ec2:us-east-2::image/ami-123" $R ec2:Owner=111122223333
+# Images: the context below is what AWS actually evaluated for the Canonical AMI (decoded from the
+# UnauthorizedOperation of the first apply, 2026-10-02). For a verified provider's public image,
+# ec2:Owner is the alias "amazon", not the owner's account ID; the account is aws:ResourceAccount.
+IMG=arn:aws:ec2:us-east-2::image/ami-0fa99aa8f97f9e30b
+case_ allowed      "Canonical image, real context (owner alias amazon)" ec2:RunInstances "$IMG" $R ec2:Owner=amazon aws:ResourceAccount=099720109477 ec2:Public=true ec2:ImageType=machine ec2:RootDeviceType=ebs
+case_ implicitDeny "Amazon Linux image (owner amazon, Amazon's account)" ec2:RunInstances "arn:aws:ec2:us-east-2::image/ami-al2023" $R ec2:Owner=amazon aws:ResourceAccount=137112412989 ec2:Public=true
+case_ implicitDeny "image in Canonical's account, owner not amazon"   ec2:RunInstances "$IMG" $R ec2:Owner=099720109477 aws:ResourceAccount=099720109477
+case_ implicitDeny "someone else's image"                     ec2:RunInstances "arn:aws:ec2:us-east-2::image/ami-123" $R ec2:Owner=111122223333 aws:ResourceAccount=111122223333
 case_ allowed      "launch into the bench subnet"             ec2:RunInstances "$A:subnet/subnet-1" $R $RT
 case_ implicitDeny "launch into another subnet"               ec2:RunInstances "$A:subnet/subnet-2" $R aws:ResourceTag/Project=other
 case_ allowed      "terminate a strata-bench instance"        ec2:TerminateInstances "$A:instance/i-1" $R $RT
