@@ -1,0 +1,123 @@
+ Percent |	Source code & Disassembly of strata_search for cycles (2365 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         : 0     0x45630 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const>:
+    0.04 :   45630:        endbr64
+    0.00 :   45634:        pushq   %rbp
+    0.00 :   45635:        movq    %rsp, %rbp
+    0.00 :   45638:        pushq   %r15
+    0.00 :   4563a:        movq    %rdi, %r15
+    0.00 :   4563d:        pushq   %r14
+    0.00 :   4563f:        pushq   %r13
+    0.00 :   45641:        pushq   %r12
+    0.04 :   45643:        pushq   %rbx
+    0.00 :   45644:        movq    %rcx, %rbx
+    0.00 :   45647:        subq    $0x48, %rsp
+    0.00 :   4564b:        movq    %rsi, -0x40(%rbp)
+    0.04 :   4564f:        movq    %rdx, -0x48(%rbp)
+    0.00 :   45653:        cmpb    $0x0, %fs:-0x58
+    0.04 :   4565c:        je      0x457b9 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x189>
+    0.00 :   45662:        movl    %r8d, -0x5c(%rbp)
+    0.04 :   45666:        leal    -0x1(%r8), %eax
+    0.00 :   4566a:        movl    -0x5c(%rbp), %esi
+    0.04 :   4566d:        movl    %ebx, %ecx
+    0.00 :   4566f:        cltq
+    0.00 :   45671:        shrq    $0x20, %rbx
+    0.00 :   45675:        movq    %r15, %r14
+    0.00 :   45678:        movq    %rax, -0x68(%rbp)
+    0.00 :   4567c:        vmovd   %ebx, %xmm0
+    0.13 :   45680:        movl    %ecx, %eax
+    0.00 :   45682:        testl   %esi, %esi
+    0.00 :   45684:        jne     0x45766 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x136>
+    0.00 :   4568a:        nopw    (%rax,%rax)
+    0.00 :   45690:        movq    0x38(%r14), %rdi
+    0.00 :   45694:        movq    0xa48(%r14), %rsi
+    0.00 :   4569b:        leaq    0x1(%rdi), %rdx
+    0.00 :   4569f:        imulq   %rax, %rdx
+    0.00 :   456a3:        leaq    (%rsi,%rdx,4), %rdx
+    0.00 :   456a7:        leaq    0x4(%rdx), %rbx
+    0.00 :   456ab:        movl    (%rdx), %edx
+    0.00 :   456ad:        leaq    (%rbx,%rdx,4), %rdi
+    0.00 :   456b1:        cmpq    %rbx, %rdi
+    0.00 :   456b4:        je      0x4579f <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x16f>
+    0.13 :   456ba:        movq    %rdi, -0x38(%rbp)
+    0.08 :   456be:        movq    %rbx, %rdi
+    0.00 :   456c1:        vmovd   %xmm0, %r13d
+    0.00 :   456c6:        movl    %ecx, %ebx
+    0.00 :   456c8:        movl    %ecx, -0x50(%rbp)
+    0.00 :   456cb:        movq    %rdi, %r12
+    0.00 :   456ce:        movq    %rax, -0x58(%rbp)
+    0.00 :   456d2:        vmovss  %xmm0, -0x4c(%rbp)
+    0.00 :   456d7:        jmp     0x456f9 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0xc9>
+    0.00 :   456d9:        nopl    (%rax)
+    0.59 :   456e0:        vmovd   %xmm0, %eax
+    0.00 :   456e4:        cmovbel %r15d, %ebx
+    3.56 :   456e8:        cmoval  %r13d, %eax
+    0.68 :   456ec:        movl    %eax, %r13d
+    0.00 :   456ef:        addq    $0x4, %r12
+    0.00 :   456f3:        cmpq    %r12, -0x38(%rbp)
+    0.00 :   456f7:        je      0x45742 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x112>
+    0.08 :   456f9:        movl    (%r12), %edx
+    0.30 :   456fd:        movq    (%r14), %rcx
+    0.00 :   45700:        movq    0xa18(%r14), %rsi
+    0.59 :   45707:        movq    -0x40(%rbp), %rdi
+    0.00 :   4570b:        movq    %rdx, %r15
+    0.68 :   4570e:        imulq   %rcx, %rdx
+    0.09 :   45712:        leaq    (%rsi,%rdx,4), %rdx
+    0.00 :   45716:        movq    -0x48(%rbp), %rsi
+    0.21 :   4571a:        callq   *0x30(%r14)
+    0.00 :   4571e:        vmovd   %r13d, %xmm1
+    0.04 :   45723:        vcomiss %xmm1, %xmm0
+    1.48 :   45727:        jp      0x456ef <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0xbf>
+    1.23 :   45729:        jne     0x456e0 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0xb0>
+    0.00 :   4572b:        cmpl    %ebx, %r15d
+    0.00 :   4572e:        jae     0x456ef <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0xbf>
+    0.00 :   45730:        vmovd   %xmm0, %r13d
+    0.00 :   45735:        movl    %r15d, %ebx
+    0.00 :   45738:        addq    $0x4, %r12
+    0.00 :   4573c:        cmpq    %r12, -0x38(%rbp)
+    0.00 :   45740:        jne     0x456f9 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0xc9>
+    0.00 :   45742:        movl    -0x50(%rbp), %ecx
+    0.00 :   45745:        vmovss  -0x4c(%rbp), %xmm0
+    0.00 :   4574a:        movq    -0x58(%rbp), %rax
+    0.13 :   4574e:        cmpl    %ebx, %ecx
+    0.00 :   45750:        je      0x4579f <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x16f>
+    0.34 :   45752:        movl    -0x5c(%rbp), %esi
+    0.17 :   45755:        movl    %ebx, %ecx
+    0.00 :   45757:        vmovd   %r13d, %xmm0
+    0.13 :   4575c:        movl    %ecx, %eax
+    0.00 :   4575e:        testl   %esi, %esi
+    0.00 :   45760:        je      0x45690 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x60>
+    0.04 :   45766:        movq    0xa60(%r14), %rdx
+    0.00 :   4576d:        movq    0x10(%r14), %rdi
+    0.00 :   45771:        leaq    (%rax,%rax,2), %rsi
+    0.09 :   45775:        leaq    (%rdx,%rsi,8), %rsi
+    0.17 :   45779:        leaq    0x1(%rdi), %rdx
+    0.00 :   4577d:        movq    -0x68(%rbp), %rdi
+    0.00 :   45781:        movq    (%rsi), %rsi
+   44.76 :   45784:        imulq   %rdi, %rdx
+    0.00 :   45788:        leaq    (%rsi,%rdx,4), %rdx
+    0.38 :   4578c:        leaq    0x4(%rdx), %rbx
+    0.00 :   45790:        movl    (%rdx), %edx
+   42.50 :   45792:        leaq    (%rbx,%rdx,4), %rdi
+    0.21 :   45796:        cmpq    %rbx, %rdi
+    0.00 :   45799:        jne     0x456ba <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x8a>
+    0.30 :   4579f:        vmovd   %xmm0, %edx
+    0.51 :   457a3:        addq    $0x48, %rsp
+    0.00 :   457a7:        shlq    $0x20, %rdx
+    0.04 :   457ab:        popq    %rbx
+    0.00 :   457ac:        popq    %r12
+    0.00 :   457ae:        orq     %rdx, %rax
+    0.08 :   457b1:        popq    %r13
+    0.04 :   457b3:        popq    %r14
+    0.00 :   457b5:        popq    %r15
+    0.00 :   457b7:        popq    %rbp
+    0.00 :   457b8:        retq
+    0.00 :   457b9:        movl    %r8d, -0x38(%rbp)
+    0.00 :   457bd:        leaq    0x27844(%rip), %rdx  # 0x6d008 <__dso_handle>
+    0.00 :   457c4:        movq    %fs:0x0, %rax
+    0.00 :   457cd:        leaq    -0xbb64(%rip), %rdi  # 0x39c70 <strata::(anonymous namespace)::SearchScratch::~SearchScratch()>
+    0.00 :   457d4:        movb    $0x1, %fs:-0x58
+    0.00 :   457dd:        leaq    -0x50(%rax), %rsi
+    0.00 :   457e4:        callq   0x5dc0 <_init+0xdc0>
+    0.00 :   457e9:        movl    -0x38(%rbp), %r8d
+    0.00 :   457ed:        jmp     0x45662 <strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const+0x32>

@@ -1,0 +1,1 @@
+{"dataset": "sift1m", "event": "cycles", "commit": "8ae9bf4dd58baa4e2ac86175e216b6ad3de2ceeb", "instance": "c7i.8xlarge", "cpu": "Intel(R) Xeon(R) Platinum 8488C", "kernel": "7.0.0-1013-aws", "perf": "perf version 7.0.14"}

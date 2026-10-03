@@ -1,0 +1,29 @@
+ Percent |	Source code & Disassembly of strata_search for cycles (7996 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         : 0     0x3a130 <strata::HnswIndex::neighbors(unsigned int, int) const>:
+    0.26 :   3a130:        endbr64
+    0.00 :   3a134:        movl    %esi, %esi
+    0.00 :   3a136:        testl   %edx, %edx
+    0.00 :   3a138:        jne     0x3a160 <strata::HnswIndex::neighbors(unsigned int, int) const+0x30>
+    0.00 :   3a13a:        movq    0x38(%rdi), %rax
+    0.00 :   3a13e:        movq    0xa48(%rdi), %rdx
+    0.00 :   3a145:        addq    $0x1, %rax
+    0.01 :   3a149:        imulq   %rsi, %rax
+    0.05 :   3a14d:        leaq    (%rdx,%rax,4), %rax
+    0.34 :   3a151:        movl    (%rax), %edx
+   99.34 :   3a153:        addq    $0x4, %rax
+    0.00 :   3a157:        retq
+    0.00 :   3a158:        nopl    (%rax,%rax)
+    0.00 :   3a160:        movq    0xa60(%rdi), %rax
+    0.00 :   3a167:        leaq    (%rsi,%rsi,2), %rcx
+    0.00 :   3a16b:        subl    $0x1, %edx
+    0.00 :   3a16e:        movslq  %edx, %rdx
+    0.00 :   3a171:        leaq    (%rax,%rcx,8), %rcx
+    0.00 :   3a175:        movq    0x10(%rdi), %rax
+    0.00 :   3a179:        addq    $0x1, %rax
+    0.00 :   3a17d:        imulq   %rdx, %rax
+    0.00 :   3a181:        movq    (%rcx), %rdx
+    0.00 :   3a184:        leaq    (%rdx,%rax,4), %rax
+    0.00 :   3a188:        movl    (%rax), %edx
+    0.00 :   3a18a:        addq    $0x4, %rax
+    0.00 :   3a18e:        retq

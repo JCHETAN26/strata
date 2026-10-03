@@ -1,0 +1,970 @@
+ Percent |	Source code & Disassembly of strata_search for cycles (124609 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------------
+         : 0     0x3b6e0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > const&, unsigned long, int, strata::(anonymous namespace)::KeepAll const&, strata::HnswIndex::TraversalBudget*) const [clone .constprop.0]>:
+    0.00 :   3b6e0:        pushq   %rbp
+    0.00 :   3b6e1:        movq    %rsp, %rbp
+    0.00 :   3b6e4:        pushq   %r15
+    0.00 :   3b6e6:        movq    %rsi, %r15
+    0.00 :   3b6e9:        pushq   %r14
+    0.00 :   3b6eb:        pushq   %r13
+    0.00 :   3b6ed:        pushq   %r12
+    0.00 :   3b6ef:        pushq   %rbx
+    0.00 :   3b6f0:        movq    %r8, %rbx
+    0.00 :   3b6f3:        subq    $0xf8, %rsp
+    0.00 :   3b6fa:        movq    %rdi, -0x110(%rbp)
+    0.00 :   3b701:        movq    %rdx, -0xf0(%rbp)
+    0.00 :   3b708:        movq    %rcx, -0xe0(%rbp)
+    0.00 :   3b70f:        movq    %r9, -0xb8(%rbp)
+    0.00 :   3b716:        movq    %fs:0x28, %rax
+    0.00 :   3b71f:        movq    %rax, -0x38(%rbp)
+    0.00 :   3b723:        xorl    %eax, %eax
+    0.00 :   3b725:        cmpb    $0x0, %fs:-0x58
+    0.00 :   3b72e:        je      0x3c6d9 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b734:        movq    0xa38(%r15), %rdi
+    0.00 :   3b73b:        subq    0xa30(%r15), %rdi
+    0.00 :   3b742:        callq   0x39cd0 <strata::(anonymous namespace)::VisitedSet::reset(unsigned long) [clone .constprop.0]>
+    0.00 :   3b747:        movq    (%rbx), %rax
+    0.00 :   3b74a:        movq    0x8(%rbx), %rbx
+    0.00 :   3b74e:        vpxor   %xmm0, %xmm0, %xmm0
+    0.00 :   3b752:        movq    $0x0, -0x70(%rbp)
+    0.00 :   3b75a:        movq    $0x0, -0x50(%rbp)
+    0.00 :   3b762:        movq    %rbx, -0xb0(%rbp)
+    0.00 :   3b769:        vmovdqa %xmm0, -0x80(%rbp)
+    0.00 :   3b76e:        vmovdqa %xmm0, -0x60(%rbp)
+    0.00 :   3b773:        cmpq    %rbx, %rax
+    0.00 :   3b776:        je      0x3c7aa <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b77c:        movq    $0x0, -0x98(%rbp)
+    0.00 :   3b787:        movq    %rax, %r13
+    0.00 :   3b78a:        xorl    %ebx, %ebx
+    0.00 :   3b78c:        leaq    -0x50, %rax
+    0.00 :   3b794:        movq    $0x0, -0xa8(%rbp)
+    0.00 :   3b79f:        movq    $0x0, -0xa0(%rbp)
+    0.00 :   3b7aa:        movq    %rax, -0xc0(%rbp)
+    0.00 :   3b7b1:        nopl    (%rax)
+    0.00 :   3b7b8:        movq    -0xc0(%rbp), %rsi
+    0.00 :   3b7bf:        movl    (%r13), %edx
+    0.00 :   3b7c3:        movq    %fs:(%rsi), %rax
+    0.00 :   3b7c7:        leaq    (%rax,%rdx,4), %rax
+    0.00 :   3b7cb:        movl    %fs:0x18(%rsi), %edx
+    0.00 :   3b7cf:        cmpl    %edx, (%rax)
+    0.00 :   3b7d1:        je      0x3b7d5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.05 :   3b7d3:        movl    %edx, (%rax)
+    0.00 :   3b7d5:        movq    -0xa0(%rbp), %rax
+    0.00 :   3b7dc:        cmpq    %rax, %rbx
+    0.00 :   3b7df:        je      0x3c1a5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b7e5:        movq    (%r13), %rax
+    0.00 :   3b7e9:        addq    $0x8, %rbx
+    0.00 :   3b7ed:        movq    %rax, -0x8(%rbx)
+    0.00 :   3b7f1:        movq    %rbx, -0x78(%rbp)
+    0.00 :   3b7f5:        movq    -0xa8(%rbp), %rax
+    0.00 :   3b7fc:        movq    %rbx, %rdi
+    0.00 :   3b7ff:        movl    -0x8(%rbx), %esi
+    0.00 :   3b802:        vmovss  -0x4(%rbx), %xmm0
+    0.00 :   3b807:        movq    -0xa8(%rbp), %r8
+    0.00 :   3b80e:        subq    %rax, %rdi
+    0.00 :   3b811:        movq    %rdi, %rdx
+    0.00 :   3b814:        sarq    $0x3, %rdx
+    0.00 :   3b818:        leaq    -0x1(%rdx), %rcx
+    0.00 :   3b81c:        subq    $0x2, %rdx
+    0.00 :   3b820:        movq    %rdx, %rax
+    0.00 :   3b823:        shrq    $0x3f, %rax
+    0.00 :   3b827:        addq    %rdx, %rax
+    0.00 :   3b82a:        sarq    %rax
+    0.00 :   3b82d:        testq   %rcx, %rcx
+    0.00 :   3b830:        jle     0x3c786 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b836:        leaq    (%r8,%rax,8), %rdx
+    0.00 :   3b83a:        vmovss  0x4(%rdx), %xmm1
+    0.00 :   3b83f:        vcomiss %xmm0, %xmm1
+    0.00 :   3b843:        jp      0x3b880 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b845:        je      0x3c080 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b84b:        jbe     0x3b880 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b84d:        movq    (%rdx), %rdi
+    0.00 :   3b850:        movq    %rdi, (%r8,%rcx,8)
+    0.00 :   3b854:        leaq    -0x1(%rax), %rcx
+    0.00 :   3b858:        movq    %rcx, %rdi
+    0.00 :   3b85b:        shrq    $0x3f, %rdi
+    0.00 :   3b85f:        addq    %rcx, %rdi
+    0.00 :   3b862:        movq    %rax, %rcx
+    0.00 :   3b865:        sarq    %rdi
+    0.00 :   3b868:        testq   %rax, %rax
+    0.00 :   3b86b:        je      0x3b88b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b86d:        movq    %rdi, %rax
+    0.00 :   3b870:        leaq    (%r8,%rax,8), %rdx
+    0.00 :   3b874:        vmovss  0x4(%rdx), %xmm1
+    0.00 :   3b879:        vcomiss %xmm0, %xmm1
+    0.00 :   3b87d:        jnp     0x3b845 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b87f:        nop
+    0.00 :   3b880:        movq    -0xa8(%rbp), %rax
+    0.00 :   3b887:        leaq    (%rax,%rcx,8), %rdx
+    0.00 :   3b88b:        movq    -0x58(%rbp), %r14
+    0.00 :   3b88f:        movq    -0x50(%rbp), %r12
+    0.00 :   3b893:        movl    %esi, (%rdx)
+    0.00 :   3b895:        vmovss  %xmm0, 0x4(%rdx)
+    0.00 :   3b89a:        cmpq    %r12, %r14
+    0.00 :   3b89d:        je      0x3c23e <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b8a3:        movq    (%r13), %rax
+    0.00 :   3b8a7:        addq    $0x8, %r14
+    0.00 :   3b8ab:        movq    %rax, -0x8(%r14)
+    0.00 :   3b8af:        movq    %r14, -0x58(%rbp)
+    0.00 :   3b8b3:        movq    -0x98(%rbp), %rax
+    0.00 :   3b8ba:        movl    -0x8(%r14), %esi
+    0.00 :   3b8be:        vmovss  -0x4(%r14), %xmm0
+    0.00 :   3b8c4:        movq    -0x98(%rbp), %r9
+    0.00 :   3b8cb:        subq    %rax, %r14
+    0.00 :   3b8ce:        movq    %r14, %rdi
+    0.00 :   3b8d1:        sarq    $0x3, %rdi
+    0.00 :   3b8d5:        leaq    -0x2(%rdi), %rdx
+    0.00 :   3b8d9:        leaq    -0x1(%rdi), %r8
+    0.00 :   3b8dd:        movq    %rdx, %rax
+    0.00 :   3b8e0:        shrq    $0x3f, %rax
+    0.00 :   3b8e4:        addq    %rdx, %rax
+    0.00 :   3b8e7:        sarq    %rax
+    0.00 :   3b8ea:        testq   %r8, %r8
+    0.00 :   3b8ed:        jle     0x3c775 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b8f3:        leaq    (%r9,%rax,8), %rcx
+    0.00 :   3b8f7:        vmovss  0x4(%rcx), %xmm1
+    0.00 :   3b8fc:        vcomiss %xmm0, %xmm1
+    0.00 :   3b900:        jp      0x3b940 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b902:        je      0x3c068 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b908:        ja      0x3b940 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b90a:        movq    (%rcx), %rdx
+    0.00 :   3b90d:        movq    %rdx, (%r9,%r8,8)
+    0.00 :   3b911:        leaq    -0x1(%rax), %r8
+    0.00 :   3b915:        movq    %r8, %rdx
+    0.00 :   3b918:        shrq    $0x3f, %rdx
+    0.00 :   3b91c:        addq    %r8, %rdx
+    0.00 :   3b91f:        movq    %rax, %r8
+    0.00 :   3b922:        sarq    %rdx
+    0.00 :   3b925:        testq   %rax, %rax
+    0.00 :   3b928:        je      0x3b94b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b92a:        movq    %rdx, %rax
+    0.00 :   3b92d:        leaq    (%r9,%rax,8), %rcx
+    0.00 :   3b931:        vmovss  0x4(%rcx), %xmm1
+    0.00 :   3b936:        vcomiss %xmm0, %xmm1
+    0.00 :   3b93a:        jnp     0x3b902 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b93c:        nopl    (%rax)
+    0.00 :   3b940:        movq    -0x98(%rbp), %rax
+    0.00 :   3b947:        leaq    (%rax,%r8,8), %rcx
+    0.00 :   3b94b:        movl    %esi, (%rcx)
+    0.00 :   3b94d:        vmovss  %xmm0, 0x4(%rcx)
+    0.00 :   3b952:        cmpq    %rdi, -0xb8(%rbp)
+    0.00 :   3b959:        jb      0x3c050 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b95f:        addq    $0x8, %r13
+    0.00 :   3b963:        cmpq    %r13, -0xb0(%rbp)
+    0.00 :   3b96a:        jne     0x3b7b8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b970:        movq    -0xa8(%rbp), %rax
+    0.00 :   3b977:        cmpq    %rax, %rbx
+    0.00 :   3b97a:        je      0x3bdea <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b980:        movl    0x10(%rbp), %eax
+    0.00 :   3b983:        subl    $0x1, %eax
+    0.00 :   3b986:        movl    %eax, -0x114(%rbp)
+    0.00 :   3b98c:        cltq
+    0.00 :   3b98e:        movq    %rax, -0xf8(%rbp)
+    0.06 :   3b995:        movq    -0xa8(%rbp), %rax
+    0.00 :   3b99c:        movq    -0x98(%rbp), %rsi
+    0.00 :   3b9a3:        vmovss  0x4(%rsi), %xmm0
+    0.02 :   3b9a8:        vcomiss 0x4(%rax), %xmm0
+    0.01 :   3b9ad:        movq    (%rax), %rdx
+    0.01 :   3b9b0:        jp      0x3b9be <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b9b2:        je      0x3c571 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3b9b8:        jbe     0x3bcfe <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b9be:        movl    %edx, %ecx
+    0.00 :   3b9c0:        leaq    -0x8(%rbx), %rax
+    0.00 :   3b9c4:        movq    -0xa8(%rbp), %rsi
+    0.00 :   3b9cb:        movq    %rax, -0xc8(%rbp)
+    0.00 :   3b9d2:        movq    %rbx, %rax
+    0.00 :   3b9d5:        subq    %rsi, %rax
+    0.00 :   3b9d8:        cmpq    $0x8, %rax
+    0.00 :   3b9dc:        jg      0x3c382 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b9e2:        movq    -0xc8(%rbp), %rax
+    0.00 :   3b9e9:        movq    -0xa8(%rbp), %rbx
+    0.00 :   3b9f0:        movq    %rax, -0x78(%rbp)
+    0.00 :   3b9f4:        cmpq    %rax, %rbx
+    0.00 :   3b9f7:        jne     0x3c11c <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3b9fd:        movq    -0xc0(%rbp), %rbx
+    0.00 :   3ba04:        movq    %fs:0x20(%rbx), %rax
+    0.01 :   3ba09:        movq    %rax, -0xb0(%rbp)
+    0.00 :   3ba10:        movq    %rax, %r13
+    0.00 :   3ba13:        cmpq    %fs:0x28(%rbx), %rax
+    0.00 :   3ba18:        je      0x3ba1f <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3ba1a:        movq    %rax, %fs:0x28(%rbx)
+    0.00 :   3ba1f:        movl    0x10(%rbp), %edx
+    0.00 :   3ba22:        testl   %edx, %edx
+    0.00 :   3ba24:        jne     0x3c0ee <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3ba2a:        movq    0x38(%r15), %rax
+    0.00 :   3ba2e:        movq    0xa48(%r15), %rdx
+    0.01 :   3ba35:        addq    $0x1, %rax
+    0.00 :   3ba39:        imulq   %rcx, %rax
+    0.01 :   3ba3d:        leaq    (%rdx,%rax,4), %rax
+    0.00 :   3ba41:        leaq    0x4(%rax), %r12
+    0.00 :   3ba45:        movl    (%rax), %eax
+    2.33 :   3ba47:        leaq    (%r12,%rax,4), %rax
+    0.01 :   3ba4b:        movq    %rax, -0xa0(%rbp)
+    0.01 :   3ba52:        cmpq    %r12, %rax
+    0.00 :   3ba55:        je      0x3bad2 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3ba57:        nopw    (%rax,%rax)
+    0.20 :   3ba60:        movq    -0xc0(%rbp), %rdi
+    0.11 :   3ba67:        movl    (%r12), %ebx
+    0.09 :   3ba6b:        movq    %fs:(%rdi), %rax
+    0.18 :   3ba6f:        movl    %fs:0x18(%rdi), %edx
+    0.10 :   3ba73:        movq    %rbx, %r14
+    0.02 :   3ba76:        leaq    (%rax,%rbx,4), %rax
+    0.10 :   3ba7a:        cmpl    %edx, (%rax)
+    0.00 :   3ba7c:        je      0x3bac5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+   18.84 :   3ba7e:        movl    %edx, (%rax)
+    0.25 :   3ba80:        cmpq    %r13, %fs:0x30(%rdi)
+    0.00 :   3ba85:        je      0x3be30 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.09 :   3ba8b:        movl    %ebx, (%r13)
+    0.01 :   3ba8f:        addq    $0x4, %r13
+    0.02 :   3ba93:        movq    %r13, %fs:0x28(%rdi)
+    0.05 :   3ba98:        movq    (%r15), %rdx
+    0.01 :   3ba9b:        movq    0xa18(%r15), %rcx
+    0.03 :   3baa2:        imulq   %rdx, %rbx
+    0.11 :   3baa6:        shlq    $0x2, %rbx
+    0.04 :   3baaa:        shlq    $0x2, %rdx
+    0.08 :   3baae:        je      0x3bac5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3bab0:        addq    %rbx, %rcx
+    0.02 :   3bab3:        xorl    %eax, %eax
+    0.04 :   3bab5:        nopl    (%rax)
+    0.30 :   3bab8:        prefetcht0      (%rcx,%rax)
+   65.05 :   3babc:        addq    $0x40, %rax
+    0.14 :   3bac0:        cmpq    %rdx, %rax
+    0.00 :   3bac3:        jb      0x3bab8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    1.37 :   3bac5:        addq    $0x4, %r12
+    0.14 :   3bac9:        cmpq    %r12, -0xa0(%rbp)
+    0.00 :   3bad0:        jne     0x3ba60 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3bad2:        movq    -0x80(%rbp), %rax
+    0.01 :   3bad6:        movq    %rax, -0xa8(%rbp)
+    0.01 :   3badd:        movq    -0xb0(%rbp), %rax
+    0.00 :   3bae4:        cmpq    %r13, %rax
+    0.00 :   3bae7:        je      0x3c6ab <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3baed:        movq    %rax, -0xa0(%rbp)
+    0.00 :   3baf4:        movq    -0xf0(%rbp), %rax
+    0.01 :   3bafb:        movq    -0xc8(%rbp), %rbx
+    0.00 :   3bb02:        movq    %rax, -0xd0(%rbp)
+    0.00 :   3bb09:        nopl    (%rax)
+    0.02 :   3bb10:        movq    -0xa0(%rbp), %rax
+    0.03 :   3bb17:        movq    (%r15), %rcx
+    0.04 :   3bb1a:        movq    0xa18(%r15), %rdx
+    0.08 :   3bb21:        movq    -0xe0(%rbp), %rsi
+    0.13 :   3bb28:        movl    (%rax), %eax
+    0.06 :   3bb2a:        movq    -0xd0(%rbp), %rdi
+    0.01 :   3bb31:        movq    %rax, %r14
+    0.02 :   3bb34:        imulq   %rcx, %rax
+    0.07 :   3bb38:        leaq    (%rdx,%rax,4), %rdx
+    0.06 :   3bb3c:        callq   *0x30(%r15)
+    0.00 :   3bb40:        movq    -0x58(%rbp), %r12
+    0.01 :   3bb44:        movq    -0x98(%rbp), %rsi
+    0.06 :   3bb4b:        movq    -0xb8(%rbp), %rcx
+    0.18 :   3bb52:        vmovss  %xmm0, -0xb0(%rbp)
+    0.13 :   3bb5a:        movq    %r12, %rax
+    0.00 :   3bb5d:        subq    %rsi, %rax
+    0.00 :   3bb60:        movq    %rax, -0xd8(%rbp)
+    0.13 :   3bb67:        sarq    $0x3, %rax
+    0.00 :   3bb6b:        movq    %rax, -0xc8(%rbp)
+    0.00 :   3bb72:        cmpq    %rcx, %rax
+    0.00 :   3bb75:        jb      0x3bb8e <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bb77:        vcomiss 0x4(%rsi), %xmm0
+    0.27 :   3bb7c:        jp      0x3bdc5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.31 :   3bb82:        je      0x3bed8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.08 :   3bb88:        ja      0x3bdc5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.17 :   3bb8e:        cmpq    %rbx, -0x70(%rbp)
+    0.00 :   3bb92:        je      0x3bef0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.27 :   3bb98:        vmovss  -0xb0(%rbp), %xmm0
+    0.03 :   3bba0:        movl    %r14d, (%rbx)
+    0.02 :   3bba3:        addq    $0x8, %rbx
+    0.00 :   3bba7:        movl    %r14d, %esi
+    0.00 :   3bbaa:        vmovss  %xmm0, -0x4(%rbx)
+    0.10 :   3bbaf:        movq    %rbx, -0x78(%rbp)
+    0.00 :   3bbb3:        movq    -0xa8(%rbp), %rax
+    0.00 :   3bbba:        movq    %rbx, %rcx
+    0.01 :   3bbbd:        movq    -0xa8(%rbp), %r8
+    0.00 :   3bbc4:        subq    %rax, %rcx
+    0.00 :   3bbc7:        movq    %rcx, %rdx
+    0.00 :   3bbca:        sarq    $0x3, %rdx
+    0.00 :   3bbce:        leaq    -0x1(%rdx), %rdi
+    0.06 :   3bbd2:        subq    $0x2, %rdx
+    0.01 :   3bbd6:        movq    %rdx, %rax
+    0.00 :   3bbd9:        shrq    $0x3f, %rax
+    0.04 :   3bbdd:        addq    %rdx, %rax
+    0.02 :   3bbe0:        sarq    %rax
+    0.02 :   3bbe3:        testq   %rdi, %rdi
+    0.00 :   3bbe6:        jle     0x3c70a <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bbec:        leaq    (%r8,%rax,8), %rdx
+    0.03 :   3bbf0:        vmovss  0x4(%rdx), %xmm1
+    0.20 :   3bbf5:        vcomiss %xmm0, %xmm1
+    0.07 :   3bbf9:        jp      0x3bc38 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.28 :   3bbfb:        je      0x3be20 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.20 :   3bc01:        jbe     0x3bc38 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.15 :   3bc03:        movq    (%rdx), %rcx
+    0.17 :   3bc06:        movq    %rcx, (%r8,%rdi,8)
+    0.03 :   3bc0a:        leaq    -0x1(%rax), %rdi
+    0.00 :   3bc0e:        movq    %rdi, %rcx
+    0.00 :   3bc11:        shrq    $0x3f, %rcx
+    0.00 :   3bc15:        addq    %rdi, %rcx
+    0.03 :   3bc18:        movq    %rax, %rdi
+    0.06 :   3bc1b:        sarq    %rcx
+    0.06 :   3bc1e:        testq   %rax, %rax
+    0.00 :   3bc21:        je      0x3bc43 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3bc23:        movq    %rcx, %rax
+    0.00 :   3bc26:        leaq    (%r8,%rax,8), %rdx
+    0.02 :   3bc2a:        vmovss  0x4(%rdx), %xmm1
+    0.09 :   3bc2f:        vcomiss %xmm0, %xmm1
+    0.14 :   3bc33:        jnp     0x3bbfb <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bc35:        nopl    (%rax)
+    0.25 :   3bc38:        movq    -0xa8(%rbp), %rax
+    0.37 :   3bc3f:        leaq    (%rax,%rdi,8), %rdx
+    0.08 :   3bc43:        movq    -0x50(%rbp), %rax
+    0.01 :   3bc47:        movl    %esi, (%rdx)
+    0.18 :   3bc49:        vmovss  %xmm0, 0x4(%rdx)
+    0.00 :   3bc4e:        movq    %rax, -0xe8(%rbp)
+    0.00 :   3bc55:        cmpq    %rax, %r12
+    0.00 :   3bc58:        je      0x3bfa0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.05 :   3bc5e:        vmovss  -0xb0(%rbp), %xmm4
+    0.01 :   3bc66:        movl    %r14d, (%r12)
+    0.00 :   3bc6a:        addq    $0x8, %r12
+    0.00 :   3bc6e:        vmovss  %xmm4, -0x4(%r12)
+    0.00 :   3bc75:        movq    %r12, -0x58(%rbp)
+    0.00 :   3bc79:        movq    -0x98(%rbp), %rax
+    0.00 :   3bc80:        movq    -0x98(%rbp), %r8
+    0.00 :   3bc87:        subq    %rax, %r12
+    0.04 :   3bc8a:        movq    %r12, %rdi
+    0.01 :   3bc8d:        sarq    $0x3, %rdi
+    0.00 :   3bc91:        leaq    -0x2(%rdi), %rdx
+    0.00 :   3bc95:        leaq    -0x1(%rdi), %rcx
+    0.00 :   3bc99:        movq    %rdx, %rax
+    0.00 :   3bc9c:        shrq    $0x3f, %rax
+    0.00 :   3bca0:        addq    %rdx, %rax
+    0.02 :   3bca3:        sarq    %rax
+    0.06 :   3bca6:        testq   %rcx, %rcx
+    0.00 :   3bca9:        jle     0x3c6c8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.03 :   3bcaf:        leaq    (%r8,%rax,8), %rdx
+    0.05 :   3bcb3:        vmovss  0x4(%rdx), %xmm0
+    0.30 :   3bcb8:        vcomiss -0xb0(%rbp), %xmm0
+    0.22 :   3bcc0:        jp      0x3bda1 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.16 :   3bcc6:        je      0x3bd98 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.05 :   3bccc:        ja      0x3bda1 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.16 :   3bcd2:        movq    (%rdx), %rsi
+    0.16 :   3bcd5:        movq    %rsi, (%r8,%rcx,8)
+    0.04 :   3bcd9:        leaq    -0x1(%rax), %rsi
+    0.00 :   3bcdd:        movq    %rsi, %rcx
+    0.00 :   3bce0:        shrq    $0x3f, %rcx
+    0.00 :   3bce4:        addq    %rsi, %rcx
+    0.01 :   3bce7:        movq    %rcx, %rsi
+    0.01 :   3bcea:        movq    %rax, %rcx
+    0.02 :   3bced:        sarq    %rsi
+    0.00 :   3bcf0:        testq   %rax, %rax
+    0.00 :   3bcf3:        je      0x3bdac <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3bcf9:        movq    %rsi, %rax
+    0.00 :   3bcfc:        jmp     0x3bcaf <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bcfe:        movq    %rsi, %rax
+    0.00 :   3bd01:        movq    -0x58(%rbp), %rsi
+    0.00 :   3bd05:        subq    %rax, %rsi
+    0.00 :   3bd08:        sarq    $0x3, %rsi
+    0.00 :   3bd0c:        movq    -0x110(%rbp), %rbx
+    0.00 :   3bd13:        leaq    -0x81(%rbp), %rdx
+    0.00 :   3bd1a:        movq    %rbx, %rdi
+    0.00 :   3bd1d:        callq   0x45eb0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >::vector(unsigned long, std::allocator<strata::Neighbor> const&)>
+    0.00 :   3bd22:        movq    %rbx, %rax
+    0.00 :   3bd25:        movq    0x8(%rbx), %rbx
+    0.00 :   3bd29:        movq    -0x98(%rbp), %r14
+    0.00 :   3bd30:        leaq    -0x60(%rbp), %r12
+    0.00 :   3bd34:        movq    (%rax), %r13
+    0.00 :   3bd37:        cmpq    %r13, %rbx
+    0.00 :   3bd3a:        je      0x3bd57 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bd3c:        nopl    (%rax)
+    0.00 :   3bd40:        movq    (%r14), %rax
+    0.01 :   3bd43:        movq    %r12, %rdi
+    0.00 :   3bd46:        subq    $0x8, %rbx
+    0.00 :   3bd4a:        movq    %rax, (%rbx)
+    0.00 :   3bd4d:        callq   0x45ce0 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()>
+    0.00 :   3bd52:        cmpq    %rbx, %r13
+    0.00 :   3bd55:        jne     0x3bd40 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bd57:        movq    %r12, %rdi
+    0.00 :   3bd5a:        callq   0x21070 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >::~vector()>
+    0.00 :   3bd5f:        leaq    -0x80(%rbp), %rdi
+    0.00 :   3bd63:        callq   0x21070 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >::~vector()>
+    0.00 :   3bd68:        movq    -0x38(%rbp), %rax
+    0.00 :   3bd6c:        subq    %fs:0x28, %rax
+    0.00 :   3bd75:        jne     0x3c7f8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bd7b:        movq    -0x110(%rbp), %rax
+    0.00 :   3bd82:        addq    $0xf8, %rsp
+    0.00 :   3bd89:        popq    %rbx
+    0.00 :   3bd8a:        popq    %r12
+    0.00 :   3bd8c:        popq    %r13
+    0.00 :   3bd8e:        popq    %r14
+    0.00 :   3bd90:        popq    %r15
+    0.00 :   3bd92:        popq    %rbp
+    0.00 :   3bd93:        retq
+    0.00 :   3bd94:        nopl    (%rax)
+    0.00 :   3bd98:        cmpl    %r14d, (%rdx)
+    0.00 :   3bd9b:        jb      0x3bcd2 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.19 :   3bda1:        movq    -0x98(%rbp), %rax
+    0.16 :   3bda8:        leaq    (%rax,%rcx,8), %rdx
+    0.04 :   3bdac:        vmovss  -0xb0(%rbp), %xmm3
+    0.00 :   3bdb4:        movl    %r14d, (%rdx)
+    0.08 :   3bdb7:        vmovss  %xmm3, 0x4(%rdx)
+    0.00 :   3bdbc:        cmpq    %rdi, -0xb8(%rbp)
+    0.00 :   3bdc3:        jb      0x3be08 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.24 :   3bdc5:        addq    $0x4, -0xa0(%rbp)
+    0.15 :   3bdcd:        movq    -0xa0(%rbp), %rax
+    0.11 :   3bdd4:        cmpq    %rax, %r13
+    0.00 :   3bdd7:        jne     0x3bb10 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3bddd:        cmpq    %rbx, -0xa8(%rbp)
+    0.00 :   3bde4:        jne     0x3b995 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bdea:        movq    -0x58(%rbp), %rsi
+    0.00 :   3bdee:        movq    -0x98(%rbp), %rax
+    0.00 :   3bdf5:        subq    %rax, %rsi
+    0.00 :   3bdf8:        sarq    $0x3, %rsi
+    0.00 :   3bdfc:        jmp     0x3bd0c <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be01:        nopl    (%rax)
+    0.02 :   3be08:        leaq    -0x60(%rbp), %r12
+    0.01 :   3be0c:        movq    %r12, %rdi
+    0.02 :   3be0f:        callq   0x45ce0 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()>
+    0.00 :   3be14:        jmp     0x3bdc5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be16:        nopw    %cs:(%rax,%rax)
+    0.00 :   3be20:        cmpl    (%rdx), %esi
+    0.00 :   3be22:        jae     0x3bc38 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be28:        jmp     0x3bc03 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be2d:        nopl    (%rax)
+    0.00 :   3be30:        movq    -0xb0(%rbp), %rsi
+    0.00 :   3be37:        movq    %r13, %rax
+    0.00 :   3be3a:        subq    %rsi, %rax
+    0.00 :   3be3d:        movabsq $0x1fffffffffffffff, %rsi
+    0.00 :   3be47:        movq    %rax, -0xa8(%rbp)
+    0.00 :   3be4e:        sarq    $0x2, %rax
+    0.00 :   3be52:        cmpq    %rsi, %rax
+    0.00 :   3be55:        je      0x3c88b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be5b:        movq    -0xb0(%rbp), %rsi
+    0.00 :   3be62:        cmpq    %rsi, %r13
+    0.00 :   3be65:        je      0x3c162 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be6b:        leaq    (%rax,%rax), %rdx
+    0.00 :   3be6f:        cmpq    %rax, %rdx
+    0.00 :   3be72:        jb      0x3c4b7 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be78:        testq   %rdx, %rdx
+    0.00 :   3be7b:        jne     0x3c757 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3be81:        movq    %r13, %r9
+    0.00 :   3be84:        xorl    %r8d, %r8d
+    0.00 :   3be87:        xorl    %ecx, %ecx
+    0.00 :   3be89:        movq    -0xa8(%rbp), %rdx
+    0.00 :   3be90:        movl    %r14d, (%rcx,%rdx)
+    0.00 :   3be94:        leaq    0x4(%rcx,%rdx), %r13
+    0.00 :   3be99:        testq   %rdx, %rdx
+    0.00 :   3be9c:        jg      0x3c08d <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bea2:        cmpq    $0x0, -0xb0(%rbp)
+    0.00 :   3beaa:        jne     0x3c0bb <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3beb0:        movq    -0xc0(%rbp), %rax
+    0.00 :   3beb7:        movq    %rcx, %fs:0x20(%rax)
+    0.00 :   3bebc:        movq    %r13, %fs:0x28(%rax)
+    0.00 :   3bec1:        movq    %r8, %fs:0x30(%rax)
+    0.00 :   3bec6:        movq    %rcx, -0xb0(%rbp)
+    0.00 :   3becd:        jmp     0x3ba98 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bed2:        nopw    (%rax,%rax)
+    0.00 :   3bed8:        cmpl    (%rsi), %r14d
+    0.00 :   3bedb:        jae     0x3bdc5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bee1:        jmp     0x3bb8e <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bee6:        nopw    %cs:(%rax,%rax)
+    0.00 :   3bef0:        movq    -0xa8(%rbp), %rsi
+    0.00 :   3bef7:        movq    %rbx, %rax
+    0.00 :   3befa:        subq    %rsi, %rax
+    0.00 :   3befd:        movabsq $0xfffffffffffffff, %rsi
+    0.00 :   3bf07:        movq    %rax, -0xe8(%rbp)
+    0.00 :   3bf0e:        sarq    $0x3, %rax
+    0.00 :   3bf12:        cmpq    %rsi, %rax
+    0.00 :   3bf15:        je      0x3c833 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bf1b:        movq    -0xa8(%rbp), %rsi
+    0.00 :   3bf22:        cmpq    %rsi, %rbx
+    0.00 :   3bf25:        je      0x3c53a <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bf2b:        leaq    (%rax,%rax), %rdx
+    0.00 :   3bf2f:        cmpq    %rax, %rdx
+    0.00 :   3bf32:        jb      0x3c62e <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bf38:        xorl    %r8d, %r8d
+    0.00 :   3bf3b:        xorl    %ecx, %ecx
+    0.00 :   3bf3d:        testq   %rdx, %rdx
+    0.00 :   3bf40:        jne     0x3c7bc <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bf46:        movq    -0xe8(%rbp), %rdx
+    0.00 :   3bf4d:        vmovss  -0xb0(%rbp), %xmm5
+    0.00 :   3bf55:        leaq    (%rcx,%rdx), %rax
+    0.00 :   3bf59:        leaq    0x8(%rcx,%rdx), %rbx
+    0.00 :   3bf5e:        movl    %r14d, (%rax)
+    0.00 :   3bf61:        vmovss  %xmm5, 0x4(%rax)
+    0.00 :   3bf66:        testq   %rdx, %rdx
+    0.00 :   3bf69:        jg      0x3c2d7 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bf6f:        cmpq    $0x0, -0xa8(%rbp)
+    0.00 :   3bf77:        jne     0x3c2f7 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bf7d:        movq    %rcx, -0x80(%rbp)
+    0.00 :   3bf81:        vmovss  -0x4(%rbx), %xmm0
+    0.00 :   3bf86:        movq    %rbx, -0x78(%rbp)
+    0.00 :   3bf8a:        movl    -0x8(%rbx), %esi
+    0.00 :   3bf8d:        movq    %r8, -0x70(%rbp)
+    0.00 :   3bf91:        movq    %rcx, -0xa8(%rbp)
+    0.00 :   3bf98:        jmp     0x3bbb3 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bf9d:        nopl    (%rax)
+    0.01 :   3bfa0:        movabsq $0xfffffffffffffff, %rsi
+    0.01 :   3bfaa:        cmpq    %rsi, -0xc8(%rbp)
+    0.00 :   3bfb1:        je      0x3c7fd <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3bfb7:        movq    -0x98(%rbp), %rsi
+    0.00 :   3bfbe:        cmpq    %rsi, -0xe8(%rbp)
+    0.00 :   3bfc5:        je      0x3c4c6 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bfcb:        movq    -0xc8(%rbp), %rsi
+    0.00 :   3bfd2:        leaq    (%rsi,%rsi), %rax
+    0.00 :   3bfd6:        cmpq    %rsi, %rax
+    0.00 :   3bfd9:        jb      0x3c61f <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bfdf:        xorl    %r8d, %r8d
+    0.00 :   3bfe2:        xorl    %ecx, %ecx
+    0.00 :   3bfe4:        testq   %rax, %rax
+    0.00 :   3bfe7:        jne     0x3c4d7 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3bfed:        movq    -0xd8(%rbp), %rdx
+    0.00 :   3bff4:        vmovss  -0xb0(%rbp), %xmm6
+    0.00 :   3bffc:        leaq    (%rcx,%rdx), %rax
+    0.00 :   3c000:        leaq    0x8(%rcx,%rdx), %r12
+    0.00 :   3c005:        movl    %r14d, (%rax)
+    0.00 :   3c008:        vmovss  %xmm6, 0x4(%rax)
+    0.00 :   3c00d:        testq   %rdx, %rdx
+    0.00 :   3c010:        jg      0x3c32b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c016:        cmpq    $0x0, -0x98(%rbp)
+    0.00 :   3c01e:        jne     0x3c34b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c024:        vmovss  -0x4(%r12), %xmm7
+    0.00 :   3c02b:        movq    %rcx, -0x60(%rbp)
+    0.00 :   3c02f:        movq    %r12, -0x58(%rbp)
+    0.00 :   3c033:        movl    -0x8(%r12), %r14d
+    0.00 :   3c038:        movq    %r8, -0x50(%rbp)
+    0.00 :   3c03c:        movq    %rcx, -0x98(%rbp)
+    0.00 :   3c043:        vmovss  %xmm7, -0xb0(%rbp)
+    0.00 :   3c04b:        jmp     0x3bc79 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c050:        leaq    -0x60(%rbp), %r12
+    0.00 :   3c054:        movq    %r12, %rdi
+    0.00 :   3c057:        callq   0x45ce0 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()>
+    0.00 :   3c05c:        jmp     0x3b95f <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c061:        nopl    (%rax)
+    0.00 :   3c068:        cmpl    %esi, (%rcx)
+    0.00 :   3c06a:        jb      0x3b90a <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c070:        movq    -0x98(%rbp), %rax
+    0.00 :   3c077:        leaq    (%rax,%r8,8), %rcx
+    0.00 :   3c07b:        jmp     0x3b94b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c080:        cmpl    (%rdx), %esi
+    0.00 :   3c082:        jae     0x3b880 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c088:        jmp     0x3b84d <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c08d:        movq    -0xb0(%rbp), %rsi
+    0.00 :   3c094:        movq    %rcx, %rdi
+    0.00 :   3c097:        movq    %r8, -0xd0(%rbp)
+    0.00 :   3c09e:        movq    %r9, -0xa8(%rbp)
+    0.00 :   3c0a5:        callq   0x5d20 <_init+0xd20>
+    0.00 :   3c0aa:        movq    -0xa8(%rbp), %r9
+    0.00 :   3c0b1:        movq    -0xd0(%rbp), %r8
+    0.00 :   3c0b8:        movq    %rax, %rcx
+    0.00 :   3c0bb:        movq    -0xb0(%rbp), %rdi
+    0.00 :   3c0c2:        movq    %r9, %rsi
+    0.00 :   3c0c5:        movq    %r8, -0xd0(%rbp)
+    0.00 :   3c0cc:        movq    %rcx, -0xa8(%rbp)
+    0.00 :   3c0d3:        subq    %rdi, %rsi
+    0.00 :   3c0d6:        callq   0x5b10 <_init+0xb10>
+    0.00 :   3c0db:        movq    -0xd0(%rbp), %r8
+    0.00 :   3c0e2:        movq    -0xa8(%rbp), %rcx
+    0.00 :   3c0e9:        jmp     0x3beb0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c0ee:        movq    0xa60(%r15), %rax
+    0.00 :   3c0f5:        leaq    (%rcx,%rcx,2), %rdx
+    0.00 :   3c0f9:        movq    -0xf8(%rbp), %rbx
+    0.00 :   3c100:        leaq    (%rax,%rdx,8), %rdx
+    0.00 :   3c104:        movq    0x10(%r15), %rax
+    0.00 :   3c108:        movq    (%rdx), %rdx
+    0.00 :   3c10b:        addq    $0x1, %rax
+    0.00 :   3c10f:        imulq   %rbx, %rax
+    0.00 :   3c113:        leaq    (%rdx,%rax,4), %rax
+    0.00 :   3c117:        jmp     0x3ba41 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c11c:        movl    0x10(%rbp), %r9d
+    0.00 :   3c120:        movl    (%rbx), %edx
+    0.00 :   3c122:        testl   %r9d, %r9d
+    0.00 :   3c125:        jne     0x3c504 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c12b:        movq    0x38(%r15), %rax
+    0.01 :   3c12f:        leaq    0x4(,%rax,4), %rsi
+    0.00 :   3c137:        imulq   %rsi, %rdx
+    0.01 :   3c13b:        addq    0xa48(%r15), %rdx
+    0.00 :   3c142:        testq   %rsi, %rsi
+    0.00 :   3c145:        je      0x3b9fd <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c14b:        xorl    %eax, %eax
+    0.00 :   3c14d:        nopl    (%rax)
+    0.00 :   3c150:        prefetcht0      (%rdx,%rax)
+    1.40 :   3c154:        addq    $0x40, %rax
+    0.01 :   3c158:        cmpq    %rsi, %rax
+    0.00 :   3c15b:        jb      0x3c150 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c15d:        jmp     0x3b9fd <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c162:        addq    $0x1, %rax
+    0.00 :   3c166:        jb      0x3c4b7 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c16c:        movabsq $0x1fffffffffffffff, %rdx
+    0.00 :   3c176:        cmpq    %rdx, %rax
+    0.00 :   3c179:        cmovaq  %rdx, %rax
+    0.00 :   3c17d:        leaq    (,%rax,4), %r13
+    0.00 :   3c185:        movq    %r13, %rdi
+    0.00 :   3c188:        callq   0x5b00 <_init+0xb00>
+    0.00 :   3c18d:        movq    %rax, %rcx
+    0.00 :   3c190:        movq    -0xc0(%rbp), %rax
+    0.00 :   3c197:        leaq    (%rcx,%r13), %r8
+    0.00 :   3c19b:        movq    %fs:0x30(%rax), %r9
+    0.00 :   3c1a0:        jmp     0x3be89 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c1a5:        movq    -0xa8(%rbp), %rax
+    0.00 :   3c1ac:        subq    %rax, %rbx
+    0.00 :   3c1af:        movq    %rbx, %rax
+    0.00 :   3c1b2:        movq    %rbx, %r12
+    0.00 :   3c1b5:        movabsq $0xfffffffffffffff, %rbx
+    0.00 :   3c1bf:        sarq    $0x3, %rax
+    0.00 :   3c1c3:        cmpq    %rbx, %rax
+    0.00 :   3c1c6:        je      0x3c818 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c1cc:        movq    -0xa8(%rbp), %rsi
+    0.00 :   3c1d3:        cmpq    %rsi, -0xa0(%rbp)
+    0.00 :   3c1da:        je      0x3c63d <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c1e0:        leaq    (%rax,%rax), %rdx
+    0.00 :   3c1e4:        cmpq    %rax, %rdx
+    0.00 :   3c1e7:        jb      0x3c72a <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c1ed:        testq   %rdx, %rdx
+    0.00 :   3c1f0:        jne     0x3c84e <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c1f6:        xorl    %ecx, %ecx
+    0.00 :   3c1f8:        xorl    %r14d, %r14d
+    0.00 :   3c1fb:        movq    (%r13), %rax
+    0.00 :   3c1ff:        leaq    0x8(%r14,%r12), %rbx
+    0.00 :   3c204:        movq    %rax, (%r14,%r12)
+    0.00 :   3c208:        testq   %r12, %r12
+    0.00 :   3c20b:        jg      0x3c583 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c211:        cmpq    $0x0, -0xa8(%rbp)
+    0.00 :   3c219:        jne     0x3c5a3 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c21f:        movq    %r14, -0x80(%rbp)
+    0.00 :   3c223:        movq    %rbx, -0x78(%rbp)
+    0.00 :   3c227:        movq    %rcx, -0x70(%rbp)
+    0.00 :   3c22b:        movq    %rcx, -0xa0(%rbp)
+    0.00 :   3c232:        movq    %r14, -0xa8(%rbp)
+    0.00 :   3c239:        jmp     0x3b7f5 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c23e:        movq    -0x98(%rbp), %rax
+    0.00 :   3c245:        movabsq $0xfffffffffffffff, %rsi
+    0.00 :   3c24f:        subq    %rax, %r14
+    0.00 :   3c252:        movq    %r14, %rax
+    0.00 :   3c255:        movq    %r14, -0xc8(%rbp)
+    0.00 :   3c25c:        sarq    $0x3, %rax
+    0.00 :   3c260:        cmpq    %rsi, %rax
+    0.00 :   3c263:        je      0x3c86c <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c269:        movq    -0x98(%rbp), %rsi
+    0.00 :   3c270:        cmpq    %rsi, %r12
+    0.00 :   3c273:        je      0x3c674 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c279:        leaq    (%rax,%rax), %rdx
+    0.00 :   3c27d:        cmpq    %rax, %rdx
+    0.00 :   3c280:        jb      0x3c71b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c286:        xorl    %r8d, %r8d
+    0.00 :   3c289:        xorl    %ecx, %ecx
+    0.00 :   3c28b:        testq   %rdx, %rdx
+    0.00 :   3c28e:        jne     0x3c7da <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c294:        movq    -0xc8(%rbp), %rdx
+    0.00 :   3c29b:        movq    (%r13), %rax
+    0.00 :   3c29f:        leaq    0x8(%rcx,%rdx), %r14
+    0.00 :   3c2a4:        movq    %rax, (%rcx,%rdx)
+    0.00 :   3c2a8:        testq   %rdx, %rdx
+    0.00 :   3c2ab:        jg      0x3c5cc <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c2b1:        cmpq    $0x0, -0x98(%rbp)
+    0.00 :   3c2b9:        jne     0x3c5ec <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c2bf:        movq    %rcx, -0x60(%rbp)
+    0.00 :   3c2c3:        movq    %r14, -0x58(%rbp)
+    0.00 :   3c2c7:        movq    %r8, -0x50(%rbp)
+    0.00 :   3c2cb:        movq    %rcx, -0x98(%rbp)
+    0.00 :   3c2d2:        jmp     0x3b8b3 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c2d7:        movq    -0xa8(%rbp), %rsi
+    0.00 :   3c2de:        movq    %rcx, %rdi
+    0.00 :   3c2e1:        movq    %r8, -0x100(%rbp)
+    0.00 :   3c2e8:        callq   0x5d20 <_init+0xd20>
+    0.00 :   3c2ed:        movq    -0x100(%rbp), %r8
+    0.00 :   3c2f4:        movq    %rax, %rcx
+    0.00 :   3c2f7:        movq    -0xe8(%rbp), %rsi
+    0.00 :   3c2fe:        movq    -0xa8(%rbp), %rdi
+    0.00 :   3c305:        movq    %r8, -0x108(%rbp)
+    0.00 :   3c30c:        movq    %rcx, -0x100(%rbp)
+    0.00 :   3c313:        callq   0x5b10 <_init+0xb10>
+    0.00 :   3c318:        movq    -0x108(%rbp), %r8
+    0.00 :   3c31f:        movq    -0x100(%rbp), %rcx
+    0.00 :   3c326:        jmp     0x3bf7d <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c32b:        movq    -0x98(%rbp), %rsi
+    0.00 :   3c332:        movq    %rcx, %rdi
+    0.00 :   3c335:        movq    %r8, -0xb0(%rbp)
+    0.00 :   3c33c:        callq   0x5d20 <_init+0xd20>
+    0.00 :   3c341:        movq    -0xb0(%rbp), %r8
+    0.00 :   3c348:        movq    %rax, %rcx
+    0.00 :   3c34b:        movq    -0xe8(%rbp), %rsi
+    0.00 :   3c352:        movq    -0x98(%rbp), %rdi
+    0.00 :   3c359:        movq    %r8, -0xc8(%rbp)
+    0.00 :   3c360:        movq    %rcx, -0xb0(%rbp)
+    0.00 :   3c367:        subq    %rdi, %rsi
+    0.00 :   3c36a:        callq   0x5b10 <_init+0xb10>
+    0.00 :   3c36f:        movq    -0xc8(%rbp), %r8
+    0.00 :   3c376:        movq    -0xb0(%rbp), %rcx
+    0.00 :   3c37d:        jmp     0x3c024 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3c382:        movq    -0xc8(%rbp), %rax
+    0.00 :   3c389:        movl    -0x8(%rbx), %r10d
+    0.00 :   3c38d:        vmovss  -0x4(%rbx), %xmm1
+    0.00 :   3c392:        movq    %rdx, -0x8(%rbx)
+    0.00 :   3c396:        movq    %rsi, %rbx
+    0.00 :   3c399:        subq    %rsi, %rax
+    0.00 :   3c39c:        movq    %rax, %r9
+    0.00 :   3c39f:        sarq    $0x3, %r9
+    0.02 :   3c3a3:        leaq    -0x1(%r9), %rdx
+    0.00 :   3c3a7:        movq    %r9, %r11
+    0.00 :   3c3aa:        movq    %rdx, %r8
+    0.00 :   3c3ad:        andl    $0x1, %r11d
+    0.00 :   3c3b1:        shrq    $0x3f, %r8
+    0.00 :   3c3b5:        addq    %rdx, %r8
+    0.00 :   3c3b8:        sarq    %r8
+    0.00 :   3c3bb:        cmpq    $0x10, %rax
+    0.00 :   3c3bf:        jle     0x3c797 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3c3c5:        xorl    %esi, %esi
+    0.00 :   3c3c7:        jmp     0x3c3e7 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c3c9:        nopl    (%rax)
+    0.05 :   3c3d0:        cmovbeq %rdi, %rax
+    0.04 :   3c3d4:        cmovbeq %r12, %rdx
+    0.05 :   3c3d8:        movq    (%rax), %rdi
+    0.15 :   3c3db:        movq    %rdi, (%rbx,%rsi,8)
+    0.05 :   3c3df:        cmpq    %rdx, %r8
+    0.00 :   3c3e2:        jle     0x3c426 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3c3e4:        movq    %rdx, %rsi
+    0.01 :   3c3e7:        leaq    0x1(%rsi), %rax
+    0.00 :   3c3eb:        leaq    (%rax,%rax), %rdx
+    0.02 :   3c3ef:        shlq    $0x4, %rax
+    0.02 :   3c3f3:        leaq    -0x1(%rdx), %r12
+    0.01 :   3c3f7:        addq    %rbx, %rax
+    0.02 :   3c3fa:        leaq    (%rbx,%r12,8), %rdi
+    0.04 :   3c3fe:        vmovss  0x4(%rdi), %xmm0
+    0.06 :   3c403:        vcomiss 0x4(%rax), %xmm0
+    0.11 :   3c408:        jp      0x3c3d8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.06 :   3c40a:        jne     0x3c3d0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c40c:        movl    (%rax), %r14d
+    0.00 :   3c40f:        cmpl    %r14d, (%rdi)
+    0.00 :   3c412:        jae     0x3c3d8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c414:        movq    %rdi, %rax
+    0.00 :   3c417:        movq    %r12, %rdx
+    0.00 :   3c41a:        movq    (%rax), %rdi
+    0.00 :   3c41d:        movq    %rdi, (%rbx,%rsi,8)
+    0.00 :   3c421:        cmpq    %rdx, %r8
+    0.00 :   3c424:        jg      0x3c3e4 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c426:        testq   %r11, %r11
+    0.00 :   3c429:        jne     0x3c445 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c42b:        subq    $0x2, %r9
+    0.00 :   3c42f:        movq    %r9, %rsi
+    0.00 :   3c432:        shrq    $0x3f, %rsi
+    0.01 :   3c436:        addq    %r9, %rsi
+    0.00 :   3c439:        sarq    %rsi
+    0.00 :   3c43c:        cmpq    %rdx, %rsi
+    0.00 :   3c43f:        je      0x3c739 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3c445:        leaq    -0x1(%rdx), %rdi
+    0.00 :   3c449:        movq    %rdi, %rsi
+    0.00 :   3c44c:        shrq    $0x3f, %rsi
+    0.01 :   3c450:        addq    %rdi, %rsi
+    0.01 :   3c453:        sarq    %rsi
+    0.00 :   3c456:        testq   %rdx, %rdx
+    0.00 :   3c459:        je      0x3c4aa <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c45b:        movq    -0xa8(%rbp), %r8
+    0.01 :   3c462:        leaq    (%r8,%rsi,8), %rax
+    0.01 :   3c466:        vmovss  0x4(%rax), %xmm0
+    0.05 :   3c46b:        vcomiss %xmm1, %xmm0
+    0.02 :   3c46f:        jp      0x3c49f <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c471:        je      0x3c49a <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c473:        jbe     0x3c49f <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.02 :   3c475:        movq    (%rax), %rdi
+    0.02 :   3c478:        movq    %rdi, (%r8,%rdx,8)
+    0.01 :   3c47c:        leaq    -0x1(%rsi), %rdx
+    0.00 :   3c480:        movq    %rdx, %rdi
+    0.00 :   3c483:        shrq    $0x3f, %rdi
+    0.00 :   3c487:        addq    %rdx, %rdi
+    0.00 :   3c48a:        movq    %rsi, %rdx
+    0.00 :   3c48d:        sarq    %rdi
+    0.00 :   3c490:        testq   %rsi, %rsi
+    0.00 :   3c493:        je      0x3c4aa <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c495:        movq    %rdi, %rsi
+    0.00 :   3c498:        jmp     0x3c462 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c49a:        cmpl    (%rax), %r10d
+    0.00 :   3c49d:        jb      0x3c475 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c49f:        movq    -0xa8(%rbp), %rax
+    0.01 :   3c4a6:        leaq    (%rax,%rdx,8), %rax
+    0.00 :   3c4aa:        movl    %r10d, (%rax)
+    0.01 :   3c4ad:        vmovss  %xmm1, 0x4(%rax)
+    0.00 :   3c4b2:        jmp     0x3b9e2 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c4b7:        movabsq $0x7ffffffffffffffc, %r13
+    0.00 :   3c4c1:        jmp     0x3c185 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c4c6:        movq    -0xc8(%rbp), %rax
+    0.00 :   3c4cd:        addq    $0x1, %rax
+    0.00 :   3c4d1:        jb      0x3c61f <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c4d7:        movabsq $0xfffffffffffffff, %rdx
+    0.00 :   3c4e1:        cmpq    %rdx, %rax
+    0.00 :   3c4e4:        cmovaq  %rdx, %rax
+    0.00 :   3c4e8:        leaq    (,%rax,8), %r12
+    0.00 :   3c4f0:        movq    %r12, %rdi
+    0.00 :   3c4f3:        callq   0x5b00 <_init+0xb00>
+    0.00 :   3c4f8:        movq    %rax, %rcx
+    0.00 :   3c4fb:        leaq    (%rax,%r12), %r8
+    0.00 :   3c4ff:        jmp     0x3bfed <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c504:        movq    0x10(%r15), %rax
+    0.00 :   3c508:        movq    0xa60(%r15), %r8
+    0.00 :   3c50f:        leaq    0x1(%rax), %rdi
+    0.00 :   3c513:        leaq    (%rdx,%rdx,2), %rax
+    0.00 :   3c517:        movslq  -0x114(%rbp), %rdx
+    0.00 :   3c51e:        leaq    (%r8,%rax,8), %rax
+    0.00 :   3c522:        leaq    (,%rdi,4), %rsi
+    0.00 :   3c52a:        imulq   %rdi, %rdx
+    0.00 :   3c52e:        movq    (%rax), %rax
+    0.00 :   3c531:        leaq    (%rax,%rdx,4), %rdx
+    0.00 :   3c535:        jmp     0x3c142 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c53a:        addq    $0x1, %rax
+    0.00 :   3c53e:        jb      0x3c62e <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c544:        movabsq $0xfffffffffffffff, %rdx
+    0.00 :   3c54e:        cmpq    %rdx, %rax
+    0.00 :   3c551:        cmovaq  %rdx, %rax
+    0.00 :   3c555:        leaq    (,%rax,8), %rbx
+    0.00 :   3c55d:        movq    %rbx, %rdi
+    0.00 :   3c560:        callq   0x5b00 <_init+0xb00>
+    0.00 :   3c565:        movq    %rax, %rcx
+    0.00 :   3c568:        leaq    (%rax,%rbx), %r8
+    0.00 :   3c56c:        jmp     0x3bf46 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c571:        movq    %rsi, %rax
+    0.00 :   3c574:        movl    %edx, %ecx
+    0.00 :   3c576:        cmpl    %edx, (%rsi)
+    0.00 :   3c578:        jae     0x3b9c0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c57e:        jmp     0x3bd01 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c583:        movq    -0xa8(%rbp), %rsi
+    0.00 :   3c58a:        movq    %r12, %rdx
+    0.00 :   3c58d:        movq    %r14, %rdi
+    0.00 :   3c590:        movq    %rcx, -0xc8(%rbp)
+    0.00 :   3c597:        callq   0x5d20 <_init+0xd20>
+    0.00 :   3c59c:        movq    -0xc8(%rbp), %rcx
+    0.00 :   3c5a3:        movq    -0xa0(%rbp), %rsi
+    0.00 :   3c5aa:        movq    -0xa8(%rbp), %rdi
+    0.00 :   3c5b1:        movq    %rcx, -0xc8(%rbp)
+    0.00 :   3c5b8:        subq    %rdi, %rsi
+    0.00 :   3c5bb:        callq   0x5b10 <_init+0xb10>
+    0.00 :   3c5c0:        movq    -0xc8(%rbp), %rcx
+    0.00 :   3c5c7:        jmp     0x3c21f <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c5cc:        movq    -0x98(%rbp), %rsi
+    0.00 :   3c5d3:        movq    %rcx, %rdi
+    0.00 :   3c5d6:        movq    %r8, -0xc8(%rbp)
+    0.00 :   3c5dd:        callq   0x5d20 <_init+0xd20>
+    0.00 :   3c5e2:        movq    -0xc8(%rbp), %r8
+    0.00 :   3c5e9:        movq    %rax, %rcx
+    0.00 :   3c5ec:        movq    -0x98(%rbp), %rdi
+    0.00 :   3c5f3:        movq    %r12, %rsi
+    0.00 :   3c5f6:        movq    %r8, -0xd0(%rbp)
+    0.00 :   3c5fd:        movq    %rcx, -0xc8(%rbp)
+    0.00 :   3c604:        subq    %rdi, %rsi
+    0.00 :   3c607:        callq   0x5b10 <_init+0xb10>
+    0.00 :   3c60c:        movq    -0xd0(%rbp), %r8
+    0.00 :   3c613:        movq    -0xc8(%rbp), %rcx
+    0.00 :   3c61a:        jmp     0x3c2bf <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c61f:        movabsq $0x7ffffffffffffff8, %r12
+    0.00 :   3c629:        jmp     0x3c4f0 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c62e:        movabsq $0x7ffffffffffffff8, %rbx
+    0.00 :   3c638:        jmp     0x3c55d <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c63d:        addq    $0x1, %rax
+    0.00 :   3c641:        jb      0x3c72a <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c647:        movabsq $0xfffffffffffffff, %rdx
+    0.00 :   3c651:        cmpq    %rdx, %rax
+    0.00 :   3c654:        cmovaq  %rdx, %rax
+    0.00 :   3c658:        leaq    (,%rax,8), %rbx
+    0.00 :   3c660:        movq    %rbx, %rdi
+    0.00 :   3c663:        callq   0x5b00 <_init+0xb00>
+    0.00 :   3c668:        movq    %rax, %r14
+    0.00 :   3c66b:        leaq    (%rax,%rbx), %rcx
+    0.00 :   3c66f:        jmp     0x3c1fb <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c674:        addq    $0x1, %rax
+    0.00 :   3c678:        jb      0x3c71b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c67e:        movabsq $0xfffffffffffffff, %rdx
+    0.00 :   3c688:        cmpq    %rdx, %rax
+    0.00 :   3c68b:        cmovaq  %rdx, %rax
+    0.00 :   3c68f:        leaq    (,%rax,8), %r14
+    0.00 :   3c697:        movq    %r14, %rdi
+    0.00 :   3c69a:        callq   0x5b00 <_init+0xb00>
+    0.00 :   3c69f:        movq    %rax, %rcx
+    0.00 :   3c6a2:        leaq    (%rax,%r14), %r8
+    0.00 :   3c6a6:        jmp     0x3c294 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c6ab:        movq    -0xc8(%rbp), %rbx
+    0.00 :   3c6b2:        cmpq    %rbx, -0xa8(%rbp)
+    0.00 :   3c6b9:        jne     0x3b995 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c6bf:        jmp     0x3bdea <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c6c4:        nopl    (%rax)
+    0.00 :   3c6c8:        movq    -0x98(%rbp), %rax
+    0.00 :   3c6cf:        leaq    -0x8(%rax,%r12), %rdx
+    0.00 :   3c6d4:        jmp     0x3bdac <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c6d9:        movq    %fs:0x0, %rax
+    0.00 :   3c6e2:        leaq    0x3091f(%rip), %rdx  # 0x6d008 <__dso_handle>
+    0.00 :   3c6e9:        movb    $0x1, %fs:-0x58
+    0.00 :   3c6f2:        leaq    -0x2a89(%rip), %rdi  # 0x39c70 <strata::(anonymous namespace)::SearchScratch::~SearchScratch()>
+    0.00 :   3c6f9:        leaq    -0x50(%rax), %rsi
+    0.00 :   3c700:        callq   0x5dc0 <_init+0xdc0>
+    0.00 :   3c705:        jmp     0x3b734 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c70a:        movq    -0xa8(%rbp), %rax
+    0.00 :   3c711:        leaq    -0x8(%rax,%rcx), %rdx
+    0.00 :   3c716:        jmp     0x3bc43 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c71b:        movabsq $0x7ffffffffffffff8, %r14
+    0.00 :   3c725:        jmp     0x3c697 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c72a:        movabsq $0x7ffffffffffffff8, %rbx
+    0.00 :   3c734:        jmp     0x3c660 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.01 :   3c739:        movq    -0xa8(%rbp), %r8
+    0.00 :   3c740:        leaq    0x1(%rdx,%rdx), %rdi
+    0.00 :   3c745:        movq    (%r8,%rdi,8), %rsi
+    0.01 :   3c749:        movq    %rsi, (%rax)
+    0.00 :   3c74c:        movq    %rdx, %rsi
+    0.00 :   3c74f:        movq    %rdi, %rdx
+    0.00 :   3c752:        jmp     0x3c462 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c757:        movabsq $0x1fffffffffffffff, %rax
+    0.00 :   3c761:        cmpq    %rax, %rdx
+    0.00 :   3c764:        cmovaq  %rax, %rdx
+    0.00 :   3c768:        leaq    (,%rdx,4), %r13
+    0.00 :   3c770:        jmp     0x3c185 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c775:        movq    -0x98(%rbp), %rax
+    0.00 :   3c77c:        leaq    -0x8(%rax,%r14), %rcx
+    0.00 :   3c781:        jmp     0x3b94b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c786:        movq    -0xa8(%rbp), %rax
+    0.00 :   3c78d:        leaq    -0x8(%rax,%rdi), %rdx
+    0.00 :   3c792:        jmp     0x3b88b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c797:        movq    %rsi, %rax
+    0.00 :   3c79a:        testq   %r11, %r11
+    0.00 :   3c79d:        jne     0x3c4aa <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c7a3:        xorl    %edx, %edx
+    0.00 :   3c7a5:        jmp     0x3c42b <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c7aa:        movq    $0x0, -0x98(%rbp)
+    0.00 :   3c7b5:        xorl    %esi, %esi
+    0.00 :   3c7b7:        jmp     0x3bd0c <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c7bc:        movabsq $0xfffffffffffffff, %rax
+    0.00 :   3c7c6:        cmpq    %rax, %rdx
+    0.00 :   3c7c9:        cmovaq  %rax, %rdx
+    0.00 :   3c7cd:        leaq    (,%rdx,8), %rbx
+    0.00 :   3c7d5:        jmp     0x3c55d <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c7da:        movabsq $0xfffffffffffffff, %rax
+    0.00 :   3c7e4:        cmpq    %rax, %rdx
+    0.00 :   3c7e7:        cmovaq  %rax, %rdx
+    0.00 :   3c7eb:        leaq    (,%rdx,8), %r14
+    0.00 :   3c7f3:        jmp     0x3c697 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c7f8:        callq   0x5b40 <_init+0xb40>
+    0.00 :   3c7fd:        movq    -0x38(%rbp), %rax
+    0.00 :   3c801:        subq    %fs:0x28, %rax
+    0.00 :   3c80a:        jne     0x3c7f8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c80c:        leaq    0x2680f(%rip), %rdi  # 0x63022
+    0.00 :   3c813:        callq   0x5930 <_init+0x930>
+    0.00 :   3c818:        movq    -0x38(%rbp), %rax
+    0.00 :   3c81c:        subq    %fs:0x28, %rax
+    0.00 :   3c825:        jne     0x3c7f8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c827:        leaq    0x267f4(%rip), %rdi  # 0x63022
+    0.00 :   3c82e:        callq   0x5930 <_init+0x930>
+    0.00 :   3c833:        movq    -0x38(%rbp), %rax
+    0.00 :   3c837:        subq    %fs:0x28, %rax
+    0.00 :   3c840:        jne     0x3c7f8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c842:        leaq    0x267d9(%rip), %rdi  # 0x63022
+    0.00 :   3c849:        callq   0x5930 <_init+0x930>
+    0.00 :   3c84e:        movabsq $0xfffffffffffffff, %rax
+    0.00 :   3c858:        cmpq    %rax, %rdx
+    0.00 :   3c85b:        cmovaq  %rax, %rdx
+    0.00 :   3c85f:        leaq    (,%rdx,8), %rbx
+    0.00 :   3c867:        jmp     0x3c660 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c86c:        movq    -0x38(%rbp), %rax
+    0.00 :   3c870:        subq    %fs:0x28, %rax
+    0.00 :   3c879:        jne     0x3c7f8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c87f:        leaq    0x2679c(%rip), %rdi  # 0x63022
+    0.00 :   3c886:        callq   0x5930 <_init+0x930>
+    0.00 :   3c88b:        movq    -0x38(%rbp), %rax
+    0.00 :   3c88f:        subq    %fs:0x28, %rax
+    0.00 :   3c898:        jne     0x3c7f8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >
+    0.00 :   3c89e:        leaq    0x2677d(%rip), %rdi  # 0x63022
+    0.00 :   3c8a5:        callq   0x5930 <_init+0x930>
+    0.00 :   3c8aa:        endbr64
+    0.00 :   3c8ae:        movq    %rax, %rbx
+    0.00 :   3c8b1:        jmp     0x7eb8 <std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > const&, unsigned long, int, strata::(anonymous namespace)::KeepAll const&, strata::HnswIndex::TraversalBudget*) const [clone .constprop.0] [clone .cold]>

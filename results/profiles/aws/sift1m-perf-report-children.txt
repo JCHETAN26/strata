@@ -1,0 +1,59 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 230K of event 'cycles'
+# Event count (approx.): 155679351757
+#
+# Children      Self  Command        Shared Object         Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+# ........  ........  .............  ....................  .................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+    99.99%     0.00%  strata_search  libc.so.6             [.] __libc_start_main
+    99.99%     0.00%  strata_search  strata_search         [.] _start
+    99.99%     0.00%  strata_search  libc.so.6             [.] 0x0000774651e2a1ca
+    99.75%     0.17%  strata_search  strata_search         [.] main
+    92.26%     0.00%  strata_search  strata_search         [.] run_point (inlined)
+    92.16%     0.00%  strata_search  strata_search         [.] ~_Function_base (inlined)
+    92.16%     0.00%  strata_search  strata_search         [.] ~function (inlined)
+    92.15%     0.00%  strata_search  strata_search         [.] parallel_for (inlined)
+    92.08%     0.01%  strata_search  strata_search         [.] std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+    91.96%     0.00%  strata_search  strata_search         [.] search (inlined)
+    57.83%     0.00%  strata_search  strata_search         [.] search_layer<strata::(anonymous namespace)::KeepAll> (inlined)
+    53.98%    53.98%  strata_search  strata_search         [.] std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > const&, unsigned long, int, strata::(anonymous namespace)::KeepAll const&, strata::HnswIndex::TraversalBudget*) const [clone .constprop.0]
+    46.08%     0.03%  strata_search  strata_search         [.] std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#2}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+    46.07%     0.00%  strata_search  strata_search         [.] __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+    46.07%     0.00%  strata_search  strata_search         [.] __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+    46.07%     0.00%  strata_search  strata_search         [.] operator() (inlined)
+    46.07%     0.01%  strata_search  strata_search         [.] std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#1}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+    46.06%     0.00%  strata_search  strata_search         [.] __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+    46.06%     0.00%  strata_search  strata_search         [.] __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+    46.06%     0.00%  strata_search  strata_search         [.] operator() (inlined)
+    46.05%     0.00%  strata_search  strata_search         [.] tl::detail::expected_copy_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_assign_base() (inlined)
+    46.05%     0.00%  strata_search  strata_search         [.] tl::detail::expected_copy_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_base() (inlined)
+    46.05%     0.00%  strata_search  strata_search         [.] tl::detail::expected_move_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_assign_base() (inlined)
+    46.05%     0.00%  strata_search  strata_search         [.] tl::detail::expected_move_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_base() (inlined)
+    46.05%     0.00%  strata_search  strata_search         [.] tl::detail::expected_operations_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected_operations_base() (inlined)
+    46.05%     0.00%  strata_search  strata_search         [.] tl::detail::expected_storage_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, false>::~expected_storage_base() (inlined)
+    46.05%     0.00%  strata_search  strata_search         [.] tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected() (inlined)
+    46.02%     0.00%  strata_search  strata_search         [.] std::vector<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>, std::allocator<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> > >::operator[](unsigned long) (inlined)
+    36.39%     0.00%  strata_search  strata_search         [.] prefetch (inlined)
+    33.30%     0.00%  strata_search  strata_search         [.] l2_squared (inlined)
+    33.14%    33.14%  strata_search  strata_search         [.] strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)
+    10.58%     0.00%  strata_search  strata_search         [.] insert (inlined)
+     6.11%     0.00%  strata_search  strata_search         [.] load (inlined)
+     3.52%     0.00%  strata_search  strata_search         [.] pop (inlined)
+     3.50%     3.50%  strata_search  strata_search         [.] std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()
+     3.46%     0.00%  strata_search  strata_search         [.] operator() (inlined)
+     3.39%     0.00%  strata_search  strata_search         [.] crc32c (inlined)
+     3.38%     3.38%  strata_search  strata_search         [.] strata::crc32c(std::span<std::byte const, 18446744073709551615ul>, unsigned int)
+     3.38%     0.00%  strata_search  strata_search         [.] pop_heap<__gnu_cxx::__normal_iterator<strata::Neighbor*, std::vector<strata::Neighbor> >, std::less<strata::Neighbor> > (inlined)
+     3.37%     0.00%  strata_search  strata_search         [.] __pop_heap<__gnu_cxx::__normal_iterator<strata::Neighbor*, std::vector<strata::Neighbor> >, __gnu_cxx::__ops::_Iter_comp_iter<std::less<strata::Neighbor> > > (inlined)
+     3.31%     0.00%  strata_search  strata_search         [.] __adjust_heap<__gnu_cxx::__normal_iterator<strata::Neighbor*, std::vector<strata::Neighbor> >, long int, strata::Neighbor, __gnu_cxx::__ops::_Iter_comp_iter<std::less<strata::Neighbor> > > (inlined)
+     2.92%     0.00%  strata_search  strata_search         [.] push (inlined)
+     2.52%     0.00%  strata_search  strata_search         [.] _mm256_sub_ps (inlined)
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

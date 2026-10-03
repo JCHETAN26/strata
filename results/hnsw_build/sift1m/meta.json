@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-10-03T02:43:38.854610+00:00",
+  "git": {
+    "commit": "8ae9bf4dd58baa4e2ac86175e216b6ad3de2ceeb",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "x86_64",
+    "os": "Linux 7.0.0-1013-aws",
+    "logical_cpus": 32,
+    "load_average_1m_5m_15m": [
+      3.57,
+      2.62,
+      5.54
+    ],
+    "cpu": "Intel(R) Xeon(R) Platinum 8488C",
+    "memory_gib": 61.8,
+    "cpu_flags_avx2": true,
+    "cpu_governor": null,
+    "kernel": "7.0.0-1013-aws",
+    "topology": {
+      "sockets": 1,
+      "cores_per_socket": 16,
+      "threads_per_core": 2,
+      "physical_cores": 16,
+      "l3_cache": "105 MiB (1 instance)",
+      "flags_avx512f": true
+    },
+    "ec2": {
+      "instance_type": "c7i.8xlarge",
+      "availability_zone": "us-east-2a",
+      "ami_id": "ami-0fa99aa8f97f9e30b",
+      "instance_id": "i-0e2d9e9c1237841ce"
+    }
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": null,
+    "hosted": null
+  },
+  "args": {
+    "dataset": "sift1m",
+    "threads": "1,2,4,8,16",
+    "rounds": "3",
+    "M": "16",
+    "ef_construction": "200",
+    "ef_search": "10,40,160",
+    "cooldown": "10",
+    "build_dir": "/home/ubuntu/strata/build/release",
+    "report_only": "False"
+  }
+}

@@ -1,0 +1,53 @@
+hnsw: built in 27.3575 s
+  {"ef_search": 80} run 1/1: qps=5303.54 recall@10=0.97499
+hnsw: built in 2.7304 s
+  {"ef_search": 80} run 1/10: qps=5195.36 recall@10=0.97499
+  {"ef_search": 80} run 2/10: qps=5060.78 recall@10=0.97499
+  {"ef_search": 80} run 3/10: qps=5193.8 recall@10=0.97499
+  {"ef_search": 80} run 4/10: qps=5213.11 recall@10=0.97499
+  {"ef_search": 80} run 5/10: qps=5205.81 recall@10=0.97499
+  {"ef_search": 80} run 6/10: qps=5177.36 recall@10=0.97499
+  {"ef_search": 80} run 7/10: qps=5185.85 recall@10=0.97499
+  {"ef_search": 80} run 8/10: qps=5223.33 recall@10=0.97499
+  {"ef_search": 80} run 9/10: qps=5167.06 recall@10=0.97499
+  {"ef_search": 80} run 10/10: qps=5325.03 recall@10=0.97499
+hnsw: built in 3.00185 s
+  {"ef_search": 80} run 1/10: qps=4708.68 recall@10=0.97499
+  {"ef_search": 80} run 2/10: qps=4666.5 recall@10=0.97499
+  {"ef_search": 80} run 3/10: qps=4705.91 recall@10=0.97499
+  {"ef_search": 80} run 4/10: qps=4726.57 recall@10=0.97499
+  {"ef_search": 80} run 5/10: qps=4716.1 recall@10=0.97499
+  {"ef_search": 80} run 6/10: qps=4620.75 recall@10=0.97499
+  {"ef_search": 80} run 7/10: qps=4710.74 recall@10=0.97499
+  {"ef_search": 80} run 8/10: qps=4689.05 recall@10=0.97499
+  {"ef_search": 80} run 9/10: qps=4715.95 recall@10=0.97499
+  {"ef_search": 80} run 10/10: qps=4641.9 recall@10=0.97499
+[ perf record: Woken up 121 times to write data ]
+[ perf record: Captured and wrote 30.041 MB /tmp/sift1m.perf.data (230785 samples) ]
+hnsw: built in 440.555 s
+  {"ef_search": 80} run 1/1: qps=3667.37 recall@10=0.93641
+hnsw: built in 27.787 s
+  {"ef_search": 80} run 1/10: qps=3714.75 recall@10=0.93641
+  {"ef_search": 80} run 2/10: qps=3705.91 recall@10=0.93641
+  {"ef_search": 80} run 3/10: qps=3689.52 recall@10=0.93641
+  {"ef_search": 80} run 4/10: qps=3682.57 recall@10=0.93641
+  {"ef_search": 80} run 5/10: qps=3692.88 recall@10=0.93641
+  {"ef_search": 80} run 6/10: qps=3708.02 recall@10=0.93641
+  {"ef_search": 80} run 7/10: qps=3736.03 recall@10=0.93641
+  {"ef_search": 80} run 8/10: qps=3662.5 recall@10=0.93641
+  {"ef_search": 80} run 9/10: qps=3616.84 recall@10=0.93641
+  {"ef_search": 80} run 10/10: qps=3656.24 recall@10=0.93641
+hnsw: built in 30.8136 s
+  {"ef_search": 80} run 1/10: qps=3299.62 recall@10=0.93641
+  {"ef_search": 80} run 2/10: qps=3310.39 recall@10=0.93641
+  {"ef_search": 80} run 3/10: qps=3290.86 recall@10=0.93641
+  {"ef_search": 80} run 4/10: qps=3292.29 recall@10=0.93641
+  {"ef_search": 80} run 5/10: qps=3289.51 recall@10=0.93641
+  {"ef_search": 80} run 6/10: qps=3326.2 recall@10=0.93641
+  {"ef_search": 80} run 7/10: qps=3332.8 recall@10=0.93641
+  {"ef_search": 80} run 8/10: qps=3313.92 recall@10=0.93641
+  {"ef_search": 80} run 9/10: qps=3291.05 recall@10=0.93641
+  {"ef_search": 80} run 10/10: qps=3311.09 recall@10=0.93641
+[ perf record: Woken up 243 times to write data ]
+[ perf record: Captured and wrote 60.625 MB /tmp/bigann10m.perf.data (474258 samples) ]
+part perf done

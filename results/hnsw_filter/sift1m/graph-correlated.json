@@ -1,0 +1,3016 @@
+{
+  "n": 1000000,
+  "dim": 128,
+  "k": 10,
+  "queries": 500,
+  "asserts": false,
+  "build_seconds": 0,
+  "kind": "correlated",
+  "phase": "graph",
+  "clusters": 1000,
+  "points": [
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.001,
+      "selectivity": 0.001762,
+      "matching": 1762,
+      "queries_own_match": 1,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 242.545144,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 242.464737,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 242.388121,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.001,
+      "selectivity": 0.001762,
+      "matching": 1762,
+      "queries_own_match": 1,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 28.5612498,
+          "recall": 0.9962,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.996192385,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 159496.396
+        },
+        {
+          "qps": 28.5928487,
+          "recall": 0.9962,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.996192385,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 159496.396
+        },
+        {
+          "qps": 28.6587748,
+          "recall": 0.9962,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.996192385,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 159496.396
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.001,
+      "selectivity": 0.001762,
+      "matching": 1762,
+      "queries_own_match": 1,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 23.9134995,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999799599,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 184735.388
+        },
+        {
+          "qps": 24.0525915,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999799599,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 184735.388
+        },
+        {
+          "qps": 23.8737165,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999799599,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 184735.388
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.001,
+      "selectivity": 0.001762,
+      "matching": 1762,
+      "queries_own_match": 1,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 19.6961388,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 216035.086
+        },
+        {
+          "qps": 19.58776,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 216035.086
+        },
+        {
+          "qps": 19.6664572,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 216035.086
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.001,
+      "selectivity": 0.001762,
+      "matching": 1762,
+      "queries_own_match": 1,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 16.1345863,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 252309.132
+        },
+        {
+          "qps": 16.0988468,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 252309.132
+        },
+        {
+          "qps": 16.0736573,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 252309.132
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.001,
+      "selectivity": 0.001762,
+      "matching": 1762,
+      "queries_own_match": 1,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 12.9026225,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 296163.084
+        },
+        {
+          "qps": 12.932765,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 296163.084
+        },
+        {
+          "qps": 12.8968111,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 296163.084
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.001,
+      "selectivity": 0.001762,
+      "matching": 1762,
+      "queries_own_match": 1,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 10.0617928,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 350964.43
+        },
+        {
+          "qps": 10.0569103,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 350964.43
+        },
+        {
+          "qps": 10.0565659,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 350964.43
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.005,
+      "selectivity": 0.005268,
+      "matching": 5268,
+      "queries_own_match": 2,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 159.381619,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 159.314675,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 159.528012,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.005,
+      "selectivity": 0.005268,
+      "matching": 5268,
+      "queries_own_match": 2,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 45.5247142,
+          "recall": 0.9928,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.992971888,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 111245.958
+        },
+        {
+          "qps": 45.1195168,
+          "recall": 0.9928,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.992971888,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 111245.958
+        },
+        {
+          "qps": 44.9605419,
+          "recall": 0.9928,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.992971888,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 111245.958
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.005,
+      "selectivity": 0.005268,
+      "matching": 5268,
+      "queries_own_match": 2,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 36.3555838,
+          "recall": 0.9992,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999196787,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 133112.36
+        },
+        {
+          "qps": 36.8342315,
+          "recall": 0.9992,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999196787,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 133112.36
+        },
+        {
+          "qps": 36.337099,
+          "recall": 0.9992,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999196787,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 133112.36
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.005,
+      "selectivity": 0.005268,
+      "matching": 5268,
+      "queries_own_match": 2,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 29.2194235,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999799197,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 159657.744
+        },
+        {
+          "qps": 29.37113,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999799197,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 159657.744
+        },
+        {
+          "qps": 29.3907964,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999799197,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 159657.744
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.005,
+      "selectivity": 0.005268,
+      "matching": 5268,
+      "queries_own_match": 2,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 23.3399129,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 191787.262
+        },
+        {
+          "qps": 23.2914088,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 191787.262
+        },
+        {
+          "qps": 23.2382867,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 191787.262
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.005,
+      "selectivity": 0.005268,
+      "matching": 5268,
+      "queries_own_match": 2,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 17.971013,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 231551.32
+        },
+        {
+          "qps": 18.0182581,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 231551.32
+        },
+        {
+          "qps": 17.9182023,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 231551.32
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.005,
+      "selectivity": 0.005268,
+      "matching": 5268,
+      "queries_own_match": 2,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 13.6598386,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 281044.266
+        },
+        {
+          "qps": 13.7569723,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 281044.266
+        },
+        {
+          "qps": 13.777869,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 281044.266
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.01,
+      "selectivity": 0.012125,
+      "matching": 12125,
+      "queries_own_match": 3,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 113.591895,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 133.641632,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 138.136812,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.01,
+      "selectivity": 0.012125,
+      "matching": 12125,
+      "queries_own_match": 3,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 103.494627,
+          "recall": 0.983,
+          "recall_own_match": 0.966666667,
+          "recall_own_nomatch": 0.983098592,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 53082.378
+        },
+        {
+          "qps": 104.705603,
+          "recall": 0.983,
+          "recall_own_match": 0.966666667,
+          "recall_own_nomatch": 0.983098592,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 53082.378
+        },
+        {
+          "qps": 104.221238,
+          "recall": 0.983,
+          "recall_own_match": 0.966666667,
+          "recall_own_nomatch": 0.983098592,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 53082.378
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.01,
+      "selectivity": 0.012125,
+      "matching": 12125,
+      "queries_own_match": 3,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 82.5501845,
+          "recall": 0.9958,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.995774648,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 67069.974
+        },
+        {
+          "qps": 82.3040121,
+          "recall": 0.9958,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.995774648,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 67069.974
+        },
+        {
+          "qps": 81.0529197,
+          "recall": 0.9958,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.995774648,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 67069.974
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.01,
+      "selectivity": 0.012125,
+      "matching": 12125,
+      "queries_own_match": 3,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 62.3730955,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999396378,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 84681.616
+        },
+        {
+          "qps": 62.4536044,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999396378,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 84681.616
+        },
+        {
+          "qps": 62.6507737,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999396378,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 84681.616
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.01,
+      "selectivity": 0.012125,
+      "matching": 12125,
+      "queries_own_match": 3,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 47.9070321,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 107451.87
+        },
+        {
+          "qps": 47.3254203,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 107451.87
+        },
+        {
+          "qps": 47.1728267,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 107451.87
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.01,
+      "selectivity": 0.012125,
+      "matching": 12125,
+      "queries_own_match": 3,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 35.2959893,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 137300.67
+        },
+        {
+          "qps": 35.8148505,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 137300.67
+        },
+        {
+          "qps": 35.2006545,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 137300.67
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.01,
+      "selectivity": 0.012125,
+      "matching": 12125,
+      "queries_own_match": 3,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 25.8623856,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 176435.146
+        },
+        {
+          "qps": 25.8300638,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 176435.146
+        },
+        {
+          "qps": 25.6929757,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798793,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 176435.146
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.013,
+      "selectivity": 0.013558,
+      "matching": 13558,
+      "queries_own_match": 4,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 126.788773,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 118.202392,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 107.049376,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.013,
+      "selectivity": 0.013558,
+      "matching": 13558,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 121.997302,
+          "recall": 0.9804,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.980645161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 46635.292
+        },
+        {
+          "qps": 122.279659,
+          "recall": 0.9804,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.980645161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 46635.292
+        },
+        {
+          "qps": 121.964218,
+          "recall": 0.9804,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.980645161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 46635.292
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.013,
+      "selectivity": 0.013558,
+      "matching": 13558,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 93.2100913,
+          "recall": 0.995,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.994959677,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 58846.06
+        },
+        {
+          "qps": 93.9793198,
+          "recall": 0.995,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.994959677,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 58846.06
+        },
+        {
+          "qps": 93.7916518,
+          "recall": 0.995,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.994959677,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 58846.06
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.013,
+      "selectivity": 0.013558,
+      "matching": 13558,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 72.3490434,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999395161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 74653.234
+        },
+        {
+          "qps": 72.6170194,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999395161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 74653.234
+        },
+        {
+          "qps": 72.8240582,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999395161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 74653.234
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.013,
+      "selectivity": 0.013558,
+      "matching": 13558,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 54.2795858,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 95179.096
+        },
+        {
+          "qps": 54.0656524,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 95179.096
+        },
+        {
+          "qps": 54.1694913,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 95179.096
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.013,
+      "selectivity": 0.013558,
+      "matching": 13558,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 40.7487347,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 122257.158
+        },
+        {
+          "qps": 40.8102916,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 122257.158
+        },
+        {
+          "qps": 40.5041296,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 122257.158
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.013,
+      "selectivity": 0.013558,
+      "matching": 13558,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 29.844755,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 158146.298
+        },
+        {
+          "qps": 29.8481579,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 158146.298
+        },
+        {
+          "qps": 29.4712925,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 158146.298
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.015,
+      "selectivity": 0.01556,
+      "matching": 15560,
+      "queries_own_match": 4,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 97.261485,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 97.7022427,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 97.4436584,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.015,
+      "selectivity": 0.01556,
+      "matching": 15560,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 124.350678,
+          "recall": 0.9808,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.981048387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 45488.922
+        },
+        {
+          "qps": 124.893404,
+          "recall": 0.9808,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.981048387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 45488.922
+        },
+        {
+          "qps": 123.807403,
+          "recall": 0.9808,
+          "recall_own_match": 0.95,
+          "recall_own_nomatch": 0.981048387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 45488.922
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.015,
+      "selectivity": 0.01556,
+      "matching": 15560,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 94.0080412,
+          "recall": 0.9952,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.99516129,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 57522.908
+        },
+        {
+          "qps": 95.9149489,
+          "recall": 0.9952,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.99516129,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 57522.908
+        },
+        {
+          "qps": 95.1051616,
+          "recall": 0.9952,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.99516129,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 57522.908
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.015,
+      "selectivity": 0.01556,
+      "matching": 15560,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 73.1444646,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999395161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 73018.978
+        },
+        {
+          "qps": 73.3396102,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999395161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 73018.978
+        },
+        {
+          "qps": 72.9706109,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999395161,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 73018.978
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.015,
+      "selectivity": 0.01556,
+      "matching": 15560,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 54.7176938,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 93349.208
+        },
+        {
+          "qps": 54.8905792,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 93349.208
+        },
+        {
+          "qps": 54.9027535,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 93349.208
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.015,
+      "selectivity": 0.01556,
+      "matching": 15560,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 38.9495837,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 120160.506
+        },
+        {
+          "qps": 37.36787,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 120160.506
+        },
+        {
+          "qps": 37.2204553,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 120160.506
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.015,
+      "selectivity": 0.01556,
+      "matching": 15560,
+      "queries_own_match": 4,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 29.639332,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 155733.21
+        },
+        {
+          "qps": 29.5448766,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 155733.21
+        },
+        {
+          "qps": 29.7951663,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999798387,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 155733.21
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.02,
+      "selectivity": 0.020815,
+      "matching": 20815,
+      "queries_own_match": 8,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 40.566814,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 40.0557114,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 40.2921229,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.02,
+      "selectivity": 0.020815,
+      "matching": 20815,
+      "queries_own_match": 8,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 171.26353,
+          "recall": 0.975,
+          "recall_own_match": 0.9,
+          "recall_own_nomatch": 0.976219512,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 33282.508
+        },
+        {
+          "qps": 169.794298,
+          "recall": 0.975,
+          "recall_own_match": 0.9,
+          "recall_own_nomatch": 0.976219512,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 33282.508
+        },
+        {
+          "qps": 170.41472,
+          "recall": 0.975,
+          "recall_own_match": 0.9,
+          "recall_own_nomatch": 0.976219512,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 33282.508
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.02,
+      "selectivity": 0.020815,
+      "matching": 20815,
+      "queries_own_match": 8,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 128.20407,
+          "recall": 0.9922,
+          "recall_own_match": 0.9875,
+          "recall_own_nomatch": 0.992276423,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 43207.812
+        },
+        {
+          "qps": 128.439046,
+          "recall": 0.9922,
+          "recall_own_match": 0.9875,
+          "recall_own_nomatch": 0.992276423,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 43207.812
+        },
+        {
+          "qps": 128.172041,
+          "recall": 0.9922,
+          "recall_own_match": 0.9875,
+          "recall_own_nomatch": 0.992276423,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 43207.812
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.02,
+      "selectivity": 0.020815,
+      "matching": 20815,
+      "queries_own_match": 8,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 95.234838,
+          "recall": 0.9984,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.998373984,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 56114.404
+        },
+        {
+          "qps": 96.0125471,
+          "recall": 0.9984,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.998373984,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 56114.404
+        },
+        {
+          "qps": 94.7140225,
+          "recall": 0.9984,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.998373984,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 56114.404
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.02,
+      "selectivity": 0.020815,
+      "matching": 20815,
+      "queries_own_match": 8,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 70.8355666,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 73412.218
+        },
+        {
+          "qps": 71.2135009,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 73412.218
+        },
+        {
+          "qps": 71.171178,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 73412.218
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.02,
+      "selectivity": 0.020815,
+      "matching": 20815,
+      "queries_own_match": 8,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 51.735907,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 96646.43
+        },
+        {
+          "qps": 51.3789636,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 96646.43
+        },
+        {
+          "qps": 51.5111005,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 96646.43
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.02,
+      "selectivity": 0.020815,
+      "matching": 20815,
+      "queries_own_match": 8,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 37.1804092,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 127987.942
+        },
+        {
+          "qps": 37.1497689,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 127987.942
+        },
+        {
+          "qps": 36.8893564,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999796748,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 127987.942
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.025,
+      "selectivity": 0.025479,
+      "matching": 25479,
+      "queries_own_match": 11,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 37.7118304,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 37.6973704,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 37.6277478,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.025,
+      "selectivity": 0.025479,
+      "matching": 25479,
+      "queries_own_match": 11,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 198.591857,
+          "recall": 0.971,
+          "recall_own_match": 0.854545455,
+          "recall_own_nomatch": 0.973619632,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 28387.542
+        },
+        {
+          "qps": 199.109801,
+          "recall": 0.971,
+          "recall_own_match": 0.854545455,
+          "recall_own_nomatch": 0.973619632,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 28387.542
+        },
+        {
+          "qps": 203.564779,
+          "recall": 0.971,
+          "recall_own_match": 0.854545455,
+          "recall_own_nomatch": 0.973619632,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 28387.542
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.025,
+      "selectivity": 0.025479,
+      "matching": 25479,
+      "queries_own_match": 11,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 151.857727,
+          "recall": 0.9922,
+          "recall_own_match": 0.972727273,
+          "recall_own_nomatch": 0.992638037,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 37018.628
+        },
+        {
+          "qps": 150.738656,
+          "recall": 0.9922,
+          "recall_own_match": 0.972727273,
+          "recall_own_nomatch": 0.992638037,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 37018.628
+        },
+        {
+          "qps": 150.174995,
+          "recall": 0.9922,
+          "recall_own_match": 0.972727273,
+          "recall_own_nomatch": 0.992638037,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 37018.628
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.025,
+      "selectivity": 0.025479,
+      "matching": 25479,
+      "queries_own_match": 11,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 111.768963,
+          "recall": 0.9988,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.998773006,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 48574.938
+        },
+        {
+          "qps": 111.204196,
+          "recall": 0.9988,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.998773006,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 48574.938
+        },
+        {
+          "qps": 111.522402,
+          "recall": 0.9988,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.998773006,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 48574.938
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.025,
+      "selectivity": 0.025479,
+      "matching": 25479,
+      "queries_own_match": 11,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 81.4176739,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 64272.998
+        },
+        {
+          "qps": 81.5488395,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 64272.998
+        },
+        {
+          "qps": 81.403288,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 64272.998
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.025,
+      "selectivity": 0.025479,
+      "matching": 25479,
+      "queries_own_match": 11,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 58.6052988,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 85839
+        },
+        {
+          "qps": 58.7907209,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 85839
+        },
+        {
+          "qps": 58.6891295,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 85839
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.025,
+      "selectivity": 0.025479,
+      "matching": 25479,
+      "queries_own_match": 11,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 41.4618499,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 115478.57
+        },
+        {
+          "qps": 41.6787481,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 115478.57
+        },
+        {
+          "qps": 41.5114239,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999795501,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 115478.57
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.03,
+      "selectivity": 0.031012,
+      "matching": 31012,
+      "queries_own_match": 16,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 34.5494021,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 34.6656448,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 34.3892772,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.03,
+      "selectivity": 0.031012,
+      "matching": 31012,
+      "queries_own_match": 16,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 215.951814,
+          "recall": 0.9636,
+          "recall_own_match": 0.875,
+          "recall_own_nomatch": 0.966528926,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 25955.672
+        },
+        {
+          "qps": 215.870042,
+          "recall": 0.9636,
+          "recall_own_match": 0.875,
+          "recall_own_nomatch": 0.966528926,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 25955.672
+        },
+        {
+          "qps": 216.084295,
+          "recall": 0.9636,
+          "recall_own_match": 0.875,
+          "recall_own_nomatch": 0.966528926,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 25955.672
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.03,
+      "selectivity": 0.031012,
+      "matching": 31012,
+      "queries_own_match": 16,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 162.937137,
+          "recall": 0.9908,
+          "recall_own_match": 0.975,
+          "recall_own_nomatch": 0.991322314,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 33919.248
+        },
+        {
+          "qps": 162.550283,
+          "recall": 0.9908,
+          "recall_own_match": 0.975,
+          "recall_own_nomatch": 0.991322314,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 33919.248
+        },
+        {
+          "qps": 163.301903,
+          "recall": 0.9908,
+          "recall_own_match": 0.975,
+          "recall_own_nomatch": 0.991322314,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 33919.248
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.03,
+      "selectivity": 0.031012,
+      "matching": 31012,
+      "queries_own_match": 16,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 121.154524,
+          "recall": 0.998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.997933884,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 44543.646
+        },
+        {
+          "qps": 122.212561,
+          "recall": 0.998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.997933884,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 44543.646
+        },
+        {
+          "qps": 122.444335,
+          "recall": 0.998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.997933884,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 44543.646
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.03,
+      "selectivity": 0.031012,
+      "matching": 31012,
+      "queries_own_match": 16,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 88.2424321,
+          "recall": 0.9992,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999173554,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 59171.43
+        },
+        {
+          "qps": 88.7668212,
+          "recall": 0.9992,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999173554,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 59171.43
+        },
+        {
+          "qps": 88.131942,
+          "recall": 0.9992,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999173554,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 59171.43
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.03,
+      "selectivity": 0.031012,
+      "matching": 31012,
+      "queries_own_match": 16,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 63.6170892,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999380165,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 79145.622
+        },
+        {
+          "qps": 63.6050826,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999380165,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 79145.622
+        },
+        {
+          "qps": 63.813462,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999380165,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 79145.622
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.03,
+      "selectivity": 0.031012,
+      "matching": 31012,
+      "queries_own_match": 16,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 44.9408352,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999380165,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 106753.198
+        },
+        {
+          "qps": 44.7385086,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999380165,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 106753.198
+        },
+        {
+          "qps": 44.8119889,
+          "recall": 0.9994,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999380165,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 106753.198
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.05,
+      "selectivity": 0.051165,
+      "matching": 51165,
+      "queries_own_match": 30,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 28.0135986,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 28.0881734,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 28.1508778,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.05,
+      "selectivity": 0.051165,
+      "matching": 51165,
+      "queries_own_match": 30,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 610.757105,
+          "recall": 0.939,
+          "recall_own_match": 0.836666667,
+          "recall_own_nomatch": 0.945531915,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 9833.046
+        },
+        {
+          "qps": 608.769274,
+          "recall": 0.939,
+          "recall_own_match": 0.836666667,
+          "recall_own_nomatch": 0.945531915,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 9833.046
+        },
+        {
+          "qps": 614.342793,
+          "recall": 0.939,
+          "recall_own_match": 0.836666667,
+          "recall_own_nomatch": 0.945531915,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 9833.046
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.05,
+      "selectivity": 0.051165,
+      "matching": 51165,
+      "queries_own_match": 30,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 432.955456,
+          "recall": 0.983,
+          "recall_own_match": 0.946666667,
+          "recall_own_nomatch": 0.985319149,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 13875.492
+        },
+        {
+          "qps": 422.152943,
+          "recall": 0.983,
+          "recall_own_match": 0.946666667,
+          "recall_own_nomatch": 0.985319149,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 13875.492
+        },
+        {
+          "qps": 424.680882,
+          "recall": 0.983,
+          "recall_own_match": 0.946666667,
+          "recall_own_nomatch": 0.985319149,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 13875.492
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.05,
+      "selectivity": 0.051165,
+      "matching": 51165,
+      "queries_own_match": 30,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 297.682475,
+          "recall": 0.996,
+          "recall_own_match": 0.986666667,
+          "recall_own_nomatch": 0.996595745,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 19649.426
+        },
+        {
+          "qps": 298.066274,
+          "recall": 0.996,
+          "recall_own_match": 0.986666667,
+          "recall_own_nomatch": 0.996595745,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 19649.426
+        },
+        {
+          "qps": 298.640163,
+          "recall": 0.996,
+          "recall_own_match": 0.986666667,
+          "recall_own_nomatch": 0.996595745,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 19649.426
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.05,
+      "selectivity": 0.051165,
+      "matching": 51165,
+      "queries_own_match": 30,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 206.423164,
+          "recall": 0.9996,
+          "recall_own_match": 0.996666667,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 27922.23
+        },
+        {
+          "qps": 204.367475,
+          "recall": 0.9996,
+          "recall_own_match": 0.996666667,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 27922.23
+        },
+        {
+          "qps": 205.604383,
+          "recall": 0.9996,
+          "recall_own_match": 0.996666667,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 27922.23
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.05,
+      "selectivity": 0.051165,
+      "matching": 51165,
+      "queries_own_match": 30,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 139.353239,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 40223.358
+        },
+        {
+          "qps": 139.758994,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 40223.358
+        },
+        {
+          "qps": 139.530243,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 40223.358
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.05,
+      "selectivity": 0.051165,
+      "matching": 51165,
+      "queries_own_match": 30,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 94.4055704,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 58147.964
+        },
+        {
+          "qps": 93.3871033,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 58147.964
+        },
+        {
+          "qps": 93.7275915,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999787234,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 58147.964
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.1,
+      "selectivity": 0.100148,
+      "matching": 100148,
+      "queries_own_match": 57,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 21.7249639,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 21.6800858,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 21.7321368,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.1,
+      "selectivity": 0.100148,
+      "matching": 100148,
+      "queries_own_match": 57,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 1363.9601,
+          "recall": 0.905,
+          "recall_own_match": 0.81754386,
+          "recall_own_nomatch": 0.916252822,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 4623.57
+        },
+        {
+          "qps": 1369.0032,
+          "recall": 0.905,
+          "recall_own_match": 0.81754386,
+          "recall_own_nomatch": 0.916252822,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 4623.57
+        },
+        {
+          "qps": 1379.99794,
+          "recall": 0.905,
+          "recall_own_match": 0.81754386,
+          "recall_own_nomatch": 0.916252822,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 4623.57
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.1,
+      "selectivity": 0.100148,
+      "matching": 100148,
+      "queries_own_match": 57,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 922.153703,
+          "recall": 0.9674,
+          "recall_own_match": 0.933333333,
+          "recall_own_nomatch": 0.971783296,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 6788.404
+        },
+        {
+          "qps": 919.164406,
+          "recall": 0.9674,
+          "recall_own_match": 0.933333333,
+          "recall_own_nomatch": 0.971783296,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 6788.404
+        },
+        {
+          "qps": 919.378213,
+          "recall": 0.9674,
+          "recall_own_match": 0.933333333,
+          "recall_own_nomatch": 0.971783296,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 6788.404
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.1,
+      "selectivity": 0.100148,
+      "matching": 100148,
+      "queries_own_match": 57,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 604.989893,
+          "recall": 0.9922,
+          "recall_own_match": 0.980701754,
+          "recall_own_nomatch": 0.993679458,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 10280.792
+        },
+        {
+          "qps": 604.664948,
+          "recall": 0.9922,
+          "recall_own_match": 0.980701754,
+          "recall_own_nomatch": 0.993679458,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 10280.792
+        },
+        {
+          "qps": 614.208763,
+          "recall": 0.9922,
+          "recall_own_match": 0.980701754,
+          "recall_own_nomatch": 0.993679458,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 10280.792
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.1,
+      "selectivity": 0.100148,
+      "matching": 100148,
+      "queries_own_match": 57,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 393.393897,
+          "recall": 0.9982,
+          "recall_own_match": 0.996491228,
+          "recall_own_nomatch": 0.998419865,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 15593.926
+        },
+        {
+          "qps": 396.245216,
+          "recall": 0.9982,
+          "recall_own_match": 0.996491228,
+          "recall_own_nomatch": 0.998419865,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 15593.926
+        },
+        {
+          "qps": 395.354635,
+          "recall": 0.9982,
+          "recall_own_match": 0.996491228,
+          "recall_own_nomatch": 0.998419865,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 15593.926
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.1,
+      "selectivity": 0.100148,
+      "matching": 100148,
+      "queries_own_match": 57,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 252.947953,
+          "recall": 0.9996,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999548533,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 23735.852
+        },
+        {
+          "qps": 249.331056,
+          "recall": 0.9996,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999548533,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 23735.852
+        },
+        {
+          "qps": 251.275144,
+          "recall": 0.9996,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999548533,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 23735.852
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.1,
+      "selectivity": 0.100148,
+      "matching": 100148,
+      "queries_own_match": 57,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 159.9946,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999774266,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 36093.622
+        },
+        {
+          "qps": 158.075,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999774266,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 36093.622
+        },
+        {
+          "qps": 158.762704,
+          "recall": 0.9998,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 0.999774266,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 36093.622
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.5,
+      "selectivity": 0.500445,
+      "matching": 500445,
+      "queries_own_match": 252,
+      "strategy": "prefilter",
+      "ef_search": 0,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 10.9356788,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 10.9332617,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        },
+        {
+          "qps": 10.9343936,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 1,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 0
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.5,
+      "selectivity": 0.500445,
+      "matching": 500445,
+      "queries_own_match": 252,
+      "strategy": "graph",
+      "ef_search": 10,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 10064.7874,
+          "recall": 0.7504,
+          "recall_own_match": 0.726587302,
+          "recall_own_nomatch": 0.774596774,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 601.704
+        },
+        {
+          "qps": 10223.2101,
+          "recall": 0.7504,
+          "recall_own_match": 0.726587302,
+          "recall_own_nomatch": 0.774596774,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 601.704
+        },
+        {
+          "qps": 9972.29398,
+          "recall": 0.7504,
+          "recall_own_match": 0.726587302,
+          "recall_own_nomatch": 0.774596774,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 601.704
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.5,
+      "selectivity": 0.500445,
+      "matching": 500445,
+      "queries_own_match": 252,
+      "strategy": "graph",
+      "ef_search": 20,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 6185.44231,
+          "recall": 0.871,
+          "recall_own_match": 0.863492063,
+          "recall_own_nomatch": 0.878629032,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 995.386
+        },
+        {
+          "qps": 6367.55883,
+          "recall": 0.871,
+          "recall_own_match": 0.863492063,
+          "recall_own_nomatch": 0.878629032,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 995.386
+        },
+        {
+          "qps": 6294.64461,
+          "recall": 0.871,
+          "recall_own_match": 0.863492063,
+          "recall_own_nomatch": 0.878629032,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 995.386
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.5,
+      "selectivity": 0.500445,
+      "matching": 500445,
+      "queries_own_match": 252,
+      "strategy": "graph",
+      "ef_search": 40,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 3707.70269,
+          "recall": 0.9496,
+          "recall_own_match": 0.944047619,
+          "recall_own_nomatch": 0.955241935,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 1698.284
+        },
+        {
+          "qps": 3585.67942,
+          "recall": 0.9496,
+          "recall_own_match": 0.944047619,
+          "recall_own_nomatch": 0.955241935,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 1698.284
+        },
+        {
+          "qps": 3724.39592,
+          "recall": 0.9496,
+          "recall_own_match": 0.944047619,
+          "recall_own_nomatch": 0.955241935,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 1698.284
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.5,
+      "selectivity": 0.500445,
+      "matching": 500445,
+      "queries_own_match": 252,
+      "strategy": "graph",
+      "ef_search": 80,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 2115.62859,
+          "recall": 0.986,
+          "recall_own_match": 0.986111111,
+          "recall_own_nomatch": 0.985887097,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 2952.9
+        },
+        {
+          "qps": 2111.34006,
+          "recall": 0.986,
+          "recall_own_match": 0.986111111,
+          "recall_own_nomatch": 0.985887097,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 2952.9
+        },
+        {
+          "qps": 2110.32647,
+          "recall": 0.986,
+          "recall_own_match": 0.986111111,
+          "recall_own_nomatch": 0.985887097,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 2952.9
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.5,
+      "selectivity": 0.500445,
+      "matching": 500445,
+      "queries_own_match": 252,
+      "strategy": "graph",
+      "ef_search": 160,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 1236.65889,
+          "recall": 0.9982,
+          "recall_own_match": 0.998809524,
+          "recall_own_nomatch": 0.997580645,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 5111.316
+        },
+        {
+          "qps": 1251.6924,
+          "recall": 0.9982,
+          "recall_own_match": 0.998809524,
+          "recall_own_nomatch": 0.997580645,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 5111.316
+        },
+        {
+          "qps": 1215.98924,
+          "recall": 0.9982,
+          "recall_own_match": 0.998809524,
+          "recall_own_nomatch": 0.997580645,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 5111.316
+        }
+      ]
+    },
+    {
+      "kind": "correlated",
+      "target_selectivity": 0.5,
+      "selectivity": 0.500445,
+      "matching": 500445,
+      "queries_own_match": 252,
+      "strategy": "graph",
+      "ef_search": 320,
+      "threshold": 0,
+      "runs": [
+        {
+          "qps": 703.096092,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 8781.166
+        },
+        {
+          "qps": 694.0205,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 8781.166
+        },
+        {
+          "qps": 708.064652,
+          "recall": 1,
+          "recall_own_match": 1,
+          "recall_own_nomatch": 1,
+          "prefilter_fraction": 0,
+          "fallback_fraction": 0,
+          "mean_graph_distances": 8781.166
+        }
+      ]
+    }
+  ]
+}

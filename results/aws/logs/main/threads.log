@@ -1,0 +1,264 @@
+$ taskset -c 0 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 1
+hnsw: built in 351.677 s
+  {"ef_search": 40} run 1/3: qps=9141.23 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=9077.91 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=9255.59 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=5297.39 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=5306.82 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=5189.82 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=2910.48 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=2924 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=2882.06 recall@10=0.9938
+$ taskset -c 0,1 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 2
+hnsw: built in 2.7397 s
+  {"ef_search": 40} run 1/3: qps=18124.8 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=18208.5 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=17737.1 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=10590.7 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=10520.7 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=10402 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=5879.28 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=5815.91 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=5787.38 recall@10=0.9938
+$ taskset -c 0,1,2,3 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 4
+hnsw: built in 2.72064 s
+  {"ef_search": 40} run 1/3: qps=35282.8 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=35761.5 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=34207.9 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=20282.8 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=20256.4 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=20177.5 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=11214.4 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=11079.8 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=11277.3 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 8
+hnsw: built in 2.72738 s
+  {"ef_search": 40} run 1/3: qps=68593.3 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=68527.2 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=68019.2 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=39102.9 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=38947 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=38879.9 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=21474.1 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=22016.1 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=21561.3 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7,8,9,10,11 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 12
+hnsw: built in 2.72322 s
+  {"ef_search": 40} run 1/3: qps=100476 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=101791 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=99039.8 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=57235.1 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=57397.1 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=57994.5 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=31450 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=31022.1 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=31695 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 16
+hnsw: built in 2.72495 s
+  {"ef_search": 40} run 1/3: qps=133456 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=134898 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=130355 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=75717 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=75958.3 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=75899.6 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=41778.9 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=42401.6 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=41888.9 recall@10=0.9938
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 32
+hnsw: built in 2.74725 s
+  {"ef_search": 40} run 1/3: qps=154441 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=156342 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=156632 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=87618.5 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=88149 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=88668.7 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=49232.7 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=50311.3 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=49539.4 recall@10=0.9938
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 32
+hnsw: built in 2.72192 s
+  {"ef_search": 40} run 1/3: qps=157568 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=153872 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=159600 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=89689.7 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=91202.9 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=87321.8 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=49815.2 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=50334.7 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=50522.8 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 16
+hnsw: built in 2.70465 s
+  {"ef_search": 40} run 1/3: qps=132199 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=132390 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=132958 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=75233.4 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=75461 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=76439.8 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=41814.8 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=41937.4 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=41899.2 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7,8,9,10,11 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 12
+hnsw: built in 2.72899 s
+  {"ef_search": 40} run 1/3: qps=98776.1 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=100167 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=100849 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=56868.2 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=56683.1 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=56939.7 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=31471.8 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=31720.7 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=31823 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 8
+hnsw: built in 2.72128 s
+  {"ef_search": 40} run 1/3: qps=69002.4 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=68940 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=67356 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=37981.8 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=39088.5 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=39303.3 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=21550.3 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=21824.9 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=21931.2 recall@10=0.9938
+$ taskset -c 0,1,2,3 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 4
+hnsw: built in 2.71883 s
+  {"ef_search": 40} run 1/3: qps=34652.3 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=34920.3 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=35496.3 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=19841.5 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=20029.3 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=19623.6 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=11051.2 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=11132.8 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=11291.4 recall@10=0.9938
+$ taskset -c 0,1 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 2
+hnsw: built in 2.72119 s
+  {"ef_search": 40} run 1/3: qps=18188.7 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=17837.3 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=18174.3 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=10333.3 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=10283.6 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=10469.2 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=5726.78 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=5740.62 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=5801.97 recall@10=0.9938
+$ taskset -c 0 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 1
+hnsw: built in 2.72439 s
+  {"ef_search": 40} run 1/3: qps=9014.05 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=9119.78 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=9087.25 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=5238.03 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=5230.67 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=5169.5 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=2930.54 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=2897.42 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=2912.4 recall@10=0.9938
+$ taskset -c 0 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 1
+hnsw: built in 2.72035 s
+  {"ef_search": 40} run 1/3: qps=9150.44 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=9191.49 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=9133.85 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=5243.33 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=5218.67 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=5247.78 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=2918.89 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=2902.14 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=2895.08 recall@10=0.9938
+$ taskset -c 0,1 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 2
+hnsw: built in 2.72909 s
+  {"ef_search": 40} run 1/3: qps=18041.5 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=18018.2 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=18030.8 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=10400.4 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=10349.6 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=10279.6 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=5692.76 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=5770.63 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=5816.67 recall@10=0.9938
+$ taskset -c 0,1,2,3 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 4
+hnsw: built in 2.71365 s
+  {"ef_search": 40} run 1/3: qps=35593.6 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=35727.8 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=36136.2 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=20611.8 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=20095.6 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=20116.5 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=11337.6 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=11263.7 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=11189.4 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 8
+hnsw: built in 2.71119 s
+  {"ef_search": 40} run 1/3: qps=69316.9 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=67646.5 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=69327.2 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=38392.8 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=38409 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=38830.5 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=21541.1 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=21690.1 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=21479.7 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7,8,9,10,11 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 12
+hnsw: built in 2.71683 s
+  {"ef_search": 40} run 1/3: qps=100371 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=97440.2 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=99016.5 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=57003.5 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=57399.9 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=57540.6 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=31470.1 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=32035.3 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=31505.2 recall@10=0.9938
+$ taskset -c 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 16
+hnsw: built in 2.7322 s
+  {"ef_search": 40} run 1/3: qps=129374 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=132494 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=132553 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=75429.8 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=74282.2 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=73757.1 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=41709.4 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=41511.3 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=41181.1 recall@10=0.9938
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --M 16 --ef-construction 200 --ef-search 40,80,160 --runs 3 --snapshot /home/ubuntu/strata/data/sift1m/scaling_index.snap --build-threads 16 --threads 32
+hnsw: built in 2.72788 s
+  {"ef_search": 40} run 1/3: qps=158138 recall@10=0.92829
+  {"ef_search": 40} run 2/3: qps=161158 recall@10=0.92829
+  {"ef_search": 40} run 3/3: qps=162291 recall@10=0.92829
+  {"ef_search": 80} run 1/3: qps=91437.4 recall@10=0.97512
+  {"ef_search": 80} run 2/3: qps=92134 recall@10=0.97512
+  {"ef_search": 80} run 3/3: qps=89858.9 recall@10=0.97512
+  {"ef_search": 160} run 1/3: qps=50040.9 recall@10=0.9938
+  {"ef_search": 160} run 2/3: qps=50449.9 recall@10=0.9938
+  {"ef_search": 160} run 3/3: qps=49851.1 recall@10=0.9938
+wrote results/search_scaling/scaling_sift1m.md
+round 0: 1 build threads
+  built in 314.67 s
+round 0: 2 build threads
+  built in 160.26 s
+round 0: 4 build threads
+  built in 79.87 s
+round 0: 8 build threads
+  built in 40.59 s
+round 0: 16 build threads
+  built in 20.94 s
+round 1: 16 build threads
+  built in 20.93 s
+round 1: 8 build threads
+  built in 40.50 s
+round 1: 4 build threads
+  built in 79.77 s
+round 1: 2 build threads
+  built in 159.91 s
+round 1: 1 build threads
+  built in 316.24 s
+round 2: 1 build threads
+  built in 334.82 s
+round 2: 2 build threads
+  built in 167.60 s
+round 2: 4 build threads
+  built in 81.84 s
+round 2: 8 build threads
+  built in 41.46 s
+round 2: 16 build threads
+  built in 21.25 s
+wrote results/hnsw_build/build_scaling_sift1m.md
+part threads done

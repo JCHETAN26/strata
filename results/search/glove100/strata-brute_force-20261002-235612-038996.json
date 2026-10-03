@@ -1,0 +1,230 @@
+{
+  "timestamp": "2026-10-02T23:56:11.977007+00:00",
+  "git": {
+    "commit": "8ae9bf4dd58baa4e2ac86175e216b6ad3de2ceeb",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "x86_64",
+    "os": "Linux 7.0.0-1013-aws",
+    "logical_cpus": 32,
+    "load_average_1m_5m_15m": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "cpu": "Intel(R) Xeon(R) Platinum 8488C",
+    "memory_gib": 61.8,
+    "cpu_flags_avx2": true,
+    "cpu_governor": null,
+    "kernel": "7.0.0-1013-aws",
+    "topology": {
+      "sockets": 1,
+      "cores_per_socket": 16,
+      "threads_per_core": 2,
+      "physical_cores": 16,
+      "l3_cache": "105 MiB (1 instance)",
+      "flags_avx512f": true
+    },
+    "ec2": {
+      "instance_type": "c7i.8xlarge",
+      "availability_zone": "us-east-2a",
+      "ami_id": "ami-0fa99aa8f97f9e30b",
+      "instance_id": "i-0e2d9e9c1237841ce"
+    }
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": null,
+    "hosted": null
+  },
+  "dataset": {
+    "name": "glove100",
+    "source_url": "http://ann-benchmarks.com/glove-100-angular.hdf5",
+    "source_sha256": "544af1d5e84e112cd4749571dcfd8ca109818a572f850af75a3a09e093a953c4",
+    "metric": "angular",
+    "base_shape": [
+      1183514,
+      100
+    ],
+    "query_shape": [
+      10000,
+      100
+    ],
+    "groundtruth_shape": [
+      10000,
+      100
+    ]
+  },
+  "library": "strata",
+  "index": "brute_force",
+  "build_params": {
+    "kernel": "avx2"
+  },
+  "build_seconds": 0.254421609,
+  "k": 10,
+  "threads": 1,
+  "num_queries": 1000,
+  "command": [
+    "/home/ubuntu/strata/build/release/bench/strata_search",
+    "--data",
+    "/home/ubuntu/strata/data/glove100",
+    "--metric",
+    "angular",
+    "--index",
+    "brute_force",
+    "--k",
+    "10",
+    "--runs",
+    "5",
+    "--max-queries",
+    "1000",
+    "--kernel",
+    "best",
+    "--threads",
+    "1"
+  ],
+  "points": [
+    {
+      "search_params": {},
+      "runs": [
+        {
+          "search_seconds": 58.6627897,
+          "qps": 17.0465811,
+          "recall": 1,
+          "recall_by_id": 0.9999,
+          "latency_mean_us": 58662.2528,
+          "latency_p50_us": 58614.671,
+          "latency_p95_us": 59819.994,
+          "latency_p99_us": 60939.691,
+          "latency_max_us": 65846.375
+        },
+        {
+          "search_seconds": 58.7842694,
+          "qps": 17.0113537,
+          "recall": 1,
+          "recall_by_id": 0.9999,
+          "latency_mean_us": 58783.7248,
+          "latency_p50_us": 58696.84,
+          "latency_p95_us": 59965.539,
+          "latency_p99_us": 60766.159,
+          "latency_max_us": 64814.578
+        },
+        {
+          "search_seconds": 58.6527571,
+          "qps": 17.0494969,
+          "recall": 1,
+          "recall_by_id": 0.9999,
+          "latency_mean_us": 58652.2083,
+          "latency_p50_us": 58572.02,
+          "latency_p95_us": 59873.072,
+          "latency_p99_us": 60407.816,
+          "latency_max_us": 67675.83
+        },
+        {
+          "search_seconds": 58.7596797,
+          "qps": 17.0184726,
+          "recall": 1,
+          "recall_by_id": 0.9999,
+          "latency_mean_us": 58759.123,
+          "latency_p50_us": 58720.875,
+          "latency_p95_us": 59998.145,
+          "latency_p99_us": 60697.894,
+          "latency_max_us": 65029.856
+        },
+        {
+          "search_seconds": 58.6813894,
+          "qps": 17.041178,
+          "recall": 1,
+          "recall_by_id": 0.9999,
+          "latency_mean_us": 58680.8128,
+          "latency_p50_us": 58624.004,
+          "latency_p95_us": 59943.556,
+          "latency_p99_us": 60759.521,
+          "latency_max_us": 65180.582
+        }
+      ],
+      "summary": {
+        "qps": {
+          "mean": 17.03341646,
+          "median": 17.041178,
+          "stdev": 0.01733647982299199,
+          "min": 17.0113537,
+          "max": 17.0494969
+        },
+        "recall": {
+          "mean": 1.0,
+          "median": 1,
+          "stdev": 0.0,
+          "min": 1,
+          "max": 1
+        },
+        "recall_by_id": {
+          "mean": 0.9999,
+          "median": 0.9999,
+          "stdev": 0.0,
+          "min": 0.9999,
+          "max": 0.9999
+        },
+        "latency_mean_us": {
+          "mean": 58707.62434,
+          "median": 58680.8128,
+          "stdev": 59.774084690676176,
+          "min": 58652.2083,
+          "max": 58783.7248
+        },
+        "latency_p50_us": {
+          "mean": 58645.68199999999,
+          "median": 58624.004,
+          "stdev": 61.499667198286424,
+          "min": 58572.02,
+          "max": 58720.875
+        },
+        "latency_p95_us": {
+          "mean": 59920.0612,
+          "median": 59943.556,
+          "stdev": 72.35113194484126,
+          "min": 59819.994,
+          "max": 59998.145
+        },
+        "latency_p99_us": {
+          "mean": 60714.2162,
+          "median": 60759.521,
+          "stdev": 193.47930224109257,
+          "min": 60407.816,
+          "max": 60939.691
+        }
+      }
+    }
+  ],
+  "raw": {
+    "harness": "strata_search",
+    "build_type": "Release",
+    "asserts": false,
+    "compiler": "13.3.0",
+    "index": "brute_force",
+    "build_params": {},
+    "build_seconds": 0.254421609,
+    "graph": null,
+    "metric": "cosine",
+    "kernel": "avx2",
+    "k": 10,
+    "threads": 1,
+    "warmup_passes": 1,
+    "num_base": 1183514,
+    "index_bytes": 473405600,
+    "rerank_bytes": 0,
+    "num_queries": 1000,
+    "dim": 100,
+    "simd": {
+      "isa": "AVX2",
+      "width_bits": 256,
+      "how": "compile time (-mavx2 -mfma on x86, NEON on ARM)",
+      "disassembly": {
+        "binary": "/home/ubuntu/strata/build/release/bench/strata_search",
+        "zmm_instructions": 0,
+        "ymm_instructions": 1365
+      }
+    }
+  }
+}

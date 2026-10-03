@@ -1,0 +1,147 @@
+ Percent |	Source code & Disassembly of strata_search for cycles (76496 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         : 0     0x4a3b0 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)>:
+    0.79 :   4a3b0:        endbr64
+    0.00 :   4a3b4:        movq    %rsi, %r8
+    0.00 :   4a3b7:        movq    %rdx, %rsi
+    0.00 :   4a3ba:        cmpq    $0xf, %r8
+    0.00 :   4a3be:        jbe     0x4a5c0 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x210>
+    0.00 :   4a3c4:        vxorps  %xmm3, %xmm3, %xmm3
+    0.00 :   4a3c8:        movl    $0x10, %eax
+    0.00 :   4a3cd:        vmovaps %ymm3, %ymm2
+    0.00 :   4a3d1:        nopl    (%rax)
+    1.08 :   4a3d8:        vmovups -0x40(%rdi,%rax,4), %ymm4
+    0.01 :   4a3de:        vmovups -0x20(%rdi,%rax,4), %ymm5
+    1.28 :   4a3e4:        vsubps  -0x40(%rsi,%rax,4), %ymm4, %ymm1
+    5.19 :   4a3ea:        vsubps  -0x20(%rsi,%rax,4), %ymm5, %ymm0
+   78.11 :   4a3f0:        addq    $0x10, %rax
+    0.77 :   4a3f4:        vfmadd231ps     %ymm1, %ymm1, %ymm2
+    1.21 :   4a3f9:        vfmadd231ps     %ymm0, %ymm0, %ymm3
+    4.41 :   4a3fe:        cmpq    %rax, %r8
+    0.00 :   4a401:        jae     0x4a3d8 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x28>
+    0.26 :   4a403:        leaq    -0x10(%r8), %r9
+    0.00 :   4a407:        andq    $-0x10, %r9
+    0.00 :   4a40b:        leaq    0x10(%r9), %rcx
+    0.00 :   4a40f:        addq    $0x18, %r9
+    0.00 :   4a413:        cmpq    %r9, %r8
+    0.00 :   4a416:        jb      0x4a44b <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x9b>
+    0.00 :   4a418:        movq    %r9, %rax
+    0.00 :   4a41b:        jmp     0x4a423 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x73>
+    0.00 :   4a41d:        nopl    (%rax)
+    0.00 :   4a420:        movq    %rdx, %rax
+    0.00 :   4a423:        vmovups (%rdi,%rcx,4), %ymm6
+    0.00 :   4a428:        vsubps  (%rsi,%rcx,4), %ymm6, %ymm0
+    0.00 :   4a42d:        leaq    0x8(%rax), %rdx
+    0.00 :   4a431:        movq    %rax, %rcx
+    0.00 :   4a434:        vfmadd231ps     %ymm0, %ymm0, %ymm2
+    0.00 :   4a439:        cmpq    %rdx, %r8
+    0.00 :   4a43c:        jae     0x4a420 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x70>
+    0.00 :   4a43e:        movq    %r8, %rcx
+    0.00 :   4a441:        subq    %r9, %rcx
+    0.00 :   4a444:        andq    $-0x8, %rcx
+    0.00 :   4a448:        addq    %r9, %rcx
+    0.00 :   4a44b:        vaddps  %ymm2, %ymm3, %ymm3
+    1.13 :   4a44f:        vextractf128    $0x1, %ymm3, %xmm2
+    0.94 :   4a455:        vaddps  %xmm3, %xmm2, %xmm2
+    1.48 :   4a459:        vmovhlps        %xmm2, %xmm2, %xmm0
+    0.29 :   4a45d:        vaddps  %xmm0, %xmm2, %xmm2
+    1.30 :   4a461:        vmovshdup       %xmm2, %xmm0
+    0.72 :   4a465:        vaddss  %xmm0, %xmm2, %xmm2
+    0.78 :   4a469:        cmpq    %r8, %rcx
+    0.00 :   4a46c:        jae     0x4a5b8 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x208>
+    0.00 :   4a472:        movq    %r8, %rdx
+    0.00 :   4a475:        subq    %rcx, %rdx
+    0.00 :   4a478:        leaq    -0x1(%rdx), %rax
+    0.00 :   4a47c:        cmpq    $0x6, %rax
+    0.00 :   4a480:        jbe     0x4a5f4 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x244>
+    0.00 :   4a486:        movq    %rdx, %r10
+    0.00 :   4a489:        leaq    (,%rcx,4), %r9
+    0.00 :   4a491:        xorl    %eax, %eax
+    0.00 :   4a493:        shrq    $0x3, %r10
+    0.00 :   4a497:        leaq    (%rdi,%r9), %r11
+    0.00 :   4a49b:        addq    %rsi, %r9
+    0.00 :   4a49e:        shlq    $0x5, %r10
+    0.00 :   4a4a2:        nopw    (%rax,%rax)
+    0.00 :   4a4a8:        vmovups (%r11,%rax), %ymm7
+    0.00 :   4a4ae:        vsubps  (%r9,%rax), %ymm7, %ymm0
+    0.00 :   4a4b4:        addq    $0x20, %rax
+    0.00 :   4a4b8:        vmulps  %ymm0, %ymm0, %ymm0
+    0.00 :   4a4bc:        vaddss  %xmm0, %xmm2, %xmm2
+    0.00 :   4a4c0:        vshufps $0x55, %xmm0, %xmm0, %xmm3
+    0.00 :   4a4c5:        vshufps $0xff, %xmm0, %xmm0, %xmm1
+    0.00 :   4a4ca:        vaddss  %xmm2, %xmm3, %xmm3
+    0.00 :   4a4ce:        vunpckhps       %xmm0, %xmm0, %xmm2
+    0.00 :   4a4d2:        vextractf128    $0x1, %ymm0, %xmm0
+    0.00 :   4a4d8:        vaddss  %xmm3, %xmm2, %xmm2
+    0.00 :   4a4dc:        vaddss  %xmm2, %xmm1, %xmm1
+    0.00 :   4a4e0:        vaddss  %xmm1, %xmm0, %xmm2
+    0.00 :   4a4e4:        vshufps $0x55, %xmm0, %xmm0, %xmm1
+    0.00 :   4a4e9:        vaddss  %xmm2, %xmm1, %xmm1
+    0.00 :   4a4ed:        vunpckhps       %xmm0, %xmm0, %xmm2
+    0.00 :   4a4f1:        vshufps $0xff, %xmm0, %xmm0, %xmm0
+    0.00 :   4a4f6:        vaddss  %xmm1, %xmm2, %xmm2
+    0.00 :   4a4fa:        vaddss  %xmm0, %xmm2, %xmm2
+    0.00 :   4a4fe:        cmpq    %rax, %r10
+    0.00 :   4a501:        jne     0x4a4a8 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0xf8>
+    0.00 :   4a503:        movq    %rdx, %rax
+    0.00 :   4a506:        andq    $-0x8, %rax
+    0.00 :   4a50a:        leaq    (%rcx,%rax), %r9
+    0.00 :   4a50e:        testb   $0x7, %dl
+    0.00 :   4a511:        je      0x4a5b8 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x208>
+    0.00 :   4a517:        subq    %rax, %rdx
+    0.00 :   4a51a:        leaq    -0x1(%rdx), %r10
+    0.00 :   4a51e:        cmpq    $0x2, %r10
+    0.00 :   4a522:        jbe     0x4a562 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x1b2>
+    0.00 :   4a524:        addq    %rcx, %rax
+    0.00 :   4a527:        vmovups (%rdi,%rax,4), %xmm7
+    0.00 :   4a52c:        vsubps  (%rsi,%rax,4), %xmm7, %xmm0
+    0.00 :   4a531:        movq    %rdx, %rax
+    0.00 :   4a534:        andq    $-0x4, %rax
+    0.00 :   4a538:        addq    %rax, %r9
+    0.00 :   4a53b:        andl    $0x3, %edx
+    0.00 :   4a53e:        vmulps  %xmm0, %xmm0, %xmm0
+    0.00 :   4a542:        vaddss  %xmm0, %xmm2, %xmm1
+    0.00 :   4a546:        vshufps $0x55, %xmm0, %xmm0, %xmm2
+    0.00 :   4a54b:        vaddss  %xmm2, %xmm1, %xmm1
+    0.00 :   4a54f:        vunpckhps       %xmm0, %xmm0, %xmm2
+    0.00 :   4a553:        vshufps $0xff, %xmm0, %xmm0, %xmm0
+    0.00 :   4a558:        vaddss  %xmm2, %xmm1, %xmm1
+    0.00 :   4a55c:        vaddss  %xmm0, %xmm1, %xmm2
+    0.00 :   4a560:        je      0x4a5b8 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x208>
+    0.00 :   4a562:        vmovss  (%rdi,%r9,4), %xmm0
+    0.00 :   4a568:        vsubss  (%rsi,%r9,4), %xmm0, %xmm0
+    0.00 :   4a56e:        leaq    0x1(%r9), %rdx
+    0.00 :   4a572:        leaq    (,%r9,4), %rax
+    0.00 :   4a57a:        vmulss  %xmm0, %xmm0, %xmm0
+    0.00 :   4a57e:        vaddss  %xmm0, %xmm2, %xmm2
+    0.00 :   4a582:        cmpq    %r8, %rdx
+    0.00 :   4a585:        jae     0x4a5b8 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x208>
+    0.00 :   4a587:        vmovss  0x4(%rax,%rdi), %xmm0
+    0.00 :   4a58d:        vsubss  0x4(%rax,%rsi), %xmm0, %xmm0
+    0.00 :   4a593:        addq    $0x2, %r9
+    0.00 :   4a597:        vmulss  %xmm0, %xmm0, %xmm0
+    0.00 :   4a59b:        vaddss  %xmm0, %xmm2, %xmm2
+    0.00 :   4a59f:        cmpq    %r8, %r9
+    0.00 :   4a5a2:        jae     0x4a5b8 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x208>
+    0.00 :   4a5a4:        vmovss  0x8(%rax,%rdi), %xmm0
+    0.00 :   4a5aa:        vsubss  0x8(%rax,%rsi), %xmm0, %xmm0
+    0.00 :   4a5b0:        vmulss  %xmm0, %xmm0, %xmm0
+    0.00 :   4a5b4:        vaddss  %xmm0, %xmm2, %xmm2
+    0.00 :   4a5b8:        vmovaps %xmm2, %xmm0
+    0.00 :   4a5bc:        vzeroupper
+    0.22 :   4a5bf:        retq
+    0.00 :   4a5c0:        vxorps  %xmm3, %xmm3, %xmm3
+    0.00 :   4a5c4:        xorl    %ecx, %ecx
+    0.00 :   4a5c6:        vmovaps %ymm3, %ymm2
+    0.00 :   4a5ca:        cmpq    $0x7, %r8
+    0.00 :   4a5ce:        jbe     0x4a44b <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x9b>
+    0.00 :   4a5d4:        vmovups (%rdi), %ymm7
+    0.00 :   4a5d8:        vsubps  (%rsi), %ymm7, %ymm2
+    0.00 :   4a5dc:        vxorps  %xmm0, %xmm0, %xmm0
+    0.00 :   4a5e0:        movl    $0x8, %r9d
+    0.00 :   4a5e6:        vmovaps %ymm0, %ymm3
+    0.00 :   4a5ea:        vfmadd132ps     %ymm2, %ymm0, %ymm2
+    0.00 :   4a5ef:        jmp     0x4a43e <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x8e>
+    0.00 :   4a5f4:        movq    %rcx, %r9
+    0.00 :   4a5f7:        xorl    %eax, %eax
+    0.00 :   4a5f9:        jmp     0x4a517 <strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)+0x167>

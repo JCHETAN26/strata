@@ -1,0 +1,376 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 474K of event 'cycles'
+# Event count (approx.): 320788226936
+#
+# Overhead  Command        Shared Object         Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+# ........  .............  ....................  .................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+    39.59%  strata_search  strata_search         [.] std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > strata::HnswIndex::search_layer<strata::(anonymous namespace)::KeepAll, false>(std::span<float const, 18446744073709551615ul>, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> > const&, unsigned long, int, strata::(anonymous namespace)::KeepAll const&, strata::HnswIndex::TraversalBudget*) const [clone .constprop.0]
+            |          
+            |--23.09%--prefetch (inlined)
+            |          search_layer<strata::(anonymous namespace)::KeepAll> (inlined)
+            |          search (inlined)
+            |          std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+            |          |          
+            |          |--11.59%--std::vector<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>, std::allocator<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> > >::operator[](unsigned long) (inlined)
+            |          |          operator() (inlined)
+            |          |          __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |          |          __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |          |          std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#2}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |          |          parallel_for (inlined)
+            |          |          ~_Function_base (inlined)
+            |          |          ~function (inlined)
+            |          |          run_point (inlined)
+            |          |          main
+            |          |          0x74653722a1ca
+            |          |          __libc_start_main
+            |          |          _start
+            |          |          
+            |           --11.50%--tl::detail::expected_storage_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, false>::~expected_storage_base() (inlined)
+            |                     tl::detail::expected_operations_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected_operations_base() (inlined)
+            |                     tl::detail::expected_copy_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_base() (inlined)
+            |                     tl::detail::expected_move_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_base() (inlined)
+            |                     tl::detail::expected_copy_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_assign_base() (inlined)
+            |                     tl::detail::expected_move_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_assign_base() (inlined)
+            |                     tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected() (inlined)
+            |                     operator() (inlined)
+            |                     __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#1}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |                     parallel_for (inlined)
+            |                     ~_Function_base (inlined)
+            |                     ~function (inlined)
+            |                     run_point (inlined)
+            |                     main
+            |                     0x74653722a1ca
+            |                     __libc_start_main
+            |                     _start
+            |          
+            |--12.46%--insert (inlined)
+            |          search_layer<strata::(anonymous namespace)::KeepAll> (inlined)
+            |          search (inlined)
+            |          std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+            |          |          
+            |          |--6.23%--tl::detail::expected_storage_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, false>::~expected_storage_base() (inlined)
+            |          |          tl::detail::expected_operations_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected_operations_base() (inlined)
+            |          |          tl::detail::expected_copy_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_base() (inlined)
+            |          |          tl::detail::expected_move_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_base() (inlined)
+            |          |          tl::detail::expected_copy_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_assign_base() (inlined)
+            |          |          tl::detail::expected_move_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_assign_base() (inlined)
+            |          |          tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected() (inlined)
+            |          |          operator() (inlined)
+            |          |          __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |          |          __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |          |          std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#1}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |          |          parallel_for (inlined)
+            |          |          ~_Function_base (inlined)
+            |          |          ~function (inlined)
+            |          |          run_point (inlined)
+            |          |          main
+            |          |          0x74653722a1ca
+            |          |          __libc_start_main
+            |          |          _start
+            |          |          
+            |           --6.23%--std::vector<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>, std::allocator<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> > >::operator[](unsigned long) (inlined)
+            |                     operator() (inlined)
+            |                     __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#2}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |                     parallel_for (inlined)
+            |                     ~_Function_base (inlined)
+            |                     ~function (inlined)
+            |                     run_point (inlined)
+            |                     main
+            |                     0x74653722a1ca
+            |                     __libc_start_main
+            |                     _start
+            |          
+            |--1.12%--end (inlined)
+            |          search_layer<strata::(anonymous namespace)::KeepAll> (inlined)
+            |          search (inlined)
+            |          std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+            |          |          
+            |          |--0.57%--std::vector<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>, std::allocator<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> > >::operator[](unsigned long) (inlined)
+            |          |          operator() (inlined)
+            |          |          __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |          |          __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |          |          std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#2}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |          |          parallel_for (inlined)
+            |          |          ~_Function_base (inlined)
+            |          |          ~function (inlined)
+            |          |          run_point (inlined)
+            |          |          main
+            |          |          0x74653722a1ca
+            |          |          __libc_start_main
+            |          |          _start
+            |          |          
+            |           --0.55%--tl::detail::expected_storage_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, false>::~expected_storage_base() (inlined)
+            |                     tl::detail::expected_operations_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected_operations_base() (inlined)
+            |                     tl::detail::expected_copy_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_base() (inlined)
+            |                     tl::detail::expected_move_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_base() (inlined)
+            |                     tl::detail::expected_copy_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_assign_base() (inlined)
+            |                     tl::detail::expected_move_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_assign_base() (inlined)
+            |                     tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected() (inlined)
+            |                     operator() (inlined)
+            |                     __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#1}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |                     parallel_for (inlined)
+            |                     ~_Function_base (inlined)
+            |                     ~function (inlined)
+            |                     run_point (inlined)
+            |                     main
+            |                     0x74653722a1ca
+            |                     __libc_start_main
+            |                     _start
+            |          
+            |--0.84%--operator<=> (inlined)
+            |          
+             --0.51%--search_layer<strata::(anonymous namespace)::KeepAll> (inlined)
+                       |          
+                        --0.51%--search (inlined)
+                                  std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+
+    20.73%  strata_search  strata_search         [.] strata::avx2::l2_squared(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>)
+            |          
+            |--17.29%--l2_squared (inlined)
+            |          |          
+            |           --17.17%--search (inlined)
+            |                     std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+            |                     |          
+            |                     |--8.59%--std::vector<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>, std::allocator<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> > >::operator[](unsigned long) (inlined)
+            |                     |          operator() (inlined)
+            |                     |          __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     |          __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                     |          std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#2}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |                     |          parallel_for (inlined)
+            |                     |          ~_Function_base (inlined)
+            |                     |          ~function (inlined)
+            |                     |          run_point (inlined)
+            |                     |          main
+            |                     |          0x74653722a1ca
+            |                     |          __libc_start_main
+            |                     |          _start
+            |                     |          
+            |                      --8.58%--tl::detail::expected_storage_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, false>::~expected_storage_base() (inlined)
+            |                                tl::detail::expected_operations_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected_operations_base() (inlined)
+            |                                tl::detail::expected_copy_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_base() (inlined)
+            |                                tl::detail::expected_move_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_base() (inlined)
+            |                                tl::detail::expected_copy_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_assign_base() (inlined)
+            |                                tl::detail::expected_move_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_assign_base() (inlined)
+            |                                tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected() (inlined)
+            |                                operator() (inlined)
+            |                                __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                                __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+            |                                std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#1}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+            |                                parallel_for (inlined)
+            |                                ~_Function_base (inlined)
+            |                                ~function (inlined)
+            |                                run_point (inlined)
+            |                                main
+            |                                0x74653722a1ca
+            |                                __libc_start_main
+            |                                _start
+            |          
+             --1.94%--_mm256_sub_ps (inlined)
+                       l2_squared (inlined)
+                       |          
+                        --1.85%--search (inlined)
+                                  std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+                                  |          
+                                  |--0.93%--tl::detail::expected_storage_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, false>::~expected_storage_base() (inlined)
+                                  |          tl::detail::expected_operations_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected_operations_base() (inlined)
+                                  |          tl::detail::expected_copy_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_base() (inlined)
+                                  |          tl::detail::expected_move_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_base() (inlined)
+                                  |          tl::detail::expected_copy_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false, true>::~expected_copy_assign_base() (inlined)
+                                  |          tl::detail::expected_move_assign_base<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error, false>::~expected_move_assign_base() (inlined)
+                                  |          tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>::~expected() (inlined)
+                                  |          operator() (inlined)
+                                  |          __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+                                  |          __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+                                  |          std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#1}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+                                  |          parallel_for (inlined)
+                                  |          ~_Function_base (inlined)
+                                  |          ~function (inlined)
+                                  |          run_point (inlined)
+                                  |          main
+                                  |          0x74653722a1ca
+                                  |          __libc_start_main
+                                  |          _start
+                                  |          
+                                   --0.92%--std::vector<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error>, std::allocator<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> > >::operator[](unsigned long) (inlined)
+                                             operator() (inlined)
+                                             __invoke_impl<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+                                             __invoke_r<void, (anonymous namespace)::run_point(const SweepPoint&, const strata::Matrix<float>&, strata::DistanceFn, const strata::Matrix<float>&, const strata::Matrix<int>&, std::span<float const>, const Options&, strata::ThreadPool&)::<lambda(std::size_t)>&, long unsigned int> (inlined)
+                                             std::_Function_handler<void (unsigned long), (anonymous namespace)::run_point((anonymous namespace)::SweepPoint const&, strata::Matrix<float> const&, float (*)(std::span<float const, 18446744073709551615ul>, std::span<float const, 18446744073709551615ul>) noexcept, strata::Matrix<float> const&, strata::Matrix<int> const&, std::span<float const, 18446744073709551615ul>, (anonymous namespace)::Options const&, strata::ThreadPool&)::{lambda(unsigned long)#2}>::_M_invoke(std::_Any_data const&, unsigned long&&)
+                                             parallel_for (inlined)
+                                             ~_Function_base (inlined)
+                                             ~function (inlined)
+                                             run_point (inlined)
+                                             main
+                                             0x74653722a1ca
+                                             __libc_start_main
+                                             _start
+
+    16.40%  strata_search  strata_search         [.] strata::crc32c(std::span<std::byte const, 18446744073709551615ul>, unsigned int)
+            |
+            ---crc32c (inlined)
+               load (inlined)
+               main
+               0x74653722a1ca
+               __libc_start_main
+               _start
+
+     2.91%  strata_search  [kernel.kallsyms]     [k] asm_exc_page_fault
+            |
+            ---asm_exc_page_fault
+               |          
+               |--1.49%--0x7465373a1efa
+               |          |          
+               |          |--0.74%--load (inlined)
+               |          |          main
+               |          |          0x74653722a1ca
+               |          |          __libc_start_main
+               |          |          _start
+               |          |          
+               |           --0.59%--~unique_ptr (inlined)
+               |                     ~_List (inlined)
+               |                     ~path (inlined)
+               |                     load_dataset (inlined)
+               |                     main
+               |                     0x74653722a1ca
+               |                     __libc_start_main
+               |                     _start
+               |          
+                --0.61%--0x7465373a1ceb
+
+     2.19%  strata_search  [kernel.kallsyms]     [k] rep_movs_alternative
+            |
+            ---rep_movs_alternative
+               copy_page_to_iter
+               filemap_read
+               generic_file_read_iter
+               ext4_file_read_iter
+               vfs_read
+               ksys_read
+               __x64_sys_read
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               read
+               |          
+               |--1.23%--read_exact (inlined)
+               |          read_snapshot (inlined)
+               |          load (inlined)
+               |          main
+               |          0x74653722a1ca
+               |          __libc_start_main
+               |          _start
+               |          
+                --0.97%--std::basic_filebuf<char, std::char_traits<char> >::xsgetn(char*, long)
+                          std::istream::read(char*, long)
+                          |          
+                           --0.97%--read_bin<float> (inlined)
+                                     ~unique_ptr (inlined)
+                                     ~_List (inlined)
+                                     ~path (inlined)
+                                     load_dataset (inlined)
+                                     main
+                                     0x74653722a1ca
+                                     __libc_start_main
+                                     _start
+
+     1.90%  strata_search  strata_search         [.] std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()
+            |          
+            |--0.77%--__adjust_heap<__gnu_cxx::__normal_iterator<strata::Neighbor*, std::vector<strata::Neighbor> >, long int, strata::Neighbor, __gnu_cxx::__ops::_Iter_comp_iter<std::less<strata::Neighbor> > > (inlined)
+            |          __pop_heap<__gnu_cxx::__normal_iterator<strata::Neighbor*, std::vector<strata::Neighbor> >, __gnu_cxx::__ops::_Iter_comp_iter<std::less<strata::Neighbor> > > (inlined)
+            |          pop_heap<__gnu_cxx::__normal_iterator<strata::Neighbor*, std::vector<strata::Neighbor> >, std::less<strata::Neighbor> > (inlined)
+            |          pop (inlined)
+            |          |          
+            |           --0.52%--operator() (inlined)
+            |                     search_layer<strata::(anonymous namespace)::KeepAll> (inlined)
+            |                     search (inlined)
+            |                     std::_Function_handler<tl::expected<std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, strata::Error> (std::span<float const, 18446744073709551615ul>, unsigned long), main::{lambda(std::span<float const, 18446744073709551615ul>, unsigned long)#2}>::_M_invoke(std::_Any_data const&, std::span<float const, 18446744073709551615ul>&&, unsigned long&&)
+            |          
+             --0.62%--operator<=> (inlined)
+                       operator() (inlined)
+
+     1.68%  strata_search  strata_search         [.] strata::HnswIndex::neighbors(unsigned int, int) const
+            |          
+             --1.68%--neighbors (inlined)
+                       0x74653722a1ca
+                       __libc_start_main
+                       _start
+
+     1.59%  strata_search  [kernel.kallsyms]     [k] _raw_spin_lock
+            |
+            ---_raw_spin_lock
+               |          
+                --1.58%--do_anonymous_page
+                          handle_pte_fault
+                          __handle_mm_fault
+                          handle_mm_fault
+                          do_user_addr_fault
+                          exc_page_fault
+                          asm_exc_page_fault
+                          |          
+                           --0.83%--0x7465373a1efa
+
+     1.44%  strata_search  strata_search         [.] main
+            |          
+             --1.24%--hnsw_graph_json (inlined)
+                       main
+                       0x74653722a1ca
+                       __libc_start_main
+                       _start
+
+     1.16%  strata_search  strata_search         [.] strata::HnswIndex::from_snapshot(strata::Snapshot const&)
+            |          
+             --1.08%--from_snapshot (inlined)
+                       ~expected_storage_base (inlined)
+                       ~expected_operations_base (inlined)
+                       ~expected_copy_base (inlined)
+                       ~expected_move_base (inlined)
+                       ~expected_copy_assign_base (inlined)
+                       ~expected_move_assign_base (inlined)
+                       ~expected (inlined)
+                       load (inlined)
+                       main
+                       0x74653722a1ca
+                       __libc_start_main
+                       _start
+
+     0.88%  strata_search  strata_search         [.] strata::Neighbor strata::HnswIndex::greedy_search<false>(std::span<float const, 18446744073709551615ul>, strata::Neighbor, int) const
+     0.71%  strata_search  [kernel.kallsyms]     [k] sync_regs
+            |
+            ---sync_regs
+
+     0.54%  strata_search  strata_search         [.] strata::read_snapshot(std::filesystem::__cxx11::path const&)
+            |          
+             --0.53%--__fill_a1<float*, float> (inlined)
+                       __fill_a<float*, float> (inlined)
+                       __fill_n_a<float*, long unsigned int, float> (inlined)
+                       fill_n<float*, long unsigned int, float> (inlined)
+                       __uninit_default_n<float*, long unsigned int> (inlined)
+                       __uninit_default_n<float*, long unsigned int> (inlined)
+                       __uninitialized_default_n<float*, long unsigned int> (inlined)
+                       __uninitialized_default_n_a<float*, long unsigned int, float> (inlined)
+                       _M_default_initialize (inlined)
+                       vector (inlined)
+                       Matrix (inlined)
+                       read_snapshot (inlined)
+                       load (inlined)
+                       main
+                       0x74653722a1ca
+                       __libc_start_main
+                       _start
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

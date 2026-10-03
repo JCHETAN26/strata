@@ -1,0 +1,93 @@
+{
+  "harness": "strata_search",
+  "build_type": "Release",
+  "asserts": false,
+  "compiler": "13.3.0",
+  "index": "hnsw",
+  "build_params": {
+    "M": 16,
+    "ef_construction": 200,
+    "selection": "heuristic",
+    "build_threads": 8
+  },
+  "build_seconds": 41.4605567,
+  "graph": {
+    "max_level": 5,
+    "nodes_per_layer": [
+      1000000,
+      62312,
+      3911,
+      250,
+      21,
+      1
+    ],
+    "layer0_mean_degree": 21.103151,
+    "layer0_reachable_fraction": 0.999991
+  },
+  "metric": "l2",
+  "kernel": "avx2",
+  "k": 10,
+  "threads": 1,
+  "warmup_passes": 1,
+  "num_base": 1000000,
+  "index_bytes": 512000000,
+  "rerank_bytes": 0,
+  "num_queries": 10000,
+  "dim": 128,
+  "points": [
+    {
+      "search_params": {
+        "ef_search": 10
+      },
+      "runs": [
+        {
+          "search_seconds": 0.412501068,
+          "qps": 24242.3615,
+          "recall": 0.71063,
+          "recall_by_id": 0.70989,
+          "latency_mean_us": 41.2016029,
+          "latency_p50_us": 39.949,
+          "latency_p95_us": 59.238,
+          "latency_p99_us": 70.74,
+          "latency_max_us": 111.952
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 40
+      },
+      "runs": [
+        {
+          "search_seconds": 1.113523,
+          "qps": 8980.50605,
+          "recall": 0.928,
+          "recall_by_id": 0.92712,
+          "latency_mean_us": 111.288339,
+          "latency_p50_us": 113.075,
+          "latency_p95_us": 144.303,
+          "latency_p99_us": 161.194,
+          "latency_max_us": 228.886
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 160
+      },
+      "runs": [
+        {
+          "search_seconds": 3.54537391,
+          "qps": 2820.57697,
+          "recall": 0.99381,
+          "recall_by_id": 0.99314,
+          "latency_mean_us": 354.435376,
+          "latency_p50_us": 368.553,
+          "latency_p95_us": 455.513,
+          "latency_p99_us": 483.029,
+          "latency_max_us": 549.377
+        }
+      ]
+    }
+  ]
+}

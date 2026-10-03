@@ -1,0 +1,20 @@
+# started on Sat Oct  3 10:57:45 2026
+
+
+ Performance counter stats for 'taskset -c 1 build/linux-profile/bench/strata_search --data data/sift1m --metric l2 --index hnsw --ef-search 80 --runs 10 --build-threads 16 --snapshot data/sift1m/perf_index.snap':
+
+      153838226463      cycles                                                                
+       83088303216      instructions                                                          
+         417543945      branch-misses                                                         
+                 0      cache-references                                                      
+                 0      cache-misses                                                          
+        1326899615      L1-dcache-load-misses                                                 
+   <not supported>      LLC-load-misses                                                       
+         402207330      dTLB-load-misses                                                      
+
+      41.746734433 seconds time elapsed
+
+      40.510127000 seconds user
+       1.216948000 seconds sys
+
+

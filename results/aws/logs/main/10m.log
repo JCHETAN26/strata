@@ -1,0 +1,87 @@
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_search_bench.py --dataset bigann10m --index hnsw --M 16 --ef-construction 200 --build-threads 16 --ef-search 10,20,40,80,160,320 --runs 3
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/bigann10m --metric l2 --index hnsw --k 10 --runs 3 --max-queries 0 --kernel best --threads 1 --M 16 --ef-construction 200 --selection heuristic --ef-search 10,20,40,80,160,320 --build-threads 16
+hnsw: built in 414.667 s
+  {"ef_search": 10} run 1/3: qps=15832.6 recall@10=0.60861
+  {"ef_search": 10} run 2/3: qps=16229.6 recall@10=0.60861
+  {"ef_search": 10} run 3/3: qps=15710.2 recall@10=0.60861
+  {"ef_search": 20} run 1/3: qps=10486.5 recall@10=0.75005
+  {"ef_search": 20} run 2/3: qps=10433.8 recall@10=0.75005
+  {"ef_search": 20} run 3/3: qps=10356.8 recall@10=0.75005
+  {"ef_search": 40} run 1/3: qps=6390.56 recall@10=0.86181
+  {"ef_search": 40} run 2/3: qps=6455.23 recall@10=0.86181
+  {"ef_search": 40} run 3/3: qps=6463.18 recall@10=0.86181
+  {"ef_search": 80} run 1/3: qps=3740.55 recall@10=0.93641
+  {"ef_search": 80} run 2/3: qps=3777.33 recall@10=0.93641
+  {"ef_search": 80} run 3/3: qps=3782.39 recall@10=0.93641
+  {"ef_search": 160} run 1/3: qps=2079.97 recall@10=0.97572
+  {"ef_search": 160} run 2/3: qps=2095.51 recall@10=0.97572
+  {"ef_search": 160} run 3/3: qps=2059.92 recall@10=0.97572
+  {"ef_search": 320} run 1/3: qps=1135.98 recall@10=0.9922
+  {"ef_search": 320} run 2/3: qps=1155.28 recall@10=0.9922
+  {"ef_search": 320} run 3/3: qps=1143.09 recall@10=0.9922
+bigann10m strata/hnsw {'ef_search': 10}: qps 15924.1 ± 271.6, recall@10 0.6086
+bigann10m strata/hnsw {'ef_search': 20}: qps 10425.7 ± 65.2, recall@10 0.7500
+bigann10m strata/hnsw {'ef_search': 40}: qps 6436.3 ± 39.8, recall@10 0.8618
+bigann10m strata/hnsw {'ef_search': 80}: qps 3766.8 ± 22.8, recall@10 0.9364
+bigann10m strata/hnsw {'ef_search': 160}: qps 2078.5 ± 17.8, recall@10 0.9757
+bigann10m strata/hnsw {'ef_search': 320}: qps 1144.8 ± 9.8, recall@10 0.9922
+saved results/search/bigann10m/strata-hnsw-20261003-012449-932263.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_search_bench.py --dataset bigann10m --index brute_force --runs 3 --max-queries 200
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/bigann10m --metric l2 --index brute_force --k 10 --runs 3 --max-queries 200 --kernel best --threads 1
+brute_force: built in 2.4461 s
+  {} run 1/3: qps=2.02045 recall@10=1
+  {} run 2/3: qps=2.01858 recall@10=1
+  {} run 3/3: qps=2.01775 recall@10=1
+bigann10m strata/brute_force : qps 2.0 ± 0.0, recall@10 1.0000
+saved results/search/bigann10m/strata-brute_force-20261003-013510-120340.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset bigann10m --library hnswlib --M 16 --ef-construction 200 --build-threads 16 --ef-search 10,20,40,80,160,320 --runs 3 --simd avx2
+hnswlib: SIMD AVX (avx2, verified)
+hnswlib/hnsw: built in 364.72 s
+  {'ef_search': 10}: qps 17318.2, recall@10 0.6080
+  {'ef_search': 20}: qps 11298.9, recall@10 0.7499
+  {'ef_search': 40}: qps 7031.6, recall@10 0.8617
+  {'ef_search': 80}: qps 4034.5, recall@10 0.9366
+  {'ef_search': 160}: qps 2201.0, recall@10 0.9758
+  {'ef_search': 320}: qps 1199.0, recall@10 0.9923
+saved results/search/bigann10m/hnswlib-hnsw-20261003-014425-070058.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset bigann10m --library faiss --index hnsw --M 16 --ef-construction 200 --build-threads 16 --ef-search 10,20,40,80,160,320 --runs 3 --simd avx2
+faiss: SIMD AVX2 (avx2, verified)
+faiss/hnsw: built in 593.24 s
+  {'ef_search': 10}: qps 10499.6, recall@10 0.6208
+  {'ef_search': 20}: qps 6542.5, recall@10 0.7640
+  {'ef_search': 40}: qps 3923.0, recall@10 0.8746
+  {'ef_search': 80}: qps 2134.1, recall@10 0.9455
+  {'ef_search': 160}: qps 1159.4, recall@10 0.9799
+  {'ef_search': 320}: qps 611.4, recall@10 0.9938
+saved results/search/bigann10m/faiss-hnsw-20261003-015958-172089.json
+cooling down 10 s
+wrote results/hnsw/hnsw_vs_reference_10m.md
+wrote results/plots/hnsw_vs_reference_10m_bigann10m.png
+$ /home/ubuntu/strata/.venv/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset bigann10m --library hnswlib --M 16 --ef-construction 200 --build-threads 16 --ef-search 10,20,40,80,160,320 --runs 3 --simd native
+hnswlib: SIMD AVX-512 (native, verified)
+hnswlib/hnsw: built in 368.79 s
+  {'ef_search': 10}: qps 17345.9, recall@10 0.6085
+  {'ef_search': 20}: qps 11212.2, recall@10 0.7496
+  {'ef_search': 40}: qps 6910.9, recall@10 0.8622
+  {'ef_search': 80}: qps 3969.1, recall@10 0.9364
+  {'ef_search': 160}: qps 2208.3, recall@10 0.9761
+  {'ef_search': 320}: qps 1181.9, recall@10 0.9923
+saved results/search/bigann10m/hnswlib-hnsw-20261003-020919-487584.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset bigann10m --library faiss --index hnsw --M 16 --ef-construction 200 --build-threads 16 --ef-search 10,20,40,80,160,320 --runs 3 --simd native
+faiss: SIMD AVX-512 (native, verified)
+faiss/hnsw: built in 583.23 s
+  {'ef_search': 10}: qps 10741.5, recall@10 0.6208
+  {'ef_search': 20}: qps 6560.9, recall@10 0.7640
+  {'ef_search': 40}: qps 3914.1, recall@10 0.8746
+  {'ef_search': 80}: qps 2180.9, recall@10 0.9455
+  {'ef_search': 160}: qps 1155.4, recall@10 0.9799
+  {'ef_search': 320}: qps 616.3, recall@10 0.9938
+saved results/search/bigann10m/faiss-hnsw-20261003-022440-513073.json
+cooling down 10 s
+wrote results/hnsw/hnsw_vs_reference_10m_avx512.md
+wrote results/plots/hnsw_vs_reference_10m_avx512_bigann10m.png
+part 10m done

@@ -1,0 +1,199 @@
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_search_bench.py --dataset sift1m --index hnsw --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index hnsw --k 10 --runs 5 --max-queries 0 --kernel best --threads 1 --M 16 --ef-construction 200 --selection heuristic --ef-search 10,20,40,80,160,320 --build-threads 1
+hnsw: built in 333.113 s
+  {"ef_search": 10} run 1/5: qps=23381.1 recall@10=0.71111
+  {"ef_search": 10} run 2/5: qps=23198.3 recall@10=0.71111
+  {"ef_search": 10} run 3/5: qps=23239 recall@10=0.71111
+  {"ef_search": 10} run 4/5: qps=23037 recall@10=0.71111
+  {"ef_search": 10} run 5/5: qps=23003.1 recall@10=0.71111
+  {"ef_search": 20} run 1/5: qps=14591.3 recall@10=0.83998
+  {"ef_search": 20} run 2/5: qps=15052.4 recall@10=0.83998
+  {"ef_search": 20} run 3/5: qps=14858.4 recall@10=0.83998
+  {"ef_search": 20} run 4/5: qps=14755.4 recall@10=0.83998
+  {"ef_search": 20} run 5/5: qps=14957.8 recall@10=0.83998
+  {"ef_search": 40} run 1/5: qps=8974.2 recall@10=0.92829
+  {"ef_search": 40} run 2/5: qps=8710.29 recall@10=0.92829
+  {"ef_search": 40} run 3/5: qps=8837.75 recall@10=0.92829
+  {"ef_search": 40} run 4/5: qps=8870.69 recall@10=0.92829
+  {"ef_search": 40} run 5/5: qps=8809.84 recall@10=0.92829
+  {"ef_search": 80} run 1/5: qps=5042.13 recall@10=0.97534
+  {"ef_search": 80} run 2/5: qps=5064.06 recall@10=0.97534
+  {"ef_search": 80} run 3/5: qps=5082.06 recall@10=0.97534
+  {"ef_search": 80} run 4/5: qps=5097.82 recall@10=0.97534
+  {"ef_search": 80} run 5/5: qps=5050.89 recall@10=0.97534
+  {"ef_search": 160} run 1/5: qps=2779.95 recall@10=0.99393
+  {"ef_search": 160} run 2/5: qps=2858.25 recall@10=0.99393
+  {"ef_search": 160} run 3/5: qps=2842.86 recall@10=0.99393
+  {"ef_search": 160} run 4/5: qps=2861.22 recall@10=0.99393
+  {"ef_search": 160} run 5/5: qps=2865.28 recall@10=0.99393
+  {"ef_search": 320} run 1/5: qps=1547.15 recall@10=0.99893
+  {"ef_search": 320} run 2/5: qps=1558.48 recall@10=0.99893
+  {"ef_search": 320} run 3/5: qps=1601.03 recall@10=0.99893
+  {"ef_search": 320} run 4/5: qps=1579.59 recall@10=0.99893
+  {"ef_search": 320} run 5/5: qps=1581.84 recall@10=0.99893
+sift1m strata/hnsw {'ef_search': 10}: qps 23171.7 ± 154.6, recall@10 0.7111
+sift1m strata/hnsw {'ef_search': 20}: qps 14843.1 ± 179.1, recall@10 0.8400
+sift1m strata/hnsw {'ef_search': 40}: qps 8840.6 ± 95.8, recall@10 0.9283
+sift1m strata/hnsw {'ef_search': 80}: qps 5067.4 ± 22.7, recall@10 0.9753
+sift1m strata/hnsw {'ef_search': 160}: qps 2841.5 ± 35.4, recall@10 0.9939
+sift1m strata/hnsw {'ef_search': 320}: qps 1573.6 ± 21.1, recall@10 0.9989
+saved results/search/sift1m/strata-hnsw-20261002-230253-066819.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_search_bench.py --dataset sift1m --index brute_force --runs 5 --max-queries 1000
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/sift1m --metric l2 --index brute_force --k 10 --runs 5 --max-queries 1000 --kernel best --threads 1
+brute_force: built in 0.275673 s
+  {} run 1/5: qps=19.9769 recall@10=1
+  {} run 2/5: qps=19.7688 recall@10=1
+  {} run 3/5: qps=19.8911 recall@10=1
+  {} run 4/5: qps=19.7848 recall@10=1
+  {} run 5/5: qps=19.8924 recall@10=1
+sift1m strata/brute_force : qps 19.9 ± 0.1, recall@10 1.0000
+saved results/search/sift1m/strata-brute_force-20261002-231137-559751.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset sift1m --library hnswlib --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd avx2
+hnswlib: SIMD AVX (avx2, verified)
+hnswlib/hnsw: built in 363.83 s
+  {'ef_search': 10}: qps 24583.6, recall@10 0.7105
+  {'ef_search': 20}: qps 15861.8, recall@10 0.8403
+  {'ef_search': 40}: qps 9582.5, recall@10 0.9284
+  {'ef_search': 80}: qps 5391.9, recall@10 0.9755
+  {'ef_search': 160}: qps 2972.2, recall@10 0.9938
+  {'ef_search': 320}: qps 1615.6, recall@10 0.9990
+saved results/search/sift1m/hnswlib-hnsw-20261002-232130-837827.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset sift1m --library faiss --index hnsw --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd avx2
+faiss: SIMD AVX2 (avx2, verified)
+faiss/hnsw: built in 492.54 s
+  {'ef_search': 10}: qps 20133.5, recall@10 0.7165
+  {'ef_search': 20}: qps 12746.0, recall@10 0.8466
+  {'ef_search': 40}: qps 7592.3, recall@10 0.9345
+  {'ef_search': 80}: qps 4106.8, recall@10 0.9782
+  {'ef_search': 160}: qps 2215.6, recall@10 0.9943
+  {'ef_search': 320}: qps 1159.5, recall@10 0.9989
+saved results/search/sift1m/faiss-hnsw-20261002-233444-254491.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_search_bench.py --dataset glove100 --index hnsw --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/glove100 --metric angular --index hnsw --k 10 --runs 5 --max-queries 0 --kernel best --threads 1 --M 16 --ef-construction 200 --selection heuristic --ef-search 10,20,40,80,160,320 --build-threads 1
+hnsw: built in 516.03 s
+  {"ef_search": 10} run 1/5: qps=21903.7 recall@10=0.47124
+  {"ef_search": 10} run 2/5: qps=22387.6 recall@10=0.47124
+  {"ef_search": 10} run 3/5: qps=21824.3 recall@10=0.47124
+  {"ef_search": 10} run 4/5: qps=22043.2 recall@10=0.47124
+  {"ef_search": 10} run 5/5: qps=23449.3 recall@10=0.47124
+  {"ef_search": 20} run 1/5: qps=13846.2 recall@10=0.59565
+  {"ef_search": 20} run 2/5: qps=13298.5 recall@10=0.59565
+  {"ef_search": 20} run 3/5: qps=13700.2 recall@10=0.59565
+  {"ef_search": 20} run 4/5: qps=13934.6 recall@10=0.59565
+  {"ef_search": 20} run 5/5: qps=13679.3 recall@10=0.59565
+  {"ef_search": 40} run 1/5: qps=8319.34 recall@10=0.70358
+  {"ef_search": 40} run 2/5: qps=8496.14 recall@10=0.70358
+  {"ef_search": 40} run 3/5: qps=8504.51 recall@10=0.70358
+  {"ef_search": 40} run 4/5: qps=8638.53 recall@10=0.70358
+  {"ef_search": 40} run 5/5: qps=8543.2 recall@10=0.70358
+  {"ef_search": 80} run 1/5: qps=4989.91 recall@10=0.78758
+  {"ef_search": 80} run 2/5: qps=5080.38 recall@10=0.78758
+  {"ef_search": 80} run 3/5: qps=4978.91 recall@10=0.78758
+  {"ef_search": 80} run 4/5: qps=5033.34 recall@10=0.78758
+  {"ef_search": 80} run 5/5: qps=5115.54 recall@10=0.78758
+  {"ef_search": 160} run 1/5: qps=2902.33 recall@10=0.85067
+  {"ef_search": 160} run 2/5: qps=2828.01 recall@10=0.85067
+  {"ef_search": 160} run 3/5: qps=2845.98 recall@10=0.85067
+  {"ef_search": 160} run 4/5: qps=2866.58 recall@10=0.85067
+  {"ef_search": 160} run 5/5: qps=2835.74 recall@10=0.85067
+  {"ef_search": 320} run 1/5: qps=1564.31 recall@10=0.89872
+  {"ef_search": 320} run 2/5: qps=1579.32 recall@10=0.89872
+  {"ef_search": 320} run 3/5: qps=1574.04 recall@10=0.89872
+  {"ef_search": 320} run 4/5: qps=1540.55 recall@10=0.89872
+  {"ef_search": 320} run 5/5: qps=1573.38 recall@10=0.89872
+glove100 strata/hnsw {'ef_search': 10}: qps 22321.6 ± 666.2, recall@10 0.4712
+glove100 strata/hnsw {'ef_search': 20}: qps 13691.8 ± 243.8, recall@10 0.5957
+glove100 strata/hnsw {'ef_search': 40}: qps 8500.3 ± 115.9, recall@10 0.7036
+glove100 strata/hnsw {'ef_search': 80}: qps 5039.6 ± 58.4, recall@10 0.7876
+glove100 strata/hnsw {'ef_search': 160}: qps 2855.7 ± 29.8, recall@10 0.8507
+glove100 strata/hnsw {'ef_search': 320}: qps 1566.3 ± 15.4, recall@10 0.8987
+saved results/search/glove100/strata-hnsw-20261002-234604-093893.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_search_bench.py --dataset glove100 --index brute_force --runs 5 --max-queries 1000
+$ /home/ubuntu/strata/build/release/bench/strata_search --data /home/ubuntu/strata/data/glove100 --metric angular --index brute_force --k 10 --runs 5 --max-queries 1000 --kernel best --threads 1
+brute_force: built in 0.254422 s
+  {} run 1/5: qps=17.0466 recall@10=1
+  {} run 2/5: qps=17.0114 recall@10=1
+  {} run 3/5: qps=17.0495 recall@10=1
+  {} run 4/5: qps=17.0185 recall@10=1
+  {} run 5/5: qps=17.0412 recall@10=1
+glove100 strata/brute_force : qps 17.0 ± 0.0, recall@10 1.0000
+saved results/search/glove100/strata-brute_force-20261002-235612-038996.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset glove100 --library hnswlib --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd avx2
+hnswlib: SIMD AVX (avx2, verified)
+hnswlib/hnsw: built in 541.17 s
+  {'ef_search': 10}: qps 21723.6, recall@10 0.4746
+  {'ef_search': 20}: qps 13465.7, recall@10 0.5991
+  {'ef_search': 40}: qps 8053.3, recall@10 0.7030
+  {'ef_search': 80}: qps 4642.7, recall@10 0.7875
+  {'ef_search': 160}: qps 2572.0, recall@10 0.8514
+  {'ef_search': 320}: qps 1385.4, recall@10 0.8995
+saved results/search/glove100/hnswlib-hnsw-20261003-000940-192870.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv-avx2/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset glove100 --library faiss --index hnsw --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd avx2
+faiss: SIMD AVX2 (avx2, verified)
+faiss/hnsw: built in 569.19 s
+  {'ef_search': 10}: qps 22310.7, recall@10 0.4760
+  {'ef_search': 20}: qps 13576.3, recall@10 0.6009
+  {'ef_search': 40}: qps 7963.0, recall@10 0.7066
+  {'ef_search': 80}: qps 4393.6, recall@10 0.7884
+  {'ef_search': 160}: qps 2390.7, recall@10 0.8497
+  {'ef_search': 320}: qps 1248.1, recall@10 0.8965
+saved results/search/glove100/faiss-hnsw-20261003-002358-070999.json
+cooling down 10 s
+wrote results/hnsw/hnsw_vs_reference_x86.md
+wrote results/plots/hnsw_vs_reference_x86_sift1m.png
+wrote results/plots/hnsw_vs_reference_x86_glove100.png
+$ /home/ubuntu/strata/.venv/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset sift1m --library hnswlib --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd native
+hnswlib: SIMD AVX-512 (native, verified)
+hnswlib/hnsw: built in 386.74 s
+  {'ef_search': 10}: qps 21869.8, recall@10 0.7105
+  {'ef_search': 20}: qps 14198.1, recall@10 0.8403
+  {'ef_search': 40}: qps 8594.9, recall@10 0.9284
+  {'ef_search': 80}: qps 4888.4, recall@10 0.9755
+  {'ef_search': 160}: qps 2804.7, recall@10 0.9938
+  {'ef_search': 320}: qps 1603.1, recall@10 0.9990
+saved results/search/sift1m/hnswlib-hnsw-20261003-003425-939109.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset sift1m --library faiss --index hnsw --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd native
+faiss: SIMD AVX-512 (native, verified)
+faiss/hnsw: built in 440.99 s
+  {'ef_search': 10}: qps 20693.3, recall@10 0.7165
+  {'ef_search': 20}: qps 13205.2, recall@10 0.8466
+  {'ef_search': 40}: qps 7800.1, recall@10 0.9345
+  {'ef_search': 80}: qps 4337.9, recall@10 0.9782
+  {'ef_search': 160}: qps 2317.2, recall@10 0.9943
+  {'ef_search': 320}: qps 1223.6, recall@10 0.9989
+saved results/search/sift1m/faiss-hnsw-20261003-004634-404090.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset glove100 --library hnswlib --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd native
+hnswlib: SIMD AVX-512 (native, verified)
+hnswlib/hnsw: built in 583.40 s
+  {'ef_search': 10}: qps 24719.9, recall@10 0.4746
+  {'ef_search': 20}: qps 15381.2, recall@10 0.5991
+  {'ef_search': 40}: qps 9064.5, recall@10 0.7030
+  {'ef_search': 80}: qps 5184.9, recall@10 0.7875
+  {'ef_search': 160}: qps 2890.9, recall@10 0.8514
+  {'ef_search': 320}: qps 1566.7, recall@10 0.8995
+saved results/search/glove100/hnswlib-hnsw-20261003-010017-868428.json
+cooling down 10 s
+$ /home/ubuntu/strata/.venv/bin/python -u /home/ubuntu/strata/bench/run_reference_bench.py --dataset glove100 --library faiss --index hnsw --M 16 --ef-construction 200 --ef-search 10,20,40,80,160,320 --runs 5 --simd native
+faiss: SIMD AVX-512 (native, verified)
+faiss/hnsw: built in 576.28 s
+  {'ef_search': 10}: qps 18224.7, recall@10 0.4758
+  {'ef_search': 20}: qps 13911.5, recall@10 0.6010
+  {'ef_search': 40}: qps 8497.5, recall@10 0.7071
+  {'ef_search': 80}: qps 4737.8, recall@10 0.7885
+  {'ef_search': 160}: qps 2315.2, recall@10 0.8497
+  {'ef_search': 320}: qps 1191.5, recall@10 0.8963
+saved results/search/glove100/faiss-hnsw-20261003-011447-940797.json
+cooling down 10 s
+wrote results/hnsw/hnsw_vs_reference_x86_avx512.md
+wrote results/plots/hnsw_vs_reference_x86_avx512_sift1m.png
+wrote results/plots/hnsw_vs_reference_x86_avx512_glove100.png
+part ann done

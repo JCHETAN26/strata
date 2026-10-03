@@ -1,0 +1,161 @@
+{
+  "harness": "strata_search",
+  "build_type": "Release",
+  "asserts": false,
+  "compiler": "13.3.0",
+  "index": "hnsw",
+  "build_params": {
+    "M": 16,
+    "ef_construction": 200,
+    "selection": "heuristic",
+    "build_threads": 16,
+    "snapshot": "loaded"
+  },
+  "build_seconds": 2.72321817,
+  "graph": {
+    "max_level": 5,
+    "nodes_per_layer": [
+      1000000,
+      62312,
+      3911,
+      250,
+      21,
+      1
+    ],
+    "layer0_mean_degree": 21.098782,
+    "layer0_reachable_fraction": 0.999984
+  },
+  "metric": "l2",
+  "kernel": "avx2",
+  "k": 10,
+  "threads": 12,
+  "warmup_passes": 1,
+  "num_base": 1000000,
+  "index_bytes": 512000000,
+  "rerank_bytes": 0,
+  "num_queries": 10000,
+  "dim": 128,
+  "points": [
+    {
+      "search_params": {
+        "ef_search": 40
+      },
+      "runs": [
+        {
+          "search_seconds": 0.099526024,
+          "qps": 100476.233,
+          "recall": 0.92829,
+          "recall_by_id": 0.92742,
+          "latency_mean_us": 114.186199,
+          "latency_p50_us": 115.418,
+          "latency_p95_us": 149.12,
+          "latency_p99_us": 166.725,
+          "latency_max_us": 240.251
+        },
+        {
+          "search_seconds": 0.098240293,
+          "qps": 101791.227,
+          "recall": 0.92829,
+          "recall_by_id": 0.92742,
+          "latency_mean_us": 112.016799,
+          "latency_p50_us": 113.337,
+          "latency_p95_us": 145.298,
+          "latency_p99_us": 162.355,
+          "latency_max_us": 225.414
+        },
+        {
+          "search_seconds": 0.100969461,
+          "qps": 99039.8473,
+          "recall": 0.92829,
+          "recall_by_id": 0.92742,
+          "latency_mean_us": 115.282898,
+          "latency_p50_us": 116.857,
+          "latency_p95_us": 150.347,
+          "latency_p99_us": 166.892,
+          "latency_max_us": 229.908
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 80
+      },
+      "runs": [
+        {
+          "search_seconds": 0.174717961,
+          "qps": 57235.1002,
+          "recall": 0.97512,
+          "recall_by_id": 0.97436,
+          "latency_mean_us": 198.611869,
+          "latency_p50_us": 204.103,
+          "latency_p95_us": 252.699,
+          "latency_p99_us": 272.611,
+          "latency_max_us": 322.105
+        },
+        {
+          "search_seconds": 0.17422477,
+          "qps": 57397.1198,
+          "recall": 0.97512,
+          "recall_by_id": 0.97436,
+          "latency_mean_us": 198.749887,
+          "latency_p50_us": 204.498,
+          "latency_p95_us": 252.515,
+          "latency_p99_us": 272.117,
+          "latency_max_us": 332.724
+        },
+        {
+          "search_seconds": 0.172430278,
+          "qps": 57994.455,
+          "recall": 0.97512,
+          "recall_by_id": 0.97436,
+          "latency_mean_us": 196.504452,
+          "latency_p50_us": 201.926,
+          "latency_p95_us": 248.898,
+          "latency_p99_us": 267.998,
+          "latency_max_us": 314.084
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 160
+      },
+      "runs": [
+        {
+          "search_seconds": 0.317965118,
+          "qps": 31449.9907,
+          "recall": 0.9938,
+          "recall_by_id": 0.99314,
+          "latency_mean_us": 359.457598,
+          "latency_p50_us": 371.589,
+          "latency_p95_us": 459.239,
+          "latency_p99_us": 487.235,
+          "latency_max_us": 536.82
+        },
+        {
+          "search_seconds": 0.322350988,
+          "qps": 31022.0858,
+          "recall": 0.9938,
+          "recall_by_id": 0.99314,
+          "latency_mean_us": 362.421971,
+          "latency_p50_us": 373.51,
+          "latency_p95_us": 469.121,
+          "latency_p99_us": 512.587,
+          "latency_max_us": 670.046
+        },
+        {
+          "search_seconds": 0.315507615,
+          "qps": 31694.9561,
+          "recall": 0.9938,
+          "recall_by_id": 0.99314,
+          "latency_mean_us": 357.509525,
+          "latency_p50_us": 369.845,
+          "latency_p95_us": 458.246,
+          "latency_p99_us": 485.594,
+          "latency_max_us": 556.533
+        }
+      ]
+    }
+  ],
+  "pinning": "12 physical cores"
+}

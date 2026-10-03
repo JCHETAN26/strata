@@ -1,0 +1,20 @@
+# started on Sat Oct  3 11:07:15 2026
+
+
+ Performance counter stats for 'taskset -c 1 build/linux-profile/bench/strata_search --data data/bigann10m --metric l2 --index hnsw --ef-search 80 --runs 10 --build-threads 16 --snapshot data/bigann10m/perf_index.snap':
+
+      316262444742      cycles                                                                
+      184560452360      instructions                                                          
+         461975479      branch-misses                                                         
+                 0      cache-references                                                      
+                 0      cache-misses                                                          
+        2593480575      L1-dcache-load-misses                                                 
+   <not supported>      LLC-load-misses                                                       
+         741823364      dTLB-load-misses                                                      
+
+      93.998764052 seconds time elapsed
+
+      74.798068000 seconds user
+      11.126469000 seconds sys
+
+

@@ -1,0 +1,1166 @@
+Hit:1 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-updates InRelease
+Hit:3 http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:4 http://security.ubuntu.com/ubuntu noble-security InRelease
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+build-essential is already the newest version (12.10ubuntu1).
+gcc-13 is already the newest version (13.3.0-6ubuntu2~24.04.1).
+g++-13 is already the newest version (13.3.0-6ubuntu2~24.04.1).
+cmake is already the newest version (3.28.3-1build7).
+ninja-build is already the newest version (1.11.1-2).
+git is already the newest version (1:2.43.0-1ubuntu7.3).
+curl is already the newest version (8.5.0-2ubuntu10.15).
+zip is already the newest version (3.0-13ubuntu0.2).
+unzip is already the newest version (6.0-28ubuntu4.1).
+tar is already the newest version (1.35+dfsg-3ubuntu0.4).
+pkg-config is already the newest version (1.8.1-2build1).
+autoconf is already the newest version (2.71-3).
+automake is already the newest version (1:1.16.5-1.3ubuntu1).
+libtool is already the newest version (2.4.7-7build1).
+perl is already the newest version (5.38.2-3.2ubuntu0.6).
+bison is already the newest version (2:3.8.2+dfsg-1ubuntu0.24.04.1).
+flex is already the newest version (2.6.4-8.2build1).
+linux-libc-dev is already the newest version (6.8.0-146.146).
+rsync is already the newest version (3.2.7-1ubuntu1.5).
+tmux is already the newest version (3.4-1ubuntu0.1).
+jq is already the newest version (1.7.1-3ubuntu0.24.04.2).
+python3-dev is already the newest version (3.12.3-0ubuntu2.1).
+linux-tools-common is already the newest version (6.8.0-146.146).
+linux-tools-7.0.0-1013-aws is already the newest version (7.0.0-1013.13~24.04.1).
+linux-tools-aws is already the newest version (7.0.0-1014.14~24.04.1).
+util-linux is already the newest version (2.39.3-9ubuntu6.6).
+0 upgraded, 0 newly installed, 0 to remove and 14 not upgraded.
+[22:51:33] repo at 8ae9bf4dd58baa4e2ac86175e216b6ad3de2ceeb
+[22:51:33] building linux-release (tests included)
+ninja: no work to do.
+[22:51:33] testing on x86 (AVX2 kernels vs scalar included)
+Test project /home/ubuntu/strata/build/linux-release
+        Start   1: LuceneNorms.SmallLengthsAreExact
+  1/252 Test   #1: LuceneNorms.SmallLengthsAreExact .........................................................................................   Passed    0.00 sec
+        Start   2: LuceneNorms.LongLengthsKeepFourSignificantBits
+  2/252 Test   #2: LuceneNorms.LongLengthsKeepFourSignificantBits ...........................................................................   Passed    0.00 sec
+        Start   3: Bm25.RejectsInvalidParameters
+  3/252 Test   #3: Bm25.RejectsInvalidParameters ............................................................................................   Passed    0.00 sec
+        Start   4: Bm25.MatchesReferenceFormula
+  4/252 Test   #4: Bm25.MatchesReferenceFormula .............................................................................................   Passed    0.00 sec
+        Start   5: Bm25.RepeatedQueryTermsCountEachTime
+  5/252 Test   #5: Bm25.RepeatedQueryTermsCountEachTime .....................................................................................   Passed    0.00 sec
+        Start   6: Bm25.ResultsSortedByScoreThenId
+  6/252 Test   #6: Bm25.ResultsSortedByScoreThenId ..........................................................................................   Passed    0.00 sec
+        Start   7: Bm25.EdgeCases
+  7/252 Test   #7: Bm25.EdgeCases ...........................................................................................................   Passed    0.00 sec
+        Start   8: Bm25.RemoveTombstonesWithoutChangingStats
+  8/252 Test   #8: Bm25.RemoveTombstonesWithoutChangingStats ................................................................................   Passed    0.00 sec
+        Start   9: Bm25.LengthEncodingMattersForLongDocuments
+  9/252 Test   #9: Bm25.LengthEncodingMattersForLongDocuments ...............................................................................   Passed    0.00 sec
+        Start  10: Bm25.AnalyzerIsAppliedToDocumentsAndQueries
+ 10/252 Test  #10: Bm25.AnalyzerIsAppliedToDocumentsAndQueries ..............................................................................   Passed    0.00 sec
+        Start  11: Bm25.SharesIdSpaceWithVectorIndexes
+ 11/252 Test  #11: Bm25.SharesIdSpaceWithVectorIndexes ......................................................................................   Passed    0.00 sec
+        Start  12: BruteForce.RejectsZeroDimension
+ 12/252 Test  #12: BruteForce.RejectsZeroDimension ..........................................................................................   Passed    0.00 sec
+        Start  13: BruteForce.EmptyIndexReturnsNoResults
+ 13/252 Test  #13: BruteForce.EmptyIndexReturnsNoResults ....................................................................................   Passed    0.00 sec
+        Start  14: BruteForce.SingleVector
+ 14/252 Test  #14: BruteForce.SingleVector ..................................................................................................   Passed    0.00 sec
+        Start  15: BruteForce.KZeroReturnsNoResults
+ 15/252 Test  #15: BruteForce.KZeroReturnsNoResults .........................................................................................   Passed    0.00 sec
+        Start  16: BruteForce.KLargerThanSizeReturnsEverything
+ 16/252 Test  #16: BruteForce.KLargerThanSizeReturnsEverything ..............................................................................   Passed    0.00 sec
+        Start  17: BruteForce.DuplicateVectorsTieBreakById
+ 17/252 Test  #17: BruteForce.DuplicateVectorsTieBreakById ..................................................................................   Passed    0.00 sec
+        Start  18: BruteForce.DimensionMismatchIsAnError
+ 18/252 Test  #18: BruteForce.DimensionMismatchIsAnError ....................................................................................   Passed    0.00 sec
+        Start  19: BruteForce.IdsAreAssignedInInsertionOrder
+ 19/252 Test  #19: BruteForce.IdsAreAssignedInInsertionOrder ................................................................................   Passed    0.00 sec
+        Start  20: BruteForce.Sift10kRecallIsPerfect
+ 20/252 Test  #20: BruteForce.Sift10kRecallIsPerfect ........................................................................................***Skipped   0.00 sec
+        Start  21: CopyBytes.CopiesExactlyNBytes
+ 21/252 Test  #21: CopyBytes.CopiesExactlyNBytes ............................................................................................   Passed    0.00 sec
+        Start  22: CopyBytes.ZeroLengthWithNullPointersIsANoOp
+ 22/252 Test  #22: CopyBytes.ZeroLengthWithNullPointersIsANoOp ..............................................................................   Passed    0.00 sec
+        Start  23: DatasetIo.FbinRoundTrip
+ 23/252 Test  #23: DatasetIo.FbinRoundTrip ..................................................................................................   Passed    0.00 sec
+        Start  24: DatasetIo.IbinRoundTrip
+ 24/252 Test  #24: DatasetIo.IbinRoundTrip ..................................................................................................   Passed    0.00 sec
+        Start  25: DatasetIo.EmptyMatrixRoundTrip
+ 25/252 Test  #25: DatasetIo.EmptyMatrixRoundTrip ...........................................................................................   Passed    0.00 sec
+        Start  26: DatasetIo.MissingFile
+ 26/252 Test  #26: DatasetIo.MissingFile ....................................................................................................   Passed    0.00 sec
+        Start  27: DatasetIo.TruncatedFile
+ 27/252 Test  #27: DatasetIo.TruncatedFile ..................................................................................................   Passed    0.00 sec
+        Start  28: DatasetIo.FileShorterThanHeader
+ 28/252 Test  #28: DatasetIo.FileShorterThanHeader ..........................................................................................   Passed    0.00 sec
+        Start  29: DatasetIo.LoadDatasetChecksShapes
+ 29/252 Test  #29: DatasetIo.LoadDatasetChecksShapes ........................................................................................   Passed    0.00 sec
+        Start  30: Distance.L2SquaredKnownValue
+ 30/252 Test  #30: Distance.L2SquaredKnownValue .............................................................................................   Passed    0.00 sec
+        Start  31: Distance.L2SquaredOfIdenticalVectorsIsZero
+ 31/252 Test  #31: Distance.L2SquaredOfIdenticalVectorsIsZero ...............................................................................   Passed    0.00 sec
+        Start  32: Distance.L2IsSymmetric
+ 32/252 Test  #32: Distance.L2IsSymmetric ...................................................................................................   Passed    0.00 sec
+        Start  33: Distance.InnerProductIsNegatedDot
+ 33/252 Test  #33: Distance.InnerProductIsNegatedDot ........................................................................................   Passed    0.00 sec
+        Start  34: Distance.CosineOfParallelVectorsIsZero
+ 34/252 Test  #34: Distance.CosineOfParallelVectorsIsZero ...................................................................................   Passed    0.00 sec
+        Start  35: Distance.CosineOfOrthogonalVectorsIsOne
+ 35/252 Test  #35: Distance.CosineOfOrthogonalVectorsIsOne ..................................................................................   Passed    0.00 sec
+        Start  36: Distance.CosineOfOppositeVectorsIsTwo
+ 36/252 Test  #36: Distance.CosineOfOppositeVectorsIsTwo ....................................................................................   Passed    0.00 sec
+        Start  37: Distance.CosineWithZeroVectorIsOne
+ 37/252 Test  #37: Distance.CosineWithZeroVectorIsOne .......................................................................................   Passed    0.00 sec
+        Start  38: Distance.EmptyVectors
+ 38/252 Test  #38: Distance.EmptyVectors ....................................................................................................   Passed    0.00 sec
+        Start  39: Distance.DispatchAgreesWithScalar
+ 39/252 Test  #39: Distance.DispatchAgreesWithScalar ........................................................................................   Passed    0.00 sec
+        Start  40: Distance.MetricNamesRoundTrip
+ 40/252 Test  #40: Distance.MetricNamesRoundTrip ............................................................................................   Passed    0.00 sec
+        Start  41: Bitset.SetTestCountIterate
+ 41/252 Test  #41: Bitset.SetTestCountIterate ...............................................................................................   Passed    0.00 sec
+        Start  42: Bitset.Empty
+ 42/252 Test  #42: Bitset.Empty .............................................................................................................   Passed    0.00 sec
+        Start  43: AttributeTable.SchemaValidation
+ 43/252 Test  #43: AttributeTable.SchemaValidation ..........................................................................................   Passed    0.00 sec
+        Start  44: Filter.Predicates
+ 44/252 Test  #44: Filter.Predicates ........................................................................................................   Passed    0.00 sec
+        Start  45: Filter.BooleanCombinators
+ 45/252 Test  #45: Filter.BooleanCombinators ................................................................................................   Passed    0.00 sec
+        Start  46: Filter.UnknownCategoryMatchesNothing
+ 46/252 Test  #46: Filter.UnknownCategoryMatchesNothing .....................................................................................   Passed    0.00 sec
+        Start  47: Filter.LargeInSetsMatchMembership
+ 47/252 Test  #47: Filter.LargeInSetsMatchMembership ........................................................................................   Passed    0.00 sec
+        Start  48: Filter.CompileErrors
+ 48/252 Test  #48: Filter.CompileErrors .....................................................................................................   Passed    0.00 sec
+        Start  49: Filter.OutOfRangeIdDoesNotMatch
+ 49/252 Test  #49: Filter.OutOfRangeIdDoesNotMatch ..........................................................................................   Passed    0.00 sec
+        Start  50: Filter.SelectivityEstimate
+ 50/252 Test  #50: Filter.SelectivityEstimate ...............................................................................................   Passed    0.00 sec
+        Start  51: FilteredSearch.PrefilterAndPredicateMatchFilteredExactSearch
+ 51/252 Test  #51: FilteredSearch.PrefilterAndPredicateMatchFilteredExactSearch .............................................................   Passed    0.01 sec
+        Start  52: FilteredSearch.RespectsTombstonesAndEdgeCases
+ 52/252 Test  #52: FilteredSearch.RespectsTombstonesAndEdgeCases ............................................................................   Passed    0.00 sec
+        Start  53: Rrf.HandComputedExample
+ 53/252 Test  #53: Rrf.HandComputedExample ..................................................................................................   Passed    0.00 sec
+        Start  54: Rrf.IgnoresScoreScalesOnlyRanksMatter
+ 54/252 Test  #54: Rrf.IgnoresScoreScalesOnlyRanksMatter ....................................................................................   Passed    0.00 sec
+        Start  55: Rrf.TiesBreakByIdAndTopKTruncates
+ 55/252 Test  #55: Rrf.TiesBreakByIdAndTopKTruncates ........................................................................................   Passed    0.00 sec
+        Start  56: Rrf.EdgeCases
+ 56/252 Test  #56: Rrf.EdgeCases ............................................................................................................   Passed    0.00 sec
+        Start  57: WeightedFusion.MinMaxNormalizationAndWeights
+ 57/252 Test  #57: WeightedFusion.MinMaxNormalizationAndWeights .............................................................................   Passed    0.00 sec
+        Start  58: WeightedFusion.ExtremeWeightsReproduceOneList
+ 58/252 Test  #58: WeightedFusion.ExtremeWeightsReproduceOneList ............................................................................   Passed    0.00 sec
+        Start  59: WeightedFusion.ConstantListNormalizesToOne
+ 59/252 Test  #59: WeightedFusion.ConstantListNormalizesToOne ...............................................................................   Passed    0.00 sec
+        Start  60: WeightedFusion.RejectsBadWeights
+ 60/252 Test  #60: WeightedFusion.RejectsBadWeights .........................................................................................   Passed    0.00 sec
+        Start  61: Recall.PerfectMatch
+ 61/252 Test  #61: Recall.PerfectMatch ......................................................................................................   Passed    0.00 sec
+        Start  62: Recall.OrderWithinTopKDoesNotMatter
+ 62/252 Test  #62: Recall.OrderWithinTopKDoesNotMatter ......................................................................................   Passed    0.00 sec
+        Start  63: Recall.PartialMatch
+ 63/252 Test  #63: Recall.PartialMatch ......................................................................................................   Passed    0.00 sec
+        Start  64: Recall.UsesOnlyFirstKGroundtruthColumns
+ 64/252 Test  #64: Recall.UsesOnlyFirstKGroundtruthColumns ..................................................................................   Passed    0.00 sec
+        Start  65: Recall.ShortResultListsCountMissesAsZero
+ 65/252 Test  #65: Recall.ShortResultListsCountMissesAsZero .................................................................................   Passed    0.00 sec
+        Start  66: Recall.ExtraResultsBeyondKAreIgnored
+ 66/252 Test  #66: Recall.ExtraResultsBeyondKAreIgnored .....................................................................................   Passed    0.00 sec
+        Start  67: Recall.InvalidArguments
+ 67/252 Test  #67: Recall.InvalidArguments ..................................................................................................   Passed    0.00 sec
+        Start  68: RecallWithTies.EqualDistanceCountsAsHit
+ 68/252 Test  #68: RecallWithTies.EqualDistanceCountsAsHit ..................................................................................   Passed    0.00 sec
+        Start  69: RecallWithTies.FartherResultIsAMiss
+ 69/252 Test  #69: RecallWithTies.FartherResultIsAMiss ......................................................................................   Passed    0.00 sec
+        Start  70: RecallWithTies.ToleranceIsRelative
+ 70/252 Test  #70: RecallWithTies.ToleranceIsRelative .......................................................................................   Passed    0.00 sec
+        Start  71: RecallWithTies.ShortResultListsAndInvalidArguments
+ 71/252 Test  #71: RecallWithTies.ShortResultListsAndInvalidArguments .......................................................................   Passed    0.00 sec
+        Start  72: KthNeighborDistances.ComputesDistanceToKthTrueNeighbor
+ 72/252 Test  #72: KthNeighborDistances.ComputesDistanceToKthTrueNeighbor ...................................................................   Passed    0.00 sec
+        Start  73: KthNeighborDistances.RejectsBadInput
+ 73/252 Test  #73: KthNeighborDistances.RejectsBadInput .....................................................................................   Passed    0.00 sec
+        Start  74: KernelDispatch.ScalarSetReturnsReference
+ 74/252 Test  #74: KernelDispatch.ScalarSetReturnsReference .................................................................................   Passed    0.00 sec
+        Start  75: KernelDispatch.BestMatchesBuildArchitecture
+ 75/252 Test  #75: KernelDispatch.BestMatchesBuildArchitecture ..............................................................................   Passed    0.00 sec
+        Start  76: Smoke.VersionIsConsistent
+ 76/252 Test  #76: Smoke.VersionIsConsistent ................................................................................................   Passed    0.00 sec
+        Start  77: KMeans.RecoversSeparatedClusters
+ 77/252 Test  #77: KMeans.RecoversSeparatedClusters .........................................................................................   Passed    0.00 sec
+        Start  78: KMeans.InertiaDoesNotIncreaseWithMoreIterations
+ 78/252 Test  #78: KMeans.InertiaDoesNotIncreaseWithMoreIterations ..........................................................................   Passed    0.01 sec
+        Start  79: KMeans.DeterministicForSeed
+ 79/252 Test  #79: KMeans.DeterministicForSeed ..............................................................................................   Passed    0.00 sec
+        Start  80: KMeans.ParallelMatchesSerial
+ 80/252 Test  #80: KMeans.ParallelMatchesSerial .............................................................................................   Passed    0.01 sec
+        Start  81: KMeans.NoEmptyClustersWithEnoughDistinctPoints
+ 81/252 Test  #81: KMeans.NoEmptyClustersWithEnoughDistinctPoints ...........................................................................   Passed    0.00 sec
+        Start  82: KMeans.InvalidArguments
+ 82/252 Test  #82: KMeans.InvalidArguments ..................................................................................................   Passed    0.00 sec
+        Start  83: ProductQuantizer.RejectsBadShapes
+ 83/252 Test  #83: ProductQuantizer.RejectsBadShapes ........................................................................................   Passed    0.00 sec
+        Start  84: ProductQuantizer.LosslessWhenPointsFitInCodebook
+ 84/252 Test  #84: ProductQuantizer.LosslessWhenPointsFitInCodebook .........................................................................   Passed    0.01 sec
+        Start  85: ProductQuantizer.MoreSubquantizersReduceError
+ 85/252 Test  #85: ProductQuantizer.MoreSubquantizersReduceError ............................................................................   Passed    1.13 sec
+        Start  86: PqIndex.EmptyAndEdgeCases
+ 86/252 Test  #86: PqIndex.EmptyAndEdgeCases ................................................................................................   Passed    0.01 sec
+        Start  87: PqIndex.MemoryAccounting
+ 87/252 Test  #87: PqIndex.MemoryAccounting .................................................................................................   Passed    0.03 sec
+        Start  88: PqIndex.ParallelAddMatchesSerial
+ 88/252 Test  #88: PqIndex.ParallelAddMatchesSerial .........................................................................................   Passed    0.03 sec
+        Start  89: PqIndex.RerankReturnsExactDistancesAndImprovesRecall
+ 89/252 Test  #89: PqIndex.RerankReturnsExactDistancesAndImprovesRecall .....................................................................***Skipped   0.00 sec
+        Start  90: Crc32c.KnownVectors
+ 90/252 Test  #90: Crc32c.KnownVectors ......................................................................................................   Passed    0.00 sec
+        Start  91: Crc32c.IncrementalMatchesWhole
+ 91/252 Test  #91: Crc32c.IncrementalMatchesWhole ...........................................................................................   Passed    0.00 sec
+        Start  92: BruteForceDelete.DeletedVectorsAreNotReturned
+ 92/252 Test  #92: BruteForceDelete.DeletedVectorsAreNotReturned ............................................................................   Passed    0.00 sec
+        Start  93: BruteForceDelete.RemoveErrors
+ 93/252 Test  #93: BruteForceDelete.RemoveErrors ............................................................................................   Passed    0.00 sec
+        Start  94: BruteForceDelete.IdsStayStableAfterDelete
+ 94/252 Test  #94: BruteForceDelete.IdsStayStableAfterDelete ................................................................................   Passed    0.00 sec
+        Start  95: SnapshotTest.RoundTrip
+ 95/252 Test  #95: SnapshotTest.RoundTrip ...................................................................................................   Passed    0.01 sec
+        Start  96: SnapshotTest.EmptySnapshot
+ 96/252 Test  #96: SnapshotTest.EmptySnapshot ...............................................................................................   Passed    0.01 sec
+        Start  97: SnapshotTest.EveryFlippedByteIsDetected
+ 97/252 Test  #97: SnapshotTest.EveryFlippedByteIsDetected ..................................................................................   Passed    0.15 sec
+        Start  98: SnapshotTest.ReadsVersion1Files
+ 98/252 Test  #98: SnapshotTest.ReadsVersion1Files ..........................................................................................   Passed    0.00 sec
+        Start  99: SnapshotTest.TruncationIsDetected
+ 99/252 Test  #99: SnapshotTest.TruncationIsDetected ........................................................................................   Passed    0.15 sec
+        Start 100: WalTest.RoundTrip
+100/252 Test #100: WalTest.RoundTrip ........................................................................................................   Passed    0.01 sec
+        Start 101: WalTest.AppendAfterReopenContinuesLsn
+101/252 Test #101: WalTest.AppendAfterReopenContinuesLsn ....................................................................................   Passed    0.01 sec
+        Start 102: WalTest.TornTailAtEveryOffset
+102/252 Test #102: WalTest.TornTailAtEveryOffset ............................................................................................   Passed    0.20 sec
+        Start 103: WalTest.AppendAfterTornTailRecovery
+103/252 Test #103: WalTest.AppendAfterTornTailRecovery ......................................................................................   Passed    0.01 sec
+        Start 104: WalTest.CorruptionInLastRecordIsTreatedAsTorn
+104/252 Test #104: WalTest.CorruptionInLastRecordIsTreatedAsTorn ............................................................................   Passed    0.01 sec
+        Start 105: WalTest.MidLogCorruptionFailsLoudly
+105/252 Test #105: WalTest.MidLogCorruptionFailsLoudly ......................................................................................   Passed    0.03 sec
+        Start 106: WalTest.CorruptLengthMidLogIsNotATornTail
+106/252 Test #106: WalTest.CorruptLengthMidLogIsNotATornTail ................................................................................   Passed    0.03 sec
+        Start 107: WalTest.HeaderValidation
+107/252 Test #107: WalTest.HeaderValidation .................................................................................................   Passed    0.04 sec
+        Start 108: WalTest.ResetStartsNewLsnRange
+108/252 Test #108: WalTest.ResetStartsNewLsnRange ...........................................................................................   Passed    0.01 sec
+        Start 109: WalTest.ApplyErrorAbortsOpen
+109/252 Test #109: WalTest.ApplyErrorAbortsOpen .............................................................................................   Passed    0.01 sec
+        Start 110: CollectionTest.InsertSearchReopen
+110/252 Test #110: CollectionTest.InsertSearchReopen ........................................................................................   Passed    0.01 sec
+        Start 111: CollectionTest.CheckpointThenMoreWrites
+111/252 Test #111: CollectionTest.CheckpointThenMoreWrites ..................................................................................   Passed    0.03 sec
+        Start 112: CollectionTest.CrashBetweenSnapshotAndWalReset
+112/252 Test #112: CollectionTest.CrashBetweenSnapshotAndWalReset ...........................................................................   Passed    0.03 sec
+        Start 113: CollectionTest.MismatchedDimensionOrMetric
+113/252 Test #113: CollectionTest.MismatchedDimensionOrMetric ...............................................................................   Passed    0.03 sec
+        Start 114: CollectionTest.InvalidWritesAreNotLogged
+114/252 Test #114: CollectionTest.InvalidWritesAreNotLogged .................................................................................   Passed    0.02 sec
+        Start 115: CollectionTest.ConcurrentSearchesDuringWrites
+115/252 Test #115: CollectionTest.ConcurrentSearchesDuringWrites ............................................................................   Passed    0.22 sec
+        Start 116: HnswCollectionTest.RecoveryRebuildsTheSameGraph
+116/252 Test #116: HnswCollectionTest.RecoveryRebuildsTheSameGraph ..........................................................................   Passed    0.05 sec
+        Start 117: HnswCollectionTest.ReopeningWithDifferentSettingsFails
+117/252 Test #117: HnswCollectionTest.ReopeningWithDifferentSettingsFails ...................................................................   Passed    0.02 sec
+        Start 118: HnswCollectionTest.SettingsAreCheckedBeforeTheFirstCheckpoint
+118/252 Test #118: HnswCollectionTest.SettingsAreCheckedBeforeTheFirstCheckpoint ............................................................   Passed    0.02 sec
+        Start 119: HnswCollectionTest.FlatCollectionsRefuseHnsw
+119/252 Test #119: HnswCollectionTest.FlatCollectionsRefuseHnsw .............................................................................   Passed    0.02 sec
+        Start 120: UnicodeWords.PunctuationAndWhitespaceSeparate
+120/252 Test #120: UnicodeWords.PunctuationAndWhitespaceSeparate ............................................................................   Passed    0.00 sec
+        Start 121: UnicodeWords.MidWordPunctuationJoinsLetters
+121/252 Test #121: UnicodeWords.MidWordPunctuationJoinsLetters ..............................................................................   Passed    0.00 sec
+        Start 122: UnicodeWords.MidNumPunctuationJoinsDigits
+122/252 Test #122: UnicodeWords.MidNumPunctuationJoinsDigits ................................................................................   Passed    0.00 sec
+        Start 123: UnicodeWords.LettersDigitsAndUnderscore
+123/252 Test #123: UnicodeWords.LettersDigitsAndUnderscore ..................................................................................   Passed    0.00 sec
+        Start 124: UnicodeWords.NonLatinScripts
+124/252 Test #124: UnicodeWords.NonLatinScripts .............................................................................................   Passed    0.00 sec
+        Start 125: UnicodeWords.EmojiAreTheirOwnTokens
+125/252 Test #125: UnicodeWords.EmojiAreTheirOwnTokens ......................................................................................   Passed    0.00 sec
+        Start 126: UnicodeWords.CombiningMarksStayAttached
+126/252 Test #126: UnicodeWords.CombiningMarksStayAttached ..................................................................................   Passed    0.00 sec
+        Start 127: UnicodeWords.InvalidUtf8IsASeparator
+127/252 Test #127: UnicodeWords.InvalidUtf8IsASeparator .....................................................................................   Passed    0.00 sec
+        Start 128: UnicodeWords.OverlongTokensAreSplit
+128/252 Test #128: UnicodeWords.OverlongTokensAreSplit ......................................................................................   Passed    0.00 sec
+        Start 129: PlainTokenizer.SplitsOnEverythingButLettersAndDigits
+129/252 Test #129: PlainTokenizer.SplitsOnEverythingButLettersAndDigits .....................................................................   Passed    0.00 sec
+        Start 130: Analyzer.SurvivesRandomBytes
+130/252 Test #130: Analyzer.SurvivesRandomBytes .............................................................................................   Passed    0.01 sec
+        Start 131: Analyzer.PossessiveFilterRunsBeforeLowercase
+131/252 Test #131: Analyzer.PossessiveFilterRunsBeforeLowercase .............................................................................   Passed    0.00 sec
+        Start 132: Analyzer.LowercaseIsOptional
+132/252 Test #132: Analyzer.LowercaseIsOptional .............................................................................................   Passed    0.00 sec
+        Start 133: Analyzer.LuceneEnglishStopwords
+133/252 Test #133: Analyzer.LuceneEnglishStopwords ..........................................................................................   Passed    0.00 sec
+        Start 134: Analyzer.AnseriniEnglishPipeline
+134/252 Test #134: Analyzer.AnseriniEnglishPipeline .........................................................................................   Passed    0.00 sec
+        Start 135: Porter.MatchesReferenceAlgorithm
+135/252 Test #135: Porter.MatchesReferenceAlgorithm .........................................................................................   Passed    0.00 sec
+        Start 136: Porter.NonAsciiAndEdgeCases
+136/252 Test #136: Porter.NonAsciiAndEdgeCases ..............................................................................................   Passed    0.00 sec
+        Start 137: ThreadPool.SizeIncludesCaller
+137/252 Test #137: ThreadPool.SizeIncludesCaller ............................................................................................   Passed    0.00 sec
+        Start 138: ThreadPool.VisitsEveryIndexExactlyOnce
+138/252 Test #138: ThreadPool.VisitsEveryIndexExactlyOnce ...................................................................................   Passed    0.00 sec
+        Start 139: ThreadPool.ExplicitChunkSizes
+139/252 Test #139: ThreadPool.ExplicitChunkSizes ............................................................................................   Passed    0.00 sec
+        Start 140: ThreadPool.ManyConsecutiveJobs
+140/252 Test #140: ThreadPool.ManyConsecutiveJobs ...........................................................................................   Passed    0.01 sec
+        Start 141: ThreadPool.UsesMultipleThreads
+141/252 Test #141: ThreadPool.UsesMultipleThreads ...........................................................................................   Passed    0.03 sec
+        Start 142: ThreadPool.ConcurrentCallersAreSerialized
+142/252 Test #142: ThreadPool.ConcurrentCallersAreSerialized ................................................................................   Passed    0.01 sec
+        Start 143: BruteForceBatch.MatchesSequentialSearch
+143/252 Test #143: BruteForceBatch.MatchesSequentialSearch ..................................................................................   Passed    0.01 sec
+        Start 144: BruteForceBatch.DimensionMismatchAndEmpty
+144/252 Test #144: BruteForceBatch.DimensionMismatchAndEmpty ................................................................................   Passed    0.00 sec
+        Start 145: Hnsw.RejectsInvalidParameters
+145/252 Test #145: Hnsw.RejectsInvalidParameters ............................................................................................   Passed    0.00 sec
+        Start 146: Hnsw.EmptyIndex
+146/252 Test #146: Hnsw.EmptyIndex ..........................................................................................................   Passed    0.00 sec
+        Start 147: Hnsw.SingleVector
+147/252 Test #147: Hnsw.SingleVector ........................................................................................................   Passed    0.00 sec
+        Start 148: Hnsw.KZeroReturnsNothing
+148/252 Test #148: Hnsw.KZeroReturnsNothing .................................................................................................   Passed    0.00 sec
+        Start 149: Hnsw.DimensionMismatchIsAnError
+149/252 Test #149: Hnsw.DimensionMismatchIsAnError ..........................................................................................   Passed    0.00 sec
+        Start 150: Hnsw.IdsAreAssignedInInsertionOrder
+150/252 Test #150: Hnsw.IdsAreAssignedInInsertionOrder ......................................................................................   Passed    0.00 sec
+        Start 151: Hnsw.AddingItsOwnVectorsIsSafe
+151/252 Test #151: Hnsw.AddingItsOwnVectorsIsSafe ...........................................................................................   Passed    0.00 sec
+        Start 152: Hnsw.KLargerThanSizeReturnsEverything
+152/252 Test #152: Hnsw.KLargerThanSizeReturnsEverything ....................................................................................   Passed    0.00 sec
+        Start 153: Hnsw.EfSmallerThanKStillReturnsK
+153/252 Test #153: Hnsw.EfSmallerThanKStillReturnsK .........................................................................................   Passed    0.02 sec
+        Start 154: Hnsw.DuplicateVectors
+154/252 Test #154: Hnsw.DuplicateVectors ....................................................................................................   Passed    0.00 sec
+        Start 155: Hnsw.SameSeedSameResults
+155/252 Test #155: Hnsw.SameSeedSameResults .................................................................................................   Passed    0.08 sec
+        Start 156: Hnsw.ResultsAreSortedDistinctAndExact
+156/252 Test #156: Hnsw.ResultsAreSortedDistinctAndExact ....................................................................................   Passed    0.10 sec
+        Start 157: Hnsw.ConcurrentSearchesMatchSerial
+157/252 Test #157: Hnsw.ConcurrentSearchesMatchSerial .......................................................................................   Passed    0.11 sec
+        Start 158: Hnsw.HeuristicPrefersDiverseNeighbors
+158/252 Test #158: Hnsw.HeuristicPrefersDiverseNeighbors ....................................................................................   Passed    0.00 sec
+        Start 159: Hnsw.RecallImprovesWithEf
+159/252 Test #159: Hnsw.RecallImprovesWithEf ................................................................................................   Passed    0.09 sec
+        Start 160: Hnsw.IncrementalInsertsAfterSearch
+160/252 Test #160: Hnsw.IncrementalInsertsAfterSearch .......................................................................................   Passed    0.11 sec
+        Start 161: Hnsw.Sift10kRecall
+161/252 Test #161: Hnsw.Sift10kRecall .......................................................................................................***Skipped   0.00 sec
+        Start 162: HnswGraph.DegreeBounds
+162/252 Test #162: HnswGraph.DegreeBounds ...................................................................................................   Passed    0.19 sec
+        Start 163: HnswGraph.NeighborListsAreWellFormed
+163/252 Test #163: HnswGraph.NeighborListsAreWellFormed .....................................................................................   Passed    0.19 sec
+        Start 164: HnswGraph.EntryPointIsOnTopLayer
+164/252 Test #164: HnswGraph.EntryPointIsOnTopLayer .........................................................................................   Passed    0.19 sec
+        Start 165: HnswGraph.LevelDistributionMatchesMl
+165/252 Test #165: HnswGraph.LevelDistributionMatchesMl .....................................................................................   Passed    0.19 sec
+        Start 166: HnswGraph.Layer0IsReachableFromEntryPoint
+166/252 Test #166: HnswGraph.Layer0IsReachableFromEntryPoint ................................................................................   Passed    0.19 sec
+        Start 167: HnswTestUtil.SameGraphDetectsDifferences
+167/252 Test #167: HnswTestUtil.SameGraphDetectsDifferences .................................................................................   Passed    0.02 sec
+        Start 168: HnswDelete.RemoveErrorsAndCounts
+168/252 Test #168: HnswDelete.RemoveErrorsAndCounts .........................................................................................   Passed    0.00 sec
+        Start 169: HnswDelete.DeletedNeverReturnedAndRecallOnLiveSet
+169/252 Test #169: HnswDelete.DeletedNeverReturnedAndRecallOnLiveSet ........................................................................   Passed    0.21 sec
+        Start 170: HnswDelete.DeletedEntryPointStillNavigates
+170/252 Test #170: HnswDelete.DeletedEntryPointStillNavigates ...............................................................................   Passed    0.04 sec
+        Start 171: HnswDelete.HeavyDeletionStillReturnsKLiveResults
+171/252 Test #171: HnswDelete.HeavyDeletionStillReturnsKLiveResults .........................................................................   Passed    0.10 sec
+        Start 172: HnswDelete.FewerLiveThanKReturnsAllLive
+172/252 Test #172: HnswDelete.FewerLiveThanKReturnsAllLive ..................................................................................   Passed    0.02 sec
+        Start 173: HnswDelete.DeletingEverythingGivesEmptyResults
+173/252 Test #173: HnswDelete.DeletingEverythingGivesEmptyResults ...........................................................................   Passed    0.00 sec
+        Start 174: HnswDelete.DeletesDoNotChangeTheGraph
+174/252 Test #174: HnswDelete.DeletesDoNotChangeTheGraph ....................................................................................   Passed    0.07 sec
+        Start 175: HnswSnapshotFile.EmptyIndexRoundTripsAndKeepsBuilding
+175/252 Test #175: HnswSnapshotFile.EmptyIndexRoundTripsAndKeepsBuilding ....................................................................   Passed    0.01 sec
+        Start 176: HnswSnapshotFile.FlatSnapshotIsNotAnHnswIndex
+176/252 Test #176: HnswSnapshotFile.FlatSnapshotIsNotAnHnswIndex ............................................................................   Passed    0.01 sec
+        Start 177: HnswSnapshotCorruption.FlippedByteFailsTheChecksum
+177/252 Test #177: HnswSnapshotCorruption.FlippedByteFailsTheChecksum .......................................................................   Passed    0.02 sec
+        Start 178: HnswSnapshotCorruption.UnsupportedSnapshotVersion
+178/252 Test #178: HnswSnapshotCorruption.UnsupportedSnapshotVersion ........................................................................   Passed    0.01 sec
+        Start 179: HnswSnapshotCorruption.OppositeByteOrderIsRejected
+179/252 Test #179: HnswSnapshotCorruption.OppositeByteOrderIsRejected .......................................................................   Passed    0.01 sec
+        Start 180: HnswSnapshotCorruption.UnsupportedGraphVersion
+180/252 Test #180: HnswSnapshotCorruption.UnsupportedGraphVersion ...........................................................................   Passed    0.03 sec
+        Start 181: HnswSnapshotCorruption.EntryPointOutOfRange
+181/252 Test #181: HnswSnapshotCorruption.EntryPointOutOfRange ..............................................................................   Passed    0.01 sec
+        Start 182: HnswSnapshotCorruption.NeighborIdOutOfRange
+182/252 Test #182: HnswSnapshotCorruption.NeighborIdOutOfRange ..............................................................................   Passed    0.01 sec
+        Start 183: HnswSnapshotCorruption.NeighborCountOverCapacity
+183/252 Test #183: HnswSnapshotCorruption.NeighborCountOverCapacity .........................................................................   Passed    0.01 sec
+        Start 184: HnswSnapshotCorruption.TruncatedOrPaddedIndexSection
+184/252 Test #184: HnswSnapshotCorruption.TruncatedOrPaddedIndexSection .....................................................................   Passed    0.01 sec
+        Start 185: HnswGolden.WriteFixture
+185/252 Test #185: HnswGolden.WriteFixture ..................................................................................................***Skipped   0.00 sec
+        Start 186: HnswGolden.LoadsBitIdenticallyOnThisMachine
+186/252 Test #186: HnswGolden.LoadsBitIdenticallyOnThisMachine ..............................................................................   Passed    0.02 sec
+        Start 187: HnswGoldenLegacy.Version2LoadsOnlyOnTheLibraryThatWroteIt
+187/252 Test #187: HnswGoldenLegacy.Version2LoadsOnlyOnTheLibraryThatWroteIt ................................................................   Passed    0.00 sec
+        Start 188: HnswGoldenLegacy.OtherLibrarysGeneratorTextIsRejectedClearly
+188/252 Test #188: HnswGoldenLegacy.OtherLibrarysGeneratorTextIsRejectedClearly .............................................................   Passed    0.00 sec
+        Start 189: HnswParallel.OneThreadEqualsSequentialExactly
+189/252 Test #189: HnswParallel.OneThreadEqualsSequentialExactly ............................................................................   Passed    0.14 sec
+        Start 190: HnswParallel.QualityMatchesSequentialOnRandomData
+190/252 Test #190: HnswParallel.QualityMatchesSequentialOnRandomData ........................................................................   Passed    0.30 sec
+        Start 191: HnswParallel.QualityMatchesSequentialOnSift10k
+191/252 Test #191: HnswParallel.QualityMatchesSequentialOnSift10k ...........................................................................***Skipped   0.00 sec
+        Start 192: HnswParallel.HighContentionStress
+192/252 Test #192: HnswParallel.HighContentionStress ........................................................................................   Passed    0.02 sec
+        Start 193: HnswParallel.SaveLoadThenSequentialAddIsDeterministic
+193/252 Test #193: HnswParallel.SaveLoadThenSequentialAddIsDeterministic ....................................................................   Passed    0.04 sec
+        Start 194: HnswParallel.BatchOnTopOfDeletesAndErrors
+194/252 Test #194: HnswParallel.BatchOnTopOfDeletesAndErrors ................................................................................   Passed    0.01 sec
+        Start 195: HnswFilter.GraphRecallAgainstBruteForceOverMatchingSet
+195/252 Test #195: HnswFilter.GraphRecallAgainstBruteForceOverMatchingSet ...................................................................   Passed    0.19 sec
+        Start 196: HnswFilter.PreFilterIsExact
+196/252 Test #196: HnswFilter.PreFilterIsExact ..............................................................................................   Passed    0.15 sec
+        Start 197: HnswFilter.NeverReturnsANonMatchingId
+197/252 Test #197: HnswFilter.NeverReturnsANonMatchingId ....................................................................................   Passed    0.23 sec
+        Start 198: HnswFilter.FilterMatchingNothing
+198/252 Test #198: HnswFilter.FilterMatchingNothing .........................................................................................   Passed    0.15 sec
+        Start 199: HnswFilter.FilterMatchingEverything
+199/252 Test #199: HnswFilter.FilterMatchingEverything ......................................................................................   Passed    0.16 sec
+        Start 200: HnswFilter.CombinedWithDeletes
+200/252 Test #200: HnswFilter.CombinedWithDeletes ...........................................................................................   Passed    0.19 sec
+        Start 201: HnswFilter.FewerMatchesThanKReturnsAllOfThem
+201/252 Test #201: HnswFilter.FewerMatchesThanKReturnsAllOfThem .............................................................................   Passed    0.15 sec
+        Start 202: HnswFilter.AutoPicksEachSideOfTheThreshold
+202/252 Test #202: HnswFilter.AutoPicksEachSideOfTheThreshold ...............................................................................   Passed    0.15 sec
+        Start 203: HnswFilter.ResamplesNearTheThreshold
+203/252 Test #203: HnswFilter.ResamplesNearTheThreshold .....................................................................................   Passed    0.15 sec
+        Start 204: HnswFilter.FallbackToPreFilterWhenTheGraphSearchIsTooLong
+204/252 Test #204: HnswFilter.FallbackToPreFilterWhenTheGraphSearchIsTooLong ................................................................   Passed    0.15 sec
+        Start 205: HnswFilter.KnownSelectivityIsUsedInsteadOfAnEstimate
+205/252 Test #205: HnswFilter.KnownSelectivityIsUsedInsteadOfAnEstimate .....................................................................   Passed    0.15 sec
+        Start 206: HnswFilter.SelectivityEstimateIsCachedPerFilter
+206/252 Test #206: HnswFilter.SelectivityEstimateIsCachedPerFilter ..........................................................................   Passed    0.15 sec
+        Start 207: HnswFilter.ConcurrentFirstEstimatesAgree
+207/252 Test #207: HnswFilter.ConcurrentFirstEstimatesAgree .................................................................................   Passed    0.15 sec
+        Start 208: HnswFilter.BitsetFormAgreesWithCompiledFilter
+208/252 Test #208: HnswFilter.BitsetFormAgreesWithCompiledFilter ............................................................................   Passed    0.18 sec
+        Start 209: HnswFilter.Errors
+209/252 Test #209: HnswFilter.Errors ........................................................................................................   Passed    0.15 sec
+        Start 210: HnswFilter.ConcurrentFilteredSearchesMatchSerial
+210/252 Test #210: HnswFilter.ConcurrentFilteredSearchesMatchSerial .........................................................................   Passed    0.15 sec
+        Start 211: AllMetrics/BruteForceMetric.MatchesFullSort/l2  # GetParam() = l2
+211/252 Test #211: AllMetrics/BruteForceMetric.MatchesFullSort/l2  # GetParam() = l2 ........................................................   Passed    0.00 sec
+        Start 212: AllMetrics/BruteForceMetric.MatchesFullSort/ip  # GetParam() = ip
+212/252 Test #212: AllMetrics/BruteForceMetric.MatchesFullSort/ip  # GetParam() = ip ........................................................   Passed    0.00 sec
+        Start 213: AllMetrics/BruteForceMetric.MatchesFullSort/cosine  # GetParam() = cosine
+213/252 Test #213: AllMetrics/BruteForceMetric.MatchesFullSort/cosine  # GetParam() = cosine ................................................   Passed    0.00 sec
+        Start 214: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/wal_only  # GetParam() = wal_only
+214/252 Test #214: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/wal_only  # GetParam() = wal_only ..........................................   Passed    0.03 sec
+        Start 215: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/frequent_checkpoints  # GetParam() = frequent_checkpoints
+215/252 Test #215: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/frequent_checkpoints  # GetParam() = frequent_checkpoints ..................   Passed    4.94 sec
+        Start 216: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/rare_checkpoints  # GetParam() = rare_checkpoints
+216/252 Test #216: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/rare_checkpoints  # GetParam() = rare_checkpoints ..........................   Passed    0.34 sec
+        Start 217: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/fsync  # GetParam() = fsync
+217/252 Test #217: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/fsync  # GetParam() = fsync ................................................   Passed    5.33 sec
+        Start 218: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_wal_only  # GetParam() = hnsw_wal_only
+218/252 Test #218: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_wal_only  # GetParam() = hnsw_wal_only ................................   Passed    0.12 sec
+        Start 219: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_frequent_checkpoints  # GetParam() = hnsw_frequent_checkpoints
+219/252 Test #219: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_frequent_checkpoints  # GetParam() = hnsw_frequent_checkpoints ........   Passed    4.32 sec
+        Start 220: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_rare_checkpoints  # GetParam() = hnsw_rare_checkpoints
+220/252 Test #220: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_rare_checkpoints  # GetParam() = hnsw_rare_checkpoints ................   Passed    0.42 sec
+        Start 221: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_fsync  # GetParam() = hnsw_fsync
+221/252 Test #221: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_fsync  # GetParam() = hnsw_fsync ......................................   Passed    5.39 sec
+        Start 222: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_l2  # GetParam() = avx2_l2
+222/252 Test #222: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_l2  # GetParam() = avx2_l2 ..........................................   Passed    0.01 sec
+        Start 223: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_ip  # GetParam() = avx2_ip
+223/252 Test #223: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_ip  # GetParam() = avx2_ip ..........................................   Passed    0.01 sec
+        Start 224: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_cosine  # GetParam() = avx2_cosine
+224/252 Test #224: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_cosine  # GetParam() = avx2_cosine ..................................   Passed    0.01 sec
+        Start 225: Kernels/SimdKernel.ExactOnIntegerData/avx2_l2  # GetParam() = avx2_l2
+225/252 Test #225: Kernels/SimdKernel.ExactOnIntegerData/avx2_l2  # GetParam() = avx2_l2 ....................................................   Passed    0.00 sec
+        Start 226: Kernels/SimdKernel.ExactOnIntegerData/avx2_ip  # GetParam() = avx2_ip
+226/252 Test #226: Kernels/SimdKernel.ExactOnIntegerData/avx2_ip  # GetParam() = avx2_ip ....................................................   Passed    0.00 sec
+        Start 227: Kernels/SimdKernel.ExactOnIntegerData/avx2_cosine  # GetParam() = avx2_cosine
+227/252 Test #227: Kernels/SimdKernel.ExactOnIntegerData/avx2_cosine  # GetParam() = avx2_cosine ............................................***Skipped   0.00 sec
+        Start 228: Kernels/SimdKernel.IdenticalVectors/avx2_l2  # GetParam() = avx2_l2
+228/252 Test #228: Kernels/SimdKernel.IdenticalVectors/avx2_l2  # GetParam() = avx2_l2 ......................................................   Passed    0.00 sec
+        Start 229: Kernels/SimdKernel.IdenticalVectors/avx2_ip  # GetParam() = avx2_ip
+229/252 Test #229: Kernels/SimdKernel.IdenticalVectors/avx2_ip  # GetParam() = avx2_ip ......................................................   Passed    0.00 sec
+        Start 230: Kernels/SimdKernel.IdenticalVectors/avx2_cosine  # GetParam() = avx2_cosine
+230/252 Test #230: Kernels/SimdKernel.IdenticalVectors/avx2_cosine  # GetParam() = avx2_cosine ..............................................   Passed    0.00 sec
+        Start 231: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_l2  # GetParam() = avx2_l2
+231/252 Test #231: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_l2  # GetParam() = avx2_l2 .................................................***Skipped   0.00 sec
+        Start 232: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_ip  # GetParam() = avx2_ip
+232/252 Test #232: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_ip  # GetParam() = avx2_ip .................................................***Skipped   0.00 sec
+        Start 233: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_cosine  # GetParam() = avx2_cosine
+233/252 Test #233: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_cosine  # GetParam() = avx2_cosine .........................................   Passed    0.00 sec
+        Start 234: Kernels/SimdKernel.NoReadPastEnd/avx2_l2  # GetParam() = avx2_l2
+234/252 Test #234: Kernels/SimdKernel.NoReadPastEnd/avx2_l2  # GetParam() = avx2_l2 .........................................................   Passed    0.00 sec
+        Start 235: Kernels/SimdKernel.NoReadPastEnd/avx2_ip  # GetParam() = avx2_ip
+235/252 Test #235: Kernels/SimdKernel.NoReadPastEnd/avx2_ip  # GetParam() = avx2_ip .........................................................   Passed    0.00 sec
+        Start 236: Kernels/SimdKernel.NoReadPastEnd/avx2_cosine  # GetParam() = avx2_cosine
+236/252 Test #236: Kernels/SimdKernel.NoReadPastEnd/avx2_cosine  # GetParam() = avx2_cosine .................................................   Passed    0.00 sec
+        Start 237: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/l2  # GetParam() = l2
+237/252 Test #237: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/l2  # GetParam() = l2 .......................................   Passed    0.03 sec
+        Start 238: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/ip  # GetParam() = ip
+238/252 Test #238: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/ip  # GetParam() = ip .......................................   Passed    0.03 sec
+        Start 239: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/cosine  # GetParam() = cosine
+239/252 Test #239: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/cosine  # GetParam() = cosine ...............................   Passed    0.03 sec
+        Start 240: AllMetrics/HnswRecall.HighRecallOnRandomData/l2  # GetParam() = l2
+240/252 Test #240: AllMetrics/HnswRecall.HighRecallOnRandomData/l2  # GetParam() = l2 .......................................................   Passed    0.21 sec
+        Start 241: AllMetrics/HnswRecall.HighRecallOnRandomData/ip  # GetParam() = ip
+241/252 Test #241: AllMetrics/HnswRecall.HighRecallOnRandomData/ip  # GetParam() = ip .......................................................   Passed    0.21 sec
+        Start 242: AllMetrics/HnswRecall.HighRecallOnRandomData/cosine  # GetParam() = cosine
+242/252 Test #242: AllMetrics/HnswRecall.HighRecallOnRandomData/cosine  # GetParam() = cosine ...............................................   Passed    0.23 sec
+        Start 243: BothModes/HnswSelection.RecallAndReachability/simple  # GetParam() = simple
+243/252 Test #243: BothModes/HnswSelection.RecallAndReachability/simple  # GetParam() = simple ..............................................   Passed    0.20 sec
+        Start 244: BothModes/HnswSelection.RecallAndReachability/heuristic  # GetParam() = heuristic
+244/252 Test #244: BothModes/HnswSelection.RecallAndReachability/heuristic  # GetParam() = heuristic ........................................   Passed    0.21 sec
+        Start 245: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_heuristic  # GetParam() = l2_heuristic
+245/252 Test #245: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_heuristic  # GetParam() = l2_heuristic .................   Passed    0.06 sec
+        Start 246: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/ip_heuristic  # GetParam() = ip_heuristic
+246/252 Test #246: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/ip_heuristic  # GetParam() = ip_heuristic .................   Passed    0.06 sec
+        Start 247: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/cosine_heuristic  # GetParam() = cosine_heuristic
+247/252 Test #247: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/cosine_heuristic  # GetParam() = cosine_heuristic .........   Passed    0.07 sec
+        Start 248: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_simple  # GetParam() = l2_simple
+248/252 Test #248: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_simple  # GetParam() = l2_simple .......................   Passed    0.06 sec
+        Start 249: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_heuristic  # GetParam() = l2_heuristic
+249/252 Test #249: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_heuristic  # GetParam() = l2_heuristic ...........   Passed    0.14 sec
+        Start 250: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/ip_heuristic  # GetParam() = ip_heuristic
+250/252 Test #250: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/ip_heuristic  # GetParam() = ip_heuristic ...........   Passed    0.14 sec
+        Start 251: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/cosine_heuristic  # GetParam() = cosine_heuristic
+251/252 Test #251: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/cosine_heuristic  # GetParam() = cosine_heuristic ...   Passed    0.16 sec
+        Start 252: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_simple  # GetParam() = l2_simple
+252/252 Test #252: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_simple  # GetParam() = l2_simple .................   Passed    0.14 sec
+
+100% tests passed, 0 tests failed out of 252
+
+Total Test time (real) =  30.80 sec
+
+The following tests did not run:
+	 20 - BruteForce.Sift10kRecallIsPerfect (Skipped)
+	 89 - PqIndex.RerankReturnsExactDistancesAndImprovesRecall (Skipped)
+	161 - Hnsw.Sift10kRecall (Skipped)
+	185 - HnswGolden.WriteFixture (Skipped)
+	191 - HnswParallel.QualityMatchesSequentialOnSift10k (Skipped)
+	227 - Kernels/SimdKernel.ExactOnIntegerData/avx2_cosine  # GetParam() = avx2_cosine (Skipped)
+	231 - Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_l2  # GetParam() = avx2_l2 (Skipped)
+	232 - Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_ip  # GetParam() = avx2_ip (Skipped)
+[22:52:04] building linux-server-release (gRPC from vcpkg: the slow step)
+ninja: no work to do.
+Test project /home/ubuntu/strata/build/linux-server-release
+        Start   1: LuceneNorms.SmallLengthsAreExact
+  1/279 Test   #1: LuceneNorms.SmallLengthsAreExact .........................................................................................   Passed    0.00 sec
+        Start   2: LuceneNorms.LongLengthsKeepFourSignificantBits
+  2/279 Test   #2: LuceneNorms.LongLengthsKeepFourSignificantBits ...........................................................................   Passed    0.00 sec
+        Start   3: Bm25.RejectsInvalidParameters
+  3/279 Test   #3: Bm25.RejectsInvalidParameters ............................................................................................   Passed    0.00 sec
+        Start   4: Bm25.MatchesReferenceFormula
+  4/279 Test   #4: Bm25.MatchesReferenceFormula .............................................................................................   Passed    0.00 sec
+        Start   5: Bm25.RepeatedQueryTermsCountEachTime
+  5/279 Test   #5: Bm25.RepeatedQueryTermsCountEachTime .....................................................................................   Passed    0.00 sec
+        Start   6: Bm25.ResultsSortedByScoreThenId
+  6/279 Test   #6: Bm25.ResultsSortedByScoreThenId ..........................................................................................   Passed    0.00 sec
+        Start   7: Bm25.EdgeCases
+  7/279 Test   #7: Bm25.EdgeCases ...........................................................................................................   Passed    0.00 sec
+        Start   8: Bm25.RemoveTombstonesWithoutChangingStats
+  8/279 Test   #8: Bm25.RemoveTombstonesWithoutChangingStats ................................................................................   Passed    0.00 sec
+        Start   9: Bm25.LengthEncodingMattersForLongDocuments
+  9/279 Test   #9: Bm25.LengthEncodingMattersForLongDocuments ...............................................................................   Passed    0.00 sec
+        Start  10: Bm25.AnalyzerIsAppliedToDocumentsAndQueries
+ 10/279 Test  #10: Bm25.AnalyzerIsAppliedToDocumentsAndQueries ..............................................................................   Passed    0.00 sec
+        Start  11: Bm25.SharesIdSpaceWithVectorIndexes
+ 11/279 Test  #11: Bm25.SharesIdSpaceWithVectorIndexes ......................................................................................   Passed    0.00 sec
+        Start  12: BruteForce.RejectsZeroDimension
+ 12/279 Test  #12: BruteForce.RejectsZeroDimension ..........................................................................................   Passed    0.00 sec
+        Start  13: BruteForce.EmptyIndexReturnsNoResults
+ 13/279 Test  #13: BruteForce.EmptyIndexReturnsNoResults ....................................................................................   Passed    0.00 sec
+        Start  14: BruteForce.SingleVector
+ 14/279 Test  #14: BruteForce.SingleVector ..................................................................................................   Passed    0.00 sec
+        Start  15: BruteForce.KZeroReturnsNoResults
+ 15/279 Test  #15: BruteForce.KZeroReturnsNoResults .........................................................................................   Passed    0.00 sec
+        Start  16: BruteForce.KLargerThanSizeReturnsEverything
+ 16/279 Test  #16: BruteForce.KLargerThanSizeReturnsEverything ..............................................................................   Passed    0.00 sec
+        Start  17: BruteForce.DuplicateVectorsTieBreakById
+ 17/279 Test  #17: BruteForce.DuplicateVectorsTieBreakById ..................................................................................   Passed    0.00 sec
+        Start  18: BruteForce.DimensionMismatchIsAnError
+ 18/279 Test  #18: BruteForce.DimensionMismatchIsAnError ....................................................................................   Passed    0.00 sec
+        Start  19: BruteForce.IdsAreAssignedInInsertionOrder
+ 19/279 Test  #19: BruteForce.IdsAreAssignedInInsertionOrder ................................................................................   Passed    0.00 sec
+        Start  20: BruteForce.Sift10kRecallIsPerfect
+ 20/279 Test  #20: BruteForce.Sift10kRecallIsPerfect ........................................................................................***Skipped   0.00 sec
+        Start  21: CopyBytes.CopiesExactlyNBytes
+ 21/279 Test  #21: CopyBytes.CopiesExactlyNBytes ............................................................................................   Passed    0.00 sec
+        Start  22: CopyBytes.ZeroLengthWithNullPointersIsANoOp
+ 22/279 Test  #22: CopyBytes.ZeroLengthWithNullPointersIsANoOp ..............................................................................   Passed    0.00 sec
+        Start  23: DatasetIo.FbinRoundTrip
+ 23/279 Test  #23: DatasetIo.FbinRoundTrip ..................................................................................................   Passed    0.00 sec
+        Start  24: DatasetIo.IbinRoundTrip
+ 24/279 Test  #24: DatasetIo.IbinRoundTrip ..................................................................................................   Passed    0.00 sec
+        Start  25: DatasetIo.EmptyMatrixRoundTrip
+ 25/279 Test  #25: DatasetIo.EmptyMatrixRoundTrip ...........................................................................................   Passed    0.00 sec
+        Start  26: DatasetIo.MissingFile
+ 26/279 Test  #26: DatasetIo.MissingFile ....................................................................................................   Passed    0.00 sec
+        Start  27: DatasetIo.TruncatedFile
+ 27/279 Test  #27: DatasetIo.TruncatedFile ..................................................................................................   Passed    0.00 sec
+        Start  28: DatasetIo.FileShorterThanHeader
+ 28/279 Test  #28: DatasetIo.FileShorterThanHeader ..........................................................................................   Passed    0.00 sec
+        Start  29: DatasetIo.LoadDatasetChecksShapes
+ 29/279 Test  #29: DatasetIo.LoadDatasetChecksShapes ........................................................................................   Passed    0.00 sec
+        Start  30: Distance.L2SquaredKnownValue
+ 30/279 Test  #30: Distance.L2SquaredKnownValue .............................................................................................   Passed    0.00 sec
+        Start  31: Distance.L2SquaredOfIdenticalVectorsIsZero
+ 31/279 Test  #31: Distance.L2SquaredOfIdenticalVectorsIsZero ...............................................................................   Passed    0.00 sec
+        Start  32: Distance.L2IsSymmetric
+ 32/279 Test  #32: Distance.L2IsSymmetric ...................................................................................................   Passed    0.00 sec
+        Start  33: Distance.InnerProductIsNegatedDot
+ 33/279 Test  #33: Distance.InnerProductIsNegatedDot ........................................................................................   Passed    0.00 sec
+        Start  34: Distance.CosineOfParallelVectorsIsZero
+ 34/279 Test  #34: Distance.CosineOfParallelVectorsIsZero ...................................................................................   Passed    0.00 sec
+        Start  35: Distance.CosineOfOrthogonalVectorsIsOne
+ 35/279 Test  #35: Distance.CosineOfOrthogonalVectorsIsOne ..................................................................................   Passed    0.00 sec
+        Start  36: Distance.CosineOfOppositeVectorsIsTwo
+ 36/279 Test  #36: Distance.CosineOfOppositeVectorsIsTwo ....................................................................................   Passed    0.00 sec
+        Start  37: Distance.CosineWithZeroVectorIsOne
+ 37/279 Test  #37: Distance.CosineWithZeroVectorIsOne .......................................................................................   Passed    0.00 sec
+        Start  38: Distance.EmptyVectors
+ 38/279 Test  #38: Distance.EmptyVectors ....................................................................................................   Passed    0.00 sec
+        Start  39: Distance.DispatchAgreesWithScalar
+ 39/279 Test  #39: Distance.DispatchAgreesWithScalar ........................................................................................   Passed    0.00 sec
+        Start  40: Distance.MetricNamesRoundTrip
+ 40/279 Test  #40: Distance.MetricNamesRoundTrip ............................................................................................   Passed    0.00 sec
+        Start  41: Bitset.SetTestCountIterate
+ 41/279 Test  #41: Bitset.SetTestCountIterate ...............................................................................................   Passed    0.00 sec
+        Start  42: Bitset.Empty
+ 42/279 Test  #42: Bitset.Empty .............................................................................................................   Passed    0.00 sec
+        Start  43: AttributeTable.SchemaValidation
+ 43/279 Test  #43: AttributeTable.SchemaValidation ..........................................................................................   Passed    0.00 sec
+        Start  44: Filter.Predicates
+ 44/279 Test  #44: Filter.Predicates ........................................................................................................   Passed    0.00 sec
+        Start  45: Filter.BooleanCombinators
+ 45/279 Test  #45: Filter.BooleanCombinators ................................................................................................   Passed    0.00 sec
+        Start  46: Filter.UnknownCategoryMatchesNothing
+ 46/279 Test  #46: Filter.UnknownCategoryMatchesNothing .....................................................................................   Passed    0.00 sec
+        Start  47: Filter.LargeInSetsMatchMembership
+ 47/279 Test  #47: Filter.LargeInSetsMatchMembership ........................................................................................   Passed    0.00 sec
+        Start  48: Filter.CompileErrors
+ 48/279 Test  #48: Filter.CompileErrors .....................................................................................................   Passed    0.00 sec
+        Start  49: Filter.OutOfRangeIdDoesNotMatch
+ 49/279 Test  #49: Filter.OutOfRangeIdDoesNotMatch ..........................................................................................   Passed    0.00 sec
+        Start  50: Filter.SelectivityEstimate
+ 50/279 Test  #50: Filter.SelectivityEstimate ...............................................................................................   Passed    0.00 sec
+        Start  51: FilteredSearch.PrefilterAndPredicateMatchFilteredExactSearch
+ 51/279 Test  #51: FilteredSearch.PrefilterAndPredicateMatchFilteredExactSearch .............................................................   Passed    0.01 sec
+        Start  52: FilteredSearch.RespectsTombstonesAndEdgeCases
+ 52/279 Test  #52: FilteredSearch.RespectsTombstonesAndEdgeCases ............................................................................   Passed    0.00 sec
+        Start  53: Rrf.HandComputedExample
+ 53/279 Test  #53: Rrf.HandComputedExample ..................................................................................................   Passed    0.00 sec
+        Start  54: Rrf.IgnoresScoreScalesOnlyRanksMatter
+ 54/279 Test  #54: Rrf.IgnoresScoreScalesOnlyRanksMatter ....................................................................................   Passed    0.00 sec
+        Start  55: Rrf.TiesBreakByIdAndTopKTruncates
+ 55/279 Test  #55: Rrf.TiesBreakByIdAndTopKTruncates ........................................................................................   Passed    0.00 sec
+        Start  56: Rrf.EdgeCases
+ 56/279 Test  #56: Rrf.EdgeCases ............................................................................................................   Passed    0.00 sec
+        Start  57: WeightedFusion.MinMaxNormalizationAndWeights
+ 57/279 Test  #57: WeightedFusion.MinMaxNormalizationAndWeights .............................................................................   Passed    0.00 sec
+        Start  58: WeightedFusion.ExtremeWeightsReproduceOneList
+ 58/279 Test  #58: WeightedFusion.ExtremeWeightsReproduceOneList ............................................................................   Passed    0.00 sec
+        Start  59: WeightedFusion.ConstantListNormalizesToOne
+ 59/279 Test  #59: WeightedFusion.ConstantListNormalizesToOne ...............................................................................   Passed    0.00 sec
+        Start  60: WeightedFusion.RejectsBadWeights
+ 60/279 Test  #60: WeightedFusion.RejectsBadWeights .........................................................................................   Passed    0.00 sec
+        Start  61: Recall.PerfectMatch
+ 61/279 Test  #61: Recall.PerfectMatch ......................................................................................................   Passed    0.00 sec
+        Start  62: Recall.OrderWithinTopKDoesNotMatter
+ 62/279 Test  #62: Recall.OrderWithinTopKDoesNotMatter ......................................................................................   Passed    0.00 sec
+        Start  63: Recall.PartialMatch
+ 63/279 Test  #63: Recall.PartialMatch ......................................................................................................   Passed    0.00 sec
+        Start  64: Recall.UsesOnlyFirstKGroundtruthColumns
+ 64/279 Test  #64: Recall.UsesOnlyFirstKGroundtruthColumns ..................................................................................   Passed    0.00 sec
+        Start  65: Recall.ShortResultListsCountMissesAsZero
+ 65/279 Test  #65: Recall.ShortResultListsCountMissesAsZero .................................................................................   Passed    0.00 sec
+        Start  66: Recall.ExtraResultsBeyondKAreIgnored
+ 66/279 Test  #66: Recall.ExtraResultsBeyondKAreIgnored .....................................................................................   Passed    0.00 sec
+        Start  67: Recall.InvalidArguments
+ 67/279 Test  #67: Recall.InvalidArguments ..................................................................................................   Passed    0.00 sec
+        Start  68: RecallWithTies.EqualDistanceCountsAsHit
+ 68/279 Test  #68: RecallWithTies.EqualDistanceCountsAsHit ..................................................................................   Passed    0.00 sec
+        Start  69: RecallWithTies.FartherResultIsAMiss
+ 69/279 Test  #69: RecallWithTies.FartherResultIsAMiss ......................................................................................   Passed    0.00 sec
+        Start  70: RecallWithTies.ToleranceIsRelative
+ 70/279 Test  #70: RecallWithTies.ToleranceIsRelative .......................................................................................   Passed    0.00 sec
+        Start  71: RecallWithTies.ShortResultListsAndInvalidArguments
+ 71/279 Test  #71: RecallWithTies.ShortResultListsAndInvalidArguments .......................................................................   Passed    0.00 sec
+        Start  72: KthNeighborDistances.ComputesDistanceToKthTrueNeighbor
+ 72/279 Test  #72: KthNeighborDistances.ComputesDistanceToKthTrueNeighbor ...................................................................   Passed    0.00 sec
+        Start  73: KthNeighborDistances.RejectsBadInput
+ 73/279 Test  #73: KthNeighborDistances.RejectsBadInput .....................................................................................   Passed    0.00 sec
+        Start  74: KernelDispatch.ScalarSetReturnsReference
+ 74/279 Test  #74: KernelDispatch.ScalarSetReturnsReference .................................................................................   Passed    0.00 sec
+        Start  75: KernelDispatch.BestMatchesBuildArchitecture
+ 75/279 Test  #75: KernelDispatch.BestMatchesBuildArchitecture ..............................................................................   Passed    0.00 sec
+        Start  76: Smoke.VersionIsConsistent
+ 76/279 Test  #76: Smoke.VersionIsConsistent ................................................................................................   Passed    0.00 sec
+        Start  77: KMeans.RecoversSeparatedClusters
+ 77/279 Test  #77: KMeans.RecoversSeparatedClusters .........................................................................................   Passed    0.00 sec
+        Start  78: KMeans.InertiaDoesNotIncreaseWithMoreIterations
+ 78/279 Test  #78: KMeans.InertiaDoesNotIncreaseWithMoreIterations ..........................................................................   Passed    0.01 sec
+        Start  79: KMeans.DeterministicForSeed
+ 79/279 Test  #79: KMeans.DeterministicForSeed ..............................................................................................   Passed    0.00 sec
+        Start  80: KMeans.ParallelMatchesSerial
+ 80/279 Test  #80: KMeans.ParallelMatchesSerial .............................................................................................   Passed    0.02 sec
+        Start  81: KMeans.NoEmptyClustersWithEnoughDistinctPoints
+ 81/279 Test  #81: KMeans.NoEmptyClustersWithEnoughDistinctPoints ...........................................................................   Passed    0.00 sec
+        Start  82: KMeans.InvalidArguments
+ 82/279 Test  #82: KMeans.InvalidArguments ..................................................................................................   Passed    0.00 sec
+        Start  83: ProductQuantizer.RejectsBadShapes
+ 83/279 Test  #83: ProductQuantizer.RejectsBadShapes ........................................................................................   Passed    0.00 sec
+        Start  84: ProductQuantizer.LosslessWhenPointsFitInCodebook
+ 84/279 Test  #84: ProductQuantizer.LosslessWhenPointsFitInCodebook .........................................................................   Passed    0.01 sec
+        Start  85: ProductQuantizer.MoreSubquantizersReduceError
+ 85/279 Test  #85: ProductQuantizer.MoreSubquantizersReduceError ............................................................................   Passed    1.13 sec
+        Start  86: PqIndex.EmptyAndEdgeCases
+ 86/279 Test  #86: PqIndex.EmptyAndEdgeCases ................................................................................................   Passed    0.01 sec
+        Start  87: PqIndex.MemoryAccounting
+ 87/279 Test  #87: PqIndex.MemoryAccounting .................................................................................................   Passed    0.03 sec
+        Start  88: PqIndex.ParallelAddMatchesSerial
+ 88/279 Test  #88: PqIndex.ParallelAddMatchesSerial .........................................................................................   Passed    0.03 sec
+        Start  89: PqIndex.RerankReturnsExactDistancesAndImprovesRecall
+ 89/279 Test  #89: PqIndex.RerankReturnsExactDistancesAndImprovesRecall .....................................................................***Skipped   0.00 sec
+        Start  90: Crc32c.KnownVectors
+ 90/279 Test  #90: Crc32c.KnownVectors ......................................................................................................   Passed    0.00 sec
+        Start  91: Crc32c.IncrementalMatchesWhole
+ 91/279 Test  #91: Crc32c.IncrementalMatchesWhole ...........................................................................................   Passed    0.00 sec
+        Start  92: BruteForceDelete.DeletedVectorsAreNotReturned
+ 92/279 Test  #92: BruteForceDelete.DeletedVectorsAreNotReturned ............................................................................   Passed    0.00 sec
+        Start  93: BruteForceDelete.RemoveErrors
+ 93/279 Test  #93: BruteForceDelete.RemoveErrors ............................................................................................   Passed    0.00 sec
+        Start  94: BruteForceDelete.IdsStayStableAfterDelete
+ 94/279 Test  #94: BruteForceDelete.IdsStayStableAfterDelete ................................................................................   Passed    0.00 sec
+        Start  95: SnapshotTest.RoundTrip
+ 95/279 Test  #95: SnapshotTest.RoundTrip ...................................................................................................   Passed    0.01 sec
+        Start  96: SnapshotTest.EmptySnapshot
+ 96/279 Test  #96: SnapshotTest.EmptySnapshot ...............................................................................................   Passed    0.01 sec
+        Start  97: SnapshotTest.EveryFlippedByteIsDetected
+ 97/279 Test  #97: SnapshotTest.EveryFlippedByteIsDetected ..................................................................................   Passed    0.09 sec
+        Start  98: SnapshotTest.ReadsVersion1Files
+ 98/279 Test  #98: SnapshotTest.ReadsVersion1Files ..........................................................................................   Passed    0.00 sec
+        Start  99: SnapshotTest.TruncationIsDetected
+ 99/279 Test  #99: SnapshotTest.TruncationIsDetected ........................................................................................   Passed    0.09 sec
+        Start 100: WalTest.RoundTrip
+100/279 Test #100: WalTest.RoundTrip ........................................................................................................   Passed    0.01 sec
+        Start 101: WalTest.AppendAfterReopenContinuesLsn
+101/279 Test #101: WalTest.AppendAfterReopenContinuesLsn ....................................................................................   Passed    0.01 sec
+        Start 102: WalTest.TornTailAtEveryOffset
+102/279 Test #102: WalTest.TornTailAtEveryOffset ............................................................................................   Passed    0.11 sec
+        Start 103: WalTest.AppendAfterTornTailRecovery
+103/279 Test #103: WalTest.AppendAfterTornTailRecovery ......................................................................................   Passed    0.01 sec
+        Start 104: WalTest.CorruptionInLastRecordIsTreatedAsTorn
+104/279 Test #104: WalTest.CorruptionInLastRecordIsTreatedAsTorn ............................................................................   Passed    0.01 sec
+        Start 105: WalTest.MidLogCorruptionFailsLoudly
+105/279 Test #105: WalTest.MidLogCorruptionFailsLoudly ......................................................................................   Passed    0.02 sec
+        Start 106: WalTest.CorruptLengthMidLogIsNotATornTail
+106/279 Test #106: WalTest.CorruptLengthMidLogIsNotATornTail ................................................................................   Passed    0.02 sec
+        Start 107: WalTest.HeaderValidation
+107/279 Test #107: WalTest.HeaderValidation .................................................................................................   Passed    0.03 sec
+        Start 108: WalTest.ResetStartsNewLsnRange
+108/279 Test #108: WalTest.ResetStartsNewLsnRange ...........................................................................................   Passed    0.01 sec
+        Start 109: WalTest.ApplyErrorAbortsOpen
+109/279 Test #109: WalTest.ApplyErrorAbortsOpen .............................................................................................   Passed    0.01 sec
+        Start 110: CollectionTest.InsertSearchReopen
+110/279 Test #110: CollectionTest.InsertSearchReopen ........................................................................................   Passed    0.01 sec
+        Start 111: CollectionTest.CheckpointThenMoreWrites
+111/279 Test #111: CollectionTest.CheckpointThenMoreWrites ..................................................................................   Passed    0.02 sec
+        Start 112: CollectionTest.CrashBetweenSnapshotAndWalReset
+112/279 Test #112: CollectionTest.CrashBetweenSnapshotAndWalReset ...........................................................................   Passed    0.02 sec
+        Start 113: CollectionTest.MismatchedDimensionOrMetric
+113/279 Test #113: CollectionTest.MismatchedDimensionOrMetric ...............................................................................   Passed    0.02 sec
+        Start 114: CollectionTest.InvalidWritesAreNotLogged
+114/279 Test #114: CollectionTest.InvalidWritesAreNotLogged .................................................................................   Passed    0.01 sec
+        Start 115: CollectionTest.ConcurrentSearchesDuringWrites
+115/279 Test #115: CollectionTest.ConcurrentSearchesDuringWrites ............................................................................   Passed    0.04 sec
+        Start 116: HnswCollectionTest.RecoveryRebuildsTheSameGraph
+116/279 Test #116: HnswCollectionTest.RecoveryRebuildsTheSameGraph ..........................................................................   Passed    0.04 sec
+        Start 117: HnswCollectionTest.ReopeningWithDifferentSettingsFails
+117/279 Test #117: HnswCollectionTest.ReopeningWithDifferentSettingsFails ...................................................................   Passed    0.01 sec
+        Start 118: HnswCollectionTest.SettingsAreCheckedBeforeTheFirstCheckpoint
+118/279 Test #118: HnswCollectionTest.SettingsAreCheckedBeforeTheFirstCheckpoint ............................................................   Passed    0.01 sec
+        Start 119: HnswCollectionTest.FlatCollectionsRefuseHnsw
+119/279 Test #119: HnswCollectionTest.FlatCollectionsRefuseHnsw .............................................................................   Passed    0.01 sec
+        Start 120: UnicodeWords.PunctuationAndWhitespaceSeparate
+120/279 Test #120: UnicodeWords.PunctuationAndWhitespaceSeparate ............................................................................   Passed    0.00 sec
+        Start 121: UnicodeWords.MidWordPunctuationJoinsLetters
+121/279 Test #121: UnicodeWords.MidWordPunctuationJoinsLetters ..............................................................................   Passed    0.00 sec
+        Start 122: UnicodeWords.MidNumPunctuationJoinsDigits
+122/279 Test #122: UnicodeWords.MidNumPunctuationJoinsDigits ................................................................................   Passed    0.00 sec
+        Start 123: UnicodeWords.LettersDigitsAndUnderscore
+123/279 Test #123: UnicodeWords.LettersDigitsAndUnderscore ..................................................................................   Passed    0.00 sec
+        Start 124: UnicodeWords.NonLatinScripts
+124/279 Test #124: UnicodeWords.NonLatinScripts .............................................................................................   Passed    0.00 sec
+        Start 125: UnicodeWords.EmojiAreTheirOwnTokens
+125/279 Test #125: UnicodeWords.EmojiAreTheirOwnTokens ......................................................................................   Passed    0.00 sec
+        Start 126: UnicodeWords.CombiningMarksStayAttached
+126/279 Test #126: UnicodeWords.CombiningMarksStayAttached ..................................................................................   Passed    0.00 sec
+        Start 127: UnicodeWords.InvalidUtf8IsASeparator
+127/279 Test #127: UnicodeWords.InvalidUtf8IsASeparator .....................................................................................   Passed    0.00 sec
+        Start 128: UnicodeWords.OverlongTokensAreSplit
+128/279 Test #128: UnicodeWords.OverlongTokensAreSplit ......................................................................................   Passed    0.00 sec
+        Start 129: PlainTokenizer.SplitsOnEverythingButLettersAndDigits
+129/279 Test #129: PlainTokenizer.SplitsOnEverythingButLettersAndDigits .....................................................................   Passed    0.00 sec
+        Start 130: Analyzer.SurvivesRandomBytes
+130/279 Test #130: Analyzer.SurvivesRandomBytes .............................................................................................   Passed    0.01 sec
+        Start 131: Analyzer.PossessiveFilterRunsBeforeLowercase
+131/279 Test #131: Analyzer.PossessiveFilterRunsBeforeLowercase .............................................................................   Passed    0.00 sec
+        Start 132: Analyzer.LowercaseIsOptional
+132/279 Test #132: Analyzer.LowercaseIsOptional .............................................................................................   Passed    0.00 sec
+        Start 133: Analyzer.LuceneEnglishStopwords
+133/279 Test #133: Analyzer.LuceneEnglishStopwords ..........................................................................................   Passed    0.00 sec
+        Start 134: Analyzer.AnseriniEnglishPipeline
+134/279 Test #134: Analyzer.AnseriniEnglishPipeline .........................................................................................   Passed    0.00 sec
+        Start 135: Porter.MatchesReferenceAlgorithm
+135/279 Test #135: Porter.MatchesReferenceAlgorithm .........................................................................................   Passed    0.00 sec
+        Start 136: Porter.NonAsciiAndEdgeCases
+136/279 Test #136: Porter.NonAsciiAndEdgeCases ..............................................................................................   Passed    0.00 sec
+        Start 137: ThreadPool.SizeIncludesCaller
+137/279 Test #137: ThreadPool.SizeIncludesCaller ............................................................................................   Passed    0.00 sec
+        Start 138: ThreadPool.VisitsEveryIndexExactlyOnce
+138/279 Test #138: ThreadPool.VisitsEveryIndexExactlyOnce ...................................................................................   Passed    0.00 sec
+        Start 139: ThreadPool.ExplicitChunkSizes
+139/279 Test #139: ThreadPool.ExplicitChunkSizes ............................................................................................   Passed    0.00 sec
+        Start 140: ThreadPool.ManyConsecutiveJobs
+140/279 Test #140: ThreadPool.ManyConsecutiveJobs ...........................................................................................   Passed    0.01 sec
+        Start 141: ThreadPool.UsesMultipleThreads
+141/279 Test #141: ThreadPool.UsesMultipleThreads ...........................................................................................   Passed    0.03 sec
+        Start 142: ThreadPool.ConcurrentCallersAreSerialized
+142/279 Test #142: ThreadPool.ConcurrentCallersAreSerialized ................................................................................   Passed    0.01 sec
+        Start 143: BruteForceBatch.MatchesSequentialSearch
+143/279 Test #143: BruteForceBatch.MatchesSequentialSearch ..................................................................................   Passed    0.01 sec
+        Start 144: BruteForceBatch.DimensionMismatchAndEmpty
+144/279 Test #144: BruteForceBatch.DimensionMismatchAndEmpty ................................................................................   Passed    0.00 sec
+        Start 145: Hnsw.RejectsInvalidParameters
+145/279 Test #145: Hnsw.RejectsInvalidParameters ............................................................................................   Passed    0.00 sec
+        Start 146: Hnsw.EmptyIndex
+146/279 Test #146: Hnsw.EmptyIndex ..........................................................................................................   Passed    0.00 sec
+        Start 147: Hnsw.SingleVector
+147/279 Test #147: Hnsw.SingleVector ........................................................................................................   Passed    0.00 sec
+        Start 148: Hnsw.KZeroReturnsNothing
+148/279 Test #148: Hnsw.KZeroReturnsNothing .................................................................................................   Passed    0.00 sec
+        Start 149: Hnsw.DimensionMismatchIsAnError
+149/279 Test #149: Hnsw.DimensionMismatchIsAnError ..........................................................................................   Passed    0.00 sec
+        Start 150: Hnsw.IdsAreAssignedInInsertionOrder
+150/279 Test #150: Hnsw.IdsAreAssignedInInsertionOrder ......................................................................................   Passed    0.00 sec
+        Start 151: Hnsw.AddingItsOwnVectorsIsSafe
+151/279 Test #151: Hnsw.AddingItsOwnVectorsIsSafe ...........................................................................................   Passed    0.00 sec
+        Start 152: Hnsw.KLargerThanSizeReturnsEverything
+152/279 Test #152: Hnsw.KLargerThanSizeReturnsEverything ....................................................................................   Passed    0.00 sec
+        Start 153: Hnsw.EfSmallerThanKStillReturnsK
+153/279 Test #153: Hnsw.EfSmallerThanKStillReturnsK .........................................................................................   Passed    0.02 sec
+        Start 154: Hnsw.DuplicateVectors
+154/279 Test #154: Hnsw.DuplicateVectors ....................................................................................................   Passed    0.00 sec
+        Start 155: Hnsw.SameSeedSameResults
+155/279 Test #155: Hnsw.SameSeedSameResults .................................................................................................   Passed    0.08 sec
+        Start 156: Hnsw.ResultsAreSortedDistinctAndExact
+156/279 Test #156: Hnsw.ResultsAreSortedDistinctAndExact ....................................................................................   Passed    0.11 sec
+        Start 157: Hnsw.ConcurrentSearchesMatchSerial
+157/279 Test #157: Hnsw.ConcurrentSearchesMatchSerial .......................................................................................   Passed    0.11 sec
+        Start 158: Hnsw.HeuristicPrefersDiverseNeighbors
+158/279 Test #158: Hnsw.HeuristicPrefersDiverseNeighbors ....................................................................................   Passed    0.00 sec
+        Start 159: Hnsw.RecallImprovesWithEf
+159/279 Test #159: Hnsw.RecallImprovesWithEf ................................................................................................   Passed    0.09 sec
+        Start 160: Hnsw.IncrementalInsertsAfterSearch
+160/279 Test #160: Hnsw.IncrementalInsertsAfterSearch .......................................................................................   Passed    0.11 sec
+        Start 161: Hnsw.Sift10kRecall
+161/279 Test #161: Hnsw.Sift10kRecall .......................................................................................................***Skipped   0.00 sec
+        Start 162: HnswGraph.DegreeBounds
+162/279 Test #162: HnswGraph.DegreeBounds ...................................................................................................   Passed    0.19 sec
+        Start 163: HnswGraph.NeighborListsAreWellFormed
+163/279 Test #163: HnswGraph.NeighborListsAreWellFormed .....................................................................................   Passed    0.19 sec
+        Start 164: HnswGraph.EntryPointIsOnTopLayer
+164/279 Test #164: HnswGraph.EntryPointIsOnTopLayer .........................................................................................   Passed    0.19 sec
+        Start 165: HnswGraph.LevelDistributionMatchesMl
+165/279 Test #165: HnswGraph.LevelDistributionMatchesMl .....................................................................................   Passed    0.19 sec
+        Start 166: HnswGraph.Layer0IsReachableFromEntryPoint
+166/279 Test #166: HnswGraph.Layer0IsReachableFromEntryPoint ................................................................................   Passed    0.19 sec
+        Start 167: HnswTestUtil.SameGraphDetectsDifferences
+167/279 Test #167: HnswTestUtil.SameGraphDetectsDifferences .................................................................................   Passed    0.02 sec
+        Start 168: HnswDelete.RemoveErrorsAndCounts
+168/279 Test #168: HnswDelete.RemoveErrorsAndCounts .........................................................................................   Passed    0.00 sec
+        Start 169: HnswDelete.DeletedNeverReturnedAndRecallOnLiveSet
+169/279 Test #169: HnswDelete.DeletedNeverReturnedAndRecallOnLiveSet ........................................................................   Passed    0.21 sec
+        Start 170: HnswDelete.DeletedEntryPointStillNavigates
+170/279 Test #170: HnswDelete.DeletedEntryPointStillNavigates ...............................................................................   Passed    0.04 sec
+        Start 171: HnswDelete.HeavyDeletionStillReturnsKLiveResults
+171/279 Test #171: HnswDelete.HeavyDeletionStillReturnsKLiveResults .........................................................................   Passed    0.11 sec
+        Start 172: HnswDelete.FewerLiveThanKReturnsAllLive
+172/279 Test #172: HnswDelete.FewerLiveThanKReturnsAllLive ..................................................................................   Passed    0.02 sec
+        Start 173: HnswDelete.DeletingEverythingGivesEmptyResults
+173/279 Test #173: HnswDelete.DeletingEverythingGivesEmptyResults ...........................................................................   Passed    0.00 sec
+        Start 174: HnswDelete.DeletesDoNotChangeTheGraph
+174/279 Test #174: HnswDelete.DeletesDoNotChangeTheGraph ....................................................................................   Passed    0.07 sec
+        Start 175: HnswSnapshotFile.EmptyIndexRoundTripsAndKeepsBuilding
+175/279 Test #175: HnswSnapshotFile.EmptyIndexRoundTripsAndKeepsBuilding ....................................................................   Passed    0.01 sec
+        Start 176: HnswSnapshotFile.FlatSnapshotIsNotAnHnswIndex
+176/279 Test #176: HnswSnapshotFile.FlatSnapshotIsNotAnHnswIndex ............................................................................   Passed    0.01 sec
+        Start 177: HnswSnapshotCorruption.FlippedByteFailsTheChecksum
+177/279 Test #177: HnswSnapshotCorruption.FlippedByteFailsTheChecksum .......................................................................   Passed    0.01 sec
+        Start 178: HnswSnapshotCorruption.UnsupportedSnapshotVersion
+178/279 Test #178: HnswSnapshotCorruption.UnsupportedSnapshotVersion ........................................................................   Passed    0.01 sec
+        Start 179: HnswSnapshotCorruption.OppositeByteOrderIsRejected
+179/279 Test #179: HnswSnapshotCorruption.OppositeByteOrderIsRejected .......................................................................   Passed    0.01 sec
+        Start 180: HnswSnapshotCorruption.UnsupportedGraphVersion
+180/279 Test #180: HnswSnapshotCorruption.UnsupportedGraphVersion ...........................................................................   Passed    0.01 sec
+        Start 181: HnswSnapshotCorruption.EntryPointOutOfRange
+181/279 Test #181: HnswSnapshotCorruption.EntryPointOutOfRange ..............................................................................   Passed    0.01 sec
+        Start 182: HnswSnapshotCorruption.NeighborIdOutOfRange
+182/279 Test #182: HnswSnapshotCorruption.NeighborIdOutOfRange ..............................................................................   Passed    0.01 sec
+        Start 183: HnswSnapshotCorruption.NeighborCountOverCapacity
+183/279 Test #183: HnswSnapshotCorruption.NeighborCountOverCapacity .........................................................................   Passed    0.01 sec
+        Start 184: HnswSnapshotCorruption.TruncatedOrPaddedIndexSection
+184/279 Test #184: HnswSnapshotCorruption.TruncatedOrPaddedIndexSection .....................................................................   Passed    0.01 sec
+        Start 185: HnswGolden.WriteFixture
+185/279 Test #185: HnswGolden.WriteFixture ..................................................................................................***Skipped   0.00 sec
+        Start 186: HnswGolden.LoadsBitIdenticallyOnThisMachine
+186/279 Test #186: HnswGolden.LoadsBitIdenticallyOnThisMachine ..............................................................................   Passed    0.02 sec
+        Start 187: HnswGoldenLegacy.Version2LoadsOnlyOnTheLibraryThatWroteIt
+187/279 Test #187: HnswGoldenLegacy.Version2LoadsOnlyOnTheLibraryThatWroteIt ................................................................   Passed    0.00 sec
+        Start 188: HnswGoldenLegacy.OtherLibrarysGeneratorTextIsRejectedClearly
+188/279 Test #188: HnswGoldenLegacy.OtherLibrarysGeneratorTextIsRejectedClearly .............................................................   Passed    0.00 sec
+        Start 189: HnswParallel.OneThreadEqualsSequentialExactly
+189/279 Test #189: HnswParallel.OneThreadEqualsSequentialExactly ............................................................................   Passed    0.15 sec
+        Start 190: HnswParallel.QualityMatchesSequentialOnRandomData
+190/279 Test #190: HnswParallel.QualityMatchesSequentialOnRandomData ........................................................................   Passed    0.30 sec
+        Start 191: HnswParallel.QualityMatchesSequentialOnSift10k
+191/279 Test #191: HnswParallel.QualityMatchesSequentialOnSift10k ...........................................................................***Skipped   0.00 sec
+        Start 192: HnswParallel.HighContentionStress
+192/279 Test #192: HnswParallel.HighContentionStress ........................................................................................   Passed    0.02 sec
+        Start 193: HnswParallel.SaveLoadThenSequentialAddIsDeterministic
+193/279 Test #193: HnswParallel.SaveLoadThenSequentialAddIsDeterministic ....................................................................   Passed    0.04 sec
+        Start 194: HnswParallel.BatchOnTopOfDeletesAndErrors
+194/279 Test #194: HnswParallel.BatchOnTopOfDeletesAndErrors ................................................................................   Passed    0.01 sec
+        Start 195: HnswFilter.GraphRecallAgainstBruteForceOverMatchingSet
+195/279 Test #195: HnswFilter.GraphRecallAgainstBruteForceOverMatchingSet ...................................................................   Passed    0.19 sec
+        Start 196: HnswFilter.PreFilterIsExact
+196/279 Test #196: HnswFilter.PreFilterIsExact ..............................................................................................   Passed    0.15 sec
+        Start 197: HnswFilter.NeverReturnsANonMatchingId
+197/279 Test #197: HnswFilter.NeverReturnsANonMatchingId ....................................................................................   Passed    0.23 sec
+        Start 198: HnswFilter.FilterMatchingNothing
+198/279 Test #198: HnswFilter.FilterMatchingNothing .........................................................................................   Passed    0.15 sec
+        Start 199: HnswFilter.FilterMatchingEverything
+199/279 Test #199: HnswFilter.FilterMatchingEverything ......................................................................................   Passed    0.16 sec
+        Start 200: HnswFilter.CombinedWithDeletes
+200/279 Test #200: HnswFilter.CombinedWithDeletes ...........................................................................................   Passed    0.19 sec
+        Start 201: HnswFilter.FewerMatchesThanKReturnsAllOfThem
+201/279 Test #201: HnswFilter.FewerMatchesThanKReturnsAllOfThem .............................................................................   Passed    0.15 sec
+        Start 202: HnswFilter.AutoPicksEachSideOfTheThreshold
+202/279 Test #202: HnswFilter.AutoPicksEachSideOfTheThreshold ...............................................................................   Passed    0.15 sec
+        Start 203: HnswFilter.ResamplesNearTheThreshold
+203/279 Test #203: HnswFilter.ResamplesNearTheThreshold .....................................................................................   Passed    0.15 sec
+        Start 204: HnswFilter.FallbackToPreFilterWhenTheGraphSearchIsTooLong
+204/279 Test #204: HnswFilter.FallbackToPreFilterWhenTheGraphSearchIsTooLong ................................................................   Passed    0.15 sec
+        Start 205: HnswFilter.KnownSelectivityIsUsedInsteadOfAnEstimate
+205/279 Test #205: HnswFilter.KnownSelectivityIsUsedInsteadOfAnEstimate .....................................................................   Passed    0.15 sec
+        Start 206: HnswFilter.SelectivityEstimateIsCachedPerFilter
+206/279 Test #206: HnswFilter.SelectivityEstimateIsCachedPerFilter ..........................................................................   Passed    0.15 sec
+        Start 207: HnswFilter.ConcurrentFirstEstimatesAgree
+207/279 Test #207: HnswFilter.ConcurrentFirstEstimatesAgree .................................................................................   Passed    0.15 sec
+        Start 208: HnswFilter.BitsetFormAgreesWithCompiledFilter
+208/279 Test #208: HnswFilter.BitsetFormAgreesWithCompiledFilter ............................................................................   Passed    0.18 sec
+        Start 209: HnswFilter.Errors
+209/279 Test #209: HnswFilter.Errors ........................................................................................................   Passed    0.15 sec
+        Start 210: HnswFilter.ConcurrentFilteredSearchesMatchSerial
+210/279 Test #210: HnswFilter.ConcurrentFilteredSearchesMatchSerial .........................................................................   Passed    0.15 sec
+        Start 211: AllMetrics/BruteForceMetric.MatchesFullSort/l2  # GetParam() = l2
+211/279 Test #211: AllMetrics/BruteForceMetric.MatchesFullSort/l2  # GetParam() = l2 ........................................................   Passed    0.00 sec
+        Start 212: AllMetrics/BruteForceMetric.MatchesFullSort/ip  # GetParam() = ip
+212/279 Test #212: AllMetrics/BruteForceMetric.MatchesFullSort/ip  # GetParam() = ip ........................................................   Passed    0.00 sec
+        Start 213: AllMetrics/BruteForceMetric.MatchesFullSort/cosine  # GetParam() = cosine
+213/279 Test #213: AllMetrics/BruteForceMetric.MatchesFullSort/cosine  # GetParam() = cosine ................................................   Passed    0.00 sec
+        Start 214: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/wal_only  # GetParam() = wal_only
+214/279 Test #214: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/wal_only  # GetParam() = wal_only ..........................................   Passed    0.03 sec
+        Start 215: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/frequent_checkpoints  # GetParam() = frequent_checkpoints
+215/279 Test #215: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/frequent_checkpoints  # GetParam() = frequent_checkpoints ..................   Passed    4.68 sec
+        Start 216: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/rare_checkpoints  # GetParam() = rare_checkpoints
+216/279 Test #216: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/rare_checkpoints  # GetParam() = rare_checkpoints ..........................   Passed    0.32 sec
+        Start 217: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/fsync  # GetParam() = fsync
+217/279 Test #217: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/fsync  # GetParam() = fsync ................................................   Passed    5.27 sec
+        Start 218: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_wal_only  # GetParam() = hnsw_wal_only
+218/279 Test #218: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_wal_only  # GetParam() = hnsw_wal_only ................................   Passed    0.12 sec
+        Start 219: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_frequent_checkpoints  # GetParam() = hnsw_frequent_checkpoints
+219/279 Test #219: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_frequent_checkpoints  # GetParam() = hnsw_frequent_checkpoints ........   Passed    4.26 sec
+        Start 220: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_rare_checkpoints  # GetParam() = hnsw_rare_checkpoints
+220/279 Test #220: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_rare_checkpoints  # GetParam() = hnsw_rare_checkpoints ................   Passed    0.36 sec
+        Start 221: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_fsync  # GetParam() = hnsw_fsync
+221/279 Test #221: Modes/CrashRecovery.NoAcknowledgedWriteIsLost/hnsw_fsync  # GetParam() = hnsw_fsync ......................................   Passed    5.30 sec
+        Start 222: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_l2  # GetParam() = avx2_l2
+222/279 Test #222: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_l2  # GetParam() = avx2_l2 ..........................................   Passed    0.01 sec
+        Start 223: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_ip  # GetParam() = avx2_ip
+223/279 Test #223: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_ip  # GetParam() = avx2_ip ..........................................   Passed    0.01 sec
+        Start 224: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_cosine  # GetParam() = avx2_cosine
+224/279 Test #224: Kernels/SimdKernel.MatchesScalarWithinTolerance/avx2_cosine  # GetParam() = avx2_cosine ..................................   Passed    0.01 sec
+        Start 225: Kernels/SimdKernel.ExactOnIntegerData/avx2_l2  # GetParam() = avx2_l2
+225/279 Test #225: Kernels/SimdKernel.ExactOnIntegerData/avx2_l2  # GetParam() = avx2_l2 ....................................................   Passed    0.00 sec
+        Start 226: Kernels/SimdKernel.ExactOnIntegerData/avx2_ip  # GetParam() = avx2_ip
+226/279 Test #226: Kernels/SimdKernel.ExactOnIntegerData/avx2_ip  # GetParam() = avx2_ip ....................................................   Passed    0.00 sec
+        Start 227: Kernels/SimdKernel.ExactOnIntegerData/avx2_cosine  # GetParam() = avx2_cosine
+227/279 Test #227: Kernels/SimdKernel.ExactOnIntegerData/avx2_cosine  # GetParam() = avx2_cosine ............................................***Skipped   0.00 sec
+        Start 228: Kernels/SimdKernel.IdenticalVectors/avx2_l2  # GetParam() = avx2_l2
+228/279 Test #228: Kernels/SimdKernel.IdenticalVectors/avx2_l2  # GetParam() = avx2_l2 ......................................................   Passed    0.00 sec
+        Start 229: Kernels/SimdKernel.IdenticalVectors/avx2_ip  # GetParam() = avx2_ip
+229/279 Test #229: Kernels/SimdKernel.IdenticalVectors/avx2_ip  # GetParam() = avx2_ip ......................................................   Passed    0.00 sec
+        Start 230: Kernels/SimdKernel.IdenticalVectors/avx2_cosine  # GetParam() = avx2_cosine
+230/279 Test #230: Kernels/SimdKernel.IdenticalVectors/avx2_cosine  # GetParam() = avx2_cosine ..............................................   Passed    0.00 sec
+        Start 231: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_l2  # GetParam() = avx2_l2
+231/279 Test #231: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_l2  # GetParam() = avx2_l2 .................................................***Skipped   0.00 sec
+        Start 232: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_ip  # GetParam() = avx2_ip
+232/279 Test #232: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_ip  # GetParam() = avx2_ip .................................................***Skipped   0.00 sec
+        Start 233: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_cosine  # GetParam() = avx2_cosine
+233/279 Test #233: Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_cosine  # GetParam() = avx2_cosine .........................................   Passed    0.00 sec
+        Start 234: Kernels/SimdKernel.NoReadPastEnd/avx2_l2  # GetParam() = avx2_l2
+234/279 Test #234: Kernels/SimdKernel.NoReadPastEnd/avx2_l2  # GetParam() = avx2_l2 .........................................................   Passed    0.00 sec
+        Start 235: Kernels/SimdKernel.NoReadPastEnd/avx2_ip  # GetParam() = avx2_ip
+235/279 Test #235: Kernels/SimdKernel.NoReadPastEnd/avx2_ip  # GetParam() = avx2_ip .........................................................   Passed    0.00 sec
+        Start 236: Kernels/SimdKernel.NoReadPastEnd/avx2_cosine  # GetParam() = avx2_cosine
+236/279 Test #236: Kernels/SimdKernel.NoReadPastEnd/avx2_cosine  # GetParam() = avx2_cosine .................................................   Passed    0.00 sec
+        Start 237: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/l2  # GetParam() = l2
+237/279 Test #237: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/l2  # GetParam() = l2 .......................................   Passed    0.03 sec
+        Start 238: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/ip  # GetParam() = ip
+238/279 Test #238: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/ip  # GetParam() = ip .......................................   Passed    0.03 sec
+        Start 239: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/cosine  # GetParam() = cosine
+239/279 Test #239: AllMetrics/PqAdc.TableDistanceEqualsDistanceToReconstruction/cosine  # GetParam() = cosine ...............................   Passed    0.03 sec
+        Start 240: AllMetrics/HnswRecall.HighRecallOnRandomData/l2  # GetParam() = l2
+240/279 Test #240: AllMetrics/HnswRecall.HighRecallOnRandomData/l2  # GetParam() = l2 .......................................................   Passed    0.21 sec
+        Start 241: AllMetrics/HnswRecall.HighRecallOnRandomData/ip  # GetParam() = ip
+241/279 Test #241: AllMetrics/HnswRecall.HighRecallOnRandomData/ip  # GetParam() = ip .......................................................   Passed    0.21 sec
+        Start 242: AllMetrics/HnswRecall.HighRecallOnRandomData/cosine  # GetParam() = cosine
+242/279 Test #242: AllMetrics/HnswRecall.HighRecallOnRandomData/cosine  # GetParam() = cosine ...............................................   Passed    0.23 sec
+        Start 243: BothModes/HnswSelection.RecallAndReachability/simple  # GetParam() = simple
+243/279 Test #243: BothModes/HnswSelection.RecallAndReachability/simple  # GetParam() = simple ..............................................   Passed    0.20 sec
+        Start 244: BothModes/HnswSelection.RecallAndReachability/heuristic  # GetParam() = heuristic
+244/279 Test #244: BothModes/HnswSelection.RecallAndReachability/heuristic  # GetParam() = heuristic ........................................   Passed    0.21 sec
+        Start 245: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_heuristic  # GetParam() = l2_heuristic
+245/279 Test #245: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_heuristic  # GetParam() = l2_heuristic .................   Passed    0.06 sec
+        Start 246: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/ip_heuristic  # GetParam() = ip_heuristic
+246/279 Test #246: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/ip_heuristic  # GetParam() = ip_heuristic .................   Passed    0.06 sec
+        Start 247: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/cosine_heuristic  # GetParam() = cosine_heuristic
+247/279 Test #247: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/cosine_heuristic  # GetParam() = cosine_heuristic .........   Passed    0.06 sec
+        Start 248: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_simple  # GetParam() = l2_simple
+248/279 Test #248: AllMetricsBothModes/HnswPersistence.SaveThenLoadIsBitIdentical/l2_simple  # GetParam() = l2_simple .......................   Passed    0.06 sec
+        Start 249: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_heuristic  # GetParam() = l2_heuristic
+249/279 Test #249: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_heuristic  # GetParam() = l2_heuristic ...........   Passed    0.14 sec
+        Start 250: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/ip_heuristic  # GetParam() = ip_heuristic
+250/279 Test #250: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/ip_heuristic  # GetParam() = ip_heuristic ...........   Passed    0.14 sec
+        Start 251: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/cosine_heuristic  # GetParam() = cosine_heuristic
+251/279 Test #251: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/cosine_heuristic  # GetParam() = cosine_heuristic ...   Passed    0.16 sec
+        Start 252: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_simple  # GetParam() = l2_simple
+252/279 Test #252: AllMetricsBothModes/HnswPersistence.SaveLoadThenAddEqualsNeverSaving/l2_simple  # GetParam() = l2_simple .................   Passed    0.14 sec
+        Start 253: ShardIdCodec.SingleShardIsIdentity
+253/279 Test #253: ShardIdCodec.SingleShardIsIdentity .......................................................................................   Passed    0.00 sec
+        Start 254: ShardIdCodec.ZeroShardsTreatedAsOne
+254/279 Test #254: ShardIdCodec.ZeroShardsTreatedAsOne ......................................................................................   Passed    0.00 sec
+        Start 255: ShardIdCodec.RoundTripsAcrossShards
+255/279 Test #255: ShardIdCodec.RoundTripsAcrossShards ......................................................................................   Passed    0.00 sec
+        Start 256: ShardIdCodec.GlobalIdsAreUniqueAndInterleaved
+256/279 Test #256: ShardIdCodec.GlobalIdsAreUniqueAndInterleaved ............................................................................   Passed    0.00 sec
+        Start 257: ShardIdCodec.LocalLimitKeepsGlobalIdsInside32Bits
+257/279 Test #257: ShardIdCodec.LocalLimitKeepsGlobalIdsInside32Bits ........................................................................   Passed    0.00 sec
+        Start 258: ExposurePolicy.LoopbackDetection
+258/279 Test #258: ExposurePolicy.LoopbackDetection .........................................................................................   Passed    0.00 sec
+        Start 259: ExposurePolicy.HostPortBracketsIpv6
+259/279 Test #259: ExposurePolicy.HostPortBracketsIpv6 ......................................................................................   Passed    0.00 sec
+        Start 260: ExposurePolicy.DefaultIsLoopbackAndAllowed
+260/279 Test #260: ExposurePolicy.DefaultIsLoopbackAndAllowed ...............................................................................   Passed    0.00 sec
+        Start 261: ExposurePolicy.ExposingRequiresTlsAndTokenOrInsecure
+261/279 Test #261: ExposurePolicy.ExposingRequiresTlsAndTokenOrInsecure .....................................................................   Passed    0.00 sec
+        Start 262: ExposurePolicy.TokenNeedsTlsAndCertNeedsKey
+262/279 Test #262: ExposurePolicy.TokenNeedsTlsAndCertNeedsKey ..............................................................................   Passed    0.00 sec
+        Start 263: ExposurePolicy.StartServerRefusesUnsafeExposure
+263/279 Test #263: ExposurePolicy.StartServerRefusesUnsafeExposure ..........................................................................   Passed    0.00 sec
+        Start 264: ExposurePolicy.ShortTokensAreRejected
+264/279 Test #264: ExposurePolicy.ShortTokensAreRejected ....................................................................................   Passed    0.00 sec
+        Start 265: SecureShardTest.AcceptsTrustedTlsWithTheToken
+265/279 Test #265: SecureShardTest.AcceptsTrustedTlsWithTheToken ............................................................................   Passed    0.03 sec
+        Start 266: SecureShardTest.RejectsAMissingToken
+266/279 Test #266: SecureShardTest.RejectsAMissingToken .....................................................................................   Passed    0.03 sec
+        Start 267: SecureShardTest.RejectsAWrongToken
+267/279 Test #267: SecureShardTest.RejectsAWrongToken .......................................................................................   Passed    0.03 sec
+        Start 268: SecureShardTest.RejectsAPlaintextClient
+268/279 Test #268: SecureShardTest.RejectsAPlaintextClient ..................................................................................   Passed    0.84 sec
+        Start 269: SecureShardTest.ClientRejectsAnUntrustedServerCertificate
+269/279 Test #269: SecureShardTest.ClientRejectsAnUntrustedServerCertificate ................................................................   Passed    0.91 sec
+        Start 270: SecureShardTest.CoordinatorReachesShardOverTlsWithToken
+270/279 Test #270: SecureShardTest.CoordinatorReachesShardOverTlsWithToken ..................................................................   Passed    0.05 sec
+        Start 271: SecureShardTest.CoordinatorWithAWrongTokenIsRejected
+271/279 Test #271: SecureShardTest.CoordinatorWithAWrongTokenIsRejected .....................................................................   Passed    0.03 sec
+        Start 272: ShardingTest.InsertSearchDeleteThroughCoordinator
+272/279 Test #272: ShardingTest.InsertSearchDeleteThroughCoordinator ........................................................................   Passed    1.50 sec
+        Start 273: ShardingTest.InsertBatchMatchesSingleInserts
+273/279 Test #273: ShardingTest.InsertBatchMatchesSingleInserts .............................................................................   Passed    0.12 sec
+        Start 274: ShardingTest.InsertBatchReportsPartialFailureAndRetriesWithoutDuplicates
+274/279 Test #274: ShardingTest.InsertBatchReportsPartialFailureAndRetriesWithoutDuplicates .................................................   Passed    0.25 sec
+        Start 275: ShardingTest.RetryIdsAreVerifiedAgainstTheStoredVectors
+275/279 Test #275: ShardingTest.RetryIdsAreVerifiedAgainstTheStoredVectors ..................................................................   Passed    0.07 sec
+        Start 276: ShardingTest.ShardRejectsABadRetryBeforeInsertingAnything
+276/279 Test #276: ShardingTest.ShardRejectsABadRetryBeforeInsertingAnything ................................................................   Passed    0.06 sec
+        Start 277: ShardingTest.ShardRefusesIdsAtOrBeyondTheLimit
+277/279 Test #277: ShardingTest.ShardRefusesIdsAtOrBeyondTheLimit ...........................................................................   Passed    0.06 sec
+        Start 278: ShardingTest.AsyncAndThreadPerShardFanoutAgree
+278/279 Test #278: ShardingTest.AsyncAndThreadPerShardFanoutAgree ...........................................................................   Passed    0.22 sec
+        Start 279: ShardingTest.SearchFailsCleanlyWhenAShardIsDown
+279/279 Test #279: ShardingTest.SearchFailsCleanlyWhenAShardIsDown ..........................................................................   Passed    0.05 sec
+
+100% tests passed, 0 tests failed out of 279
+
+Total Test time (real) =  33.97 sec
+
+The following tests did not run:
+	 20 - BruteForce.Sift10kRecallIsPerfect (Skipped)
+	 89 - PqIndex.RerankReturnsExactDistancesAndImprovesRecall (Skipped)
+	161 - Hnsw.Sift10kRecall (Skipped)
+	185 - HnswGolden.WriteFixture (Skipped)
+	191 - HnswParallel.QualityMatchesSequentialOnSift10k (Skipped)
+	227 - Kernels/SimdKernel.ExactOnIntegerData/avx2_cosine  # GetParam() = avx2_cosine (Skipped)
+	231 - Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_l2  # GetParam() = avx2_l2 (Skipped)
+	232 - Kernels/SimdKernel.CosineZeroVectorIsOne/avx2_ip  # GetParam() = avx2_ip (Skipped)
+[22:52:38] building linux-profile (for perf)
+ninja: no work to do.
+faiss 1.15.1 OPTIMIZE DD AVX2 AVX512 AVX512_SPR AVX512_VPOPCNT 
+hnswlib ?
+[22:53:13] verifying SIMD configurations (native and AVX2-restricted)
+native  hnswlib  AVX-512 (512-bit)  problems=[]
+native  faiss    AVX-512 (512-bit)  problems=[]
+avx2    hnswlib  AVX (256-bit)  problems=[]
+avx2    faiss    AVX2 (256-bit)  problems=[]
+[22:53:14] datasets
+downloading http://ann-benchmarks.com/sift-128-euclidean.hdf5
+downloading http://ann-benchmarks.com/glove-100-angular.hdf5
+downloading 10,000,000 x 128 bytes from https://dl.fbaipublicfiles.com/billion-scale-ann-benchmarks/bigann/base.1B.u8bin
+  1,048,576 / 10,000,000
+  2,097,152 / 10,000,000
+  3,145,728 / 10,000,000
+  4,194,304 / 10,000,000
+  5,242,880 / 10,000,000
+  6,291,456 / 10,000,000
+  7,340,032 / 10,000,000
+  8,388,608 / 10,000,000
+  9,437,184 / 10,000,000
+  ground truth matches exact search on 20 queries
+sift1m: wrote /home/ubuntu/strata/data/sift1m
+  base         (1000000, 128) float32
+  query        (10000, 128) float32
+  groundtruth  (10000, 100) int32
+glove100: wrote /home/ubuntu/strata/data/glove100
+  base         (1183514, 100) float32
+  query        (10000, 100) float32
+  groundtruth  (10000, 100) int32
+bigann10m: wrote /home/ubuntu/strata/data/bigann10m
+[22:53:54] main ready

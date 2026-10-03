@@ -1,0 +1,1183 @@
+ Percent |	Source code & Disassembly of strata_search for cycles (5699 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         : 0     0x42700 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)>:
+    0.00 :   42700:        endbr64
+    0.00 :   42704:        pushq   %rbp
+    0.00 :   42705:        movq    %rsp, %rbp
+    0.00 :   42708:        pushq   %r15
+    0.00 :   4270a:        pushq   %r14
+    0.00 :   4270c:        pushq   %r13
+    0.00 :   4270e:        pushq   %r12
+    0.00 :   42710:        pushq   %r10
+    0.00 :   42712:        pushq   %rbx
+    0.00 :   42713:        subq    $0x1000, %rsp
+    0.00 :   4271a:        orq     $0x0, (%rsp)
+    0.00 :   4271f:        subq    $0x1000, %rsp
+    0.00 :   42726:        orq     $0x0, (%rsp)
+    0.00 :   4272b:        subq    $0x130, %rsp
+    0.00 :   42732:        movq    %fs:0x28, %rax
+    0.00 :   4273b:        movq    %rax, -0x38(%rbp)
+    0.00 :   4273f:        xorl    %eax, %eax
+    0.00 :   42741:        cmpl    $0x1, 0x4(%rsi)
+    0.00 :   42745:        movq    %rdi, %rbx
+    0.00 :   42748:        jne     0x42800 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x100>
+    0.00 :   4274e:        movq    0x8(%rsi), %r13
+    0.00 :   42752:        movq    0x38(%rsi), %rax
+    0.00 :   42756:        movq    %rsi, %r12
+    0.00 :   42759:        subq    0x30(%rsi), %rax
+    0.00 :   4275d:        cmpq    %r13, %rax
+    0.00 :   42760:        jne     0x4276f <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x6f>
+    0.00 :   42762:        movq    %r13, %rax
+    0.00 :   42765:        shrq    $0x20, %rax
+    0.00 :   42769:        je      0x42860 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x160>
+    0.00 :   4276f:        leaq    -0x14d0(%rbp), %r14
+    0.00 :   42776:        leaq    0x20fb3(%rip), %rsi  # 0x63730
+    0.00 :   4277d:        movq    %r14, %rdi
+    0.00 :   42780:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   42785:        movq    -0x14c8(%rbp), %rdx
+    0.00 :   4278c:        movq    -0x14d0(%rbp), %rsi
+    0.00 :   42793:        leaq    -0xb00(%rbp), %rdi
+    0.00 :   4279a:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   4279f:        movl    -0xb00(%rbp), %eax
+    0.00 :   427a5:        leaq    -0xaf8(%rbp), %r12
+    0.00 :   427ac:        leaq    0x8(%rbx), %rdi
+    0.00 :   427b0:        movq    %r12, %rsi
+    0.00 :   427b3:        movl    %eax, (%rbx)
+    0.00 :   427b5:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   427ba:        movb    $0x0, 0xab8(%rbx)
+    0.00 :   427c1:        movq    %r12, %rdi
+    0.00 :   427c4:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   427c9:        movq    %r14, %rdi
+    0.00 :   427cc:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   427d1:        movq    -0x38(%rbp), %rax
+    0.00 :   427d5:        subq    %fs:0x28, %rax
+    0.00 :   427de:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   427e4:        leaq    -0x30(%rbp), %rsp
+    0.00 :   427e8:        movq    %rbx, %rax
+    0.00 :   427eb:        popq    %rbx
+    0.00 :   427ec:        popq    %r10
+    0.00 :   427ee:        popq    %r12
+    0.00 :   427f0:        popq    %r13
+    0.00 :   427f2:        popq    %r14
+    0.00 :   427f4:        popq    %r15
+    0.00 :   427f6:        popq    %rbp
+    0.00 :   427f7:        retq
+    0.00 :   427f8:        nopl    (%rax,%rax)
+    0.00 :   42800:        leaq    -0x14d0(%rbp), %r12
+    0.00 :   42807:        leaq    0x20f0d(%rip), %rsi  # 0x6371b
+    0.00 :   4280e:        movq    %r12, %rdi
+    0.00 :   42811:        leaq    -0xaf8(%rbp), %r13
+    0.00 :   42818:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   4281d:        movq    %r12, %rdx
+    0.00 :   42820:        leaq    -0xb00(%rbp), %rdi
+    0.00 :   42827:        xorl    %esi, %esi
+    0.00 :   42829:        callq   0x452d0 <strata::make_error(strata::ErrorCode, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)>
+    0.00 :   4282e:        movl    -0xb00(%rbp), %eax
+    0.00 :   42834:        leaq    0x8(%rbx), %rdi
+    0.00 :   42838:        movq    %r13, %rsi
+    0.00 :   4283b:        movl    %eax, (%rbx)
+    0.00 :   4283d:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   42842:        movb    $0x0, 0xab8(%rbx)
+    0.00 :   42849:        movq    %r13, %rdi
+    0.00 :   4284c:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   42851:        movq    %r12, %rdi
+    0.00 :   42854:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   42859:        jmp     0x427d1 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd1>
+    0.00 :   4285e:        nop
+    0.00 :   42860:        movq    0x50(%rsi), %rdx
+    0.00 :   42864:        movq    0x58(%rsi), %rax
+    0.00 :   42868:        movq    $0x0, -0x2110(%rbp)
+    0.00 :   42873:        movq    $0x0, -0x2108(%rbp)
+    0.00 :   4287e:        subq    %rdx, %rax
+    0.00 :   42881:        movq    %rdx, -0x20f0(%rbp)
+    0.00 :   42888:        movq    %rax, -0x20e8(%rbp)
+    0.00 :   4288f:        movq    $0x0, -0x2100(%rbp)
+    0.00 :   4289a:        cmpq    $0x3, %rax
+    0.00 :   4289e:        jbe     0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   428a0:        leaq    -0x4(%rax), %rcx
+    0.00 :   428a4:        leaq    0x4(%rdx), %rsi
+    0.00 :   428a8:        movl    (%rdx), %r14d
+    0.00 :   428ab:        movq    %rsi, -0x20f0(%rbp)
+    0.00 :   428b2:        movq    %rcx, -0x20e8(%rbp)
+    0.00 :   428b9:        cmpq    $0x3, %rcx
+    0.00 :   428bd:        ja      0x428f8 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1f8>
+    0.00 :   428bf:        leaq    -0x14d0(%rbp), %r14
+    0.00 :   428c6:        leaq    0x20e72(%rip), %rsi  # 0x6373f
+    0.00 :   428cd:        movq    %r14, %rdi
+    0.00 :   428d0:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   428d5:        movq    -0x14c8(%rbp), %rdx
+    0.00 :   428dc:        movq    -0x14d0(%rbp), %rsi
+    0.00 :   428e3:        leaq    -0xb00(%rbp), %rdi
+    0.00 :   428ea:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   428ef:        jmp     0x4279f <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x9f>
+    0.00 :   428f4:        nopl    (%rax)
+    0.00 :   428f8:        movl    0x4(%rdx), %ecx
+    0.00 :   428fb:        subq    $0x8, %rax
+    0.00 :   428ff:        addq    $0x8, %rdx
+    0.00 :   42903:        movq    %rdx, -0x20f0(%rbp)
+    0.00 :   4290a:        movq    %rax, -0x20e8(%rbp)
+    0.00 :   42911:        cmpq    $0x7, %rax
+    0.00 :   42915:        jbe     0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   42917:        leaq    -0x20f0(%rbp), %rdi
+    0.00 :   4291e:        leaq    -0x2110(%rbp), %rsi
+    0.00 :   42925:        movq    %rdi, -0x2120(%rbp)
+    0.00 :   4292c:        callq   0x39b40 <bool strata::(anonymous namespace)::SectionReader::read<unsigned long>(unsigned long&) [clone .part.0]>
+    0.00 :   42931:        testb   %al, %al
+    0.00 :   42933:        je      0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   42935:        cmpq    $0x7, -0x20e8(%rbp)
+    0.00 :   4293d:        jbe     0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   4293f:        leaq    -0x2108(%rbp), %rsi
+    0.00 :   42946:        callq   0x39b40 <bool strata::(anonymous namespace)::SectionReader::read<unsigned long>(unsigned long&) [clone .part.0]>
+    0.00 :   4294b:        testb   %al, %al
+    0.00 :   4294d:        je      0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   42953:        cmpq    $0x7, -0x20e8(%rbp)
+    0.00 :   4295b:        jbe     0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   42961:        leaq    -0x2100(%rbp), %rsi
+    0.00 :   42968:        callq   0x39b40 <bool strata::(anonymous namespace)::SectionReader::read<unsigned long>(unsigned long&) [clone .part.0]>
+    0.00 :   4296d:        testb   %al, %al
+    0.00 :   4296f:        je      0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   42975:        movq    -0x20e8(%rbp), %r15
+    0.00 :   4297c:        cmpq    $0x3, %r15
+    0.00 :   42980:        jbe     0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   42986:        movq    -0x20f0(%rbp), %rax
+    0.00 :   4298d:        movl    (%rax), %edx
+    0.00 :   4298f:        leaq    0x4(%rax), %rsi
+    0.00 :   42993:        movq    %rsi, -0x20f0(%rbp)
+    0.00 :   4299a:        movl    %edx, -0x212c(%rbp)
+    0.00 :   429a0:        leaq    -0x4(%r15), %rdx
+    0.00 :   429a4:        movq    %rdx, -0x20e8(%rbp)
+    0.00 :   429ab:        cmpq    $0x3, %rdx
+    0.00 :   429af:        jbe     0x428bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1bf>
+    0.00 :   429b5:        movl    0x4(%rax), %edx
+    0.00 :   429b8:        leaq    -0x8(%r15), %r8
+    0.00 :   429bc:        movq    %r8, -0x20e8(%rbp)
+    0.00 :   429c3:        movl    %edx, -0x2130(%rbp)
+    0.00 :   429c9:        leaq    0x8(%rax), %rdx
+    0.00 :   429cd:        movq    %rdx, -0x20f0(%rbp)
+    0.00 :   429d4:        leal    -0x1(%r14), %edx
+    0.00 :   429d8:        cmpl    $0x1, %edx
+    0.00 :   429db:        ja      0x42b42 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x442>
+    0.00 :   429e1:        cmpl    $0x1, %ecx
+    0.00 :   429e4:        jbe     0x42a20 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x320>
+    0.00 :   429e6:        leaq    -0x14d0(%rbp), %r14
+    0.00 :   429ed:        leaq    0x20d77(%rip), %rsi  # 0x6376b
+    0.00 :   429f4:        movq    %r14, %rdi
+    0.00 :   429f7:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   429fc:        movq    -0x14c8(%rbp), %rdx
+    0.00 :   42a03:        movq    -0x14d0(%rbp), %rsi
+    0.00 :   42a0a:        leaq    -0xb00(%rbp), %rdi
+    0.00 :   42a11:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   42a16:        jmp     0x4279f <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x9f>
+    0.00 :   42a1b:        callq   0x5b40 <_init+0xb40>
+    0.00 :   42a20:        movq    %rax, -0x2118(%rbp)
+    0.00 :   42a27:        vmovq   -0x2110(%rbp), %xmm1
+    0.00 :   42a2f:        subq    $0x20, %rsp
+    0.00 :   42a33:        movq    -0x2100(%rbp), %rax
+    0.00 :   42a3a:        movl    %ecx, -0x20c8(%rbp)
+    0.00 :   42a40:        vpinsrq $0x1, -0x2108(%rbp), %xmm1, %xmm0
+    0.00 :   42a4a:        movq    %r8, -0x2128(%rbp)
+    0.00 :   42a51:        movq    %rax, -0x20d0(%rbp)
+    0.00 :   42a58:        movq    0x10(%r12), %rsi
+    0.00 :   42a5d:        vmovdqa %xmm0, -0x20e0(%rbp)
+    0.00 :   42a65:        vmovdqu -0x20e0(%rbp), %ymm2
+    0.00 :   42a6d:        movq    %rax, -0x2148(%rbp)
+    0.00 :   42a74:        leaq    -0xb00(%rbp), %rax
+    0.00 :   42a7b:        movq    %rax, -0x2138(%rbp)
+    0.00 :   42a82:        movq    %rax, %rdi
+    0.00 :   42a85:        vmovdqu %ymm2, (%rsp)
+    0.00 :   42a8a:        movl    (%r12), %edx
+    0.00 :   42a8e:        vzeroupper
+    0.00 :   42a91:        callq   0x3c8c0 <strata::HnswIndex::create(unsigned long, strata::Metric, strata::HnswParams)>
+    0.00 :   42a96:        addq    $0x20, %rsp
+    0.00 :   42a9a:        cmpb    $0x0, -0x48(%rbp)
+    0.00 :   42a9e:        movq    -0x2118(%rbp), %rax
+    0.00 :   42aa5:        movq    -0x2128(%rbp), %r8
+    0.00 :   42aac:        je      0x43025 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x925>
+    0.00 :   42ab2:        cmpl    $0x2, %r14d
+    0.00 :   42ab6:        jne     0x42d16 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x616>
+    0.00 :   42abc:        cmpq    $0x7, %r8
+    0.00 :   42ac0:        ja      0x42bd0 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x4d0>
+    0.00 :   42ac6:        xorl    %edx, %edx
+    0.00 :   42ac8:        movq    %rdx, -0x20f8(%rbp)
+    0.00 :   42acf:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   42ad6:        leaq    0x20cb6(%rip), %rsi  # 0x63793
+    0.00 :   42add:        movq    %r15, %rdi
+    0.00 :   42ae0:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   42ae5:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   42aec:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   42af3:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   42afa:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   42aff:        movl    -0x14d0(%rbp), %eax
+    0.00 :   42b05:        leaq    -0x14c8(%rbp), %r12
+    0.00 :   42b0c:        leaq    0x8(%rbx), %rdi
+    0.00 :   42b10:        movq    %r12, %rsi
+    0.00 :   42b13:        movl    %eax, (%rbx)
+    0.00 :   42b15:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   42b1a:        movb    $0x0, 0xab8(%rbx)
+    0.00 :   42b21:        movq    %r12, %rdi
+    0.00 :   42b24:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   42b29:        movq    %r15, %rdi
+    0.00 :   42b2c:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   42b31:        movq    -0x2138(%rbp), %rdi
+    0.00 :   42b38:        callq   0x14c00 <tl::detail::expected_storage_base<strata::HnswIndex, strata::Error, false, false>::~expected_storage_base()>
+    0.00 :   42b3d:        jmp     0x427d1 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd1>
+    0.00 :   42b42:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   42b49:        movl    %r14d, %esi
+    0.00 :   42b4c:        movq    %r15, %rdi
+    0.00 :   42b4f:        callq   0x45000 <std::__cxx11::to_string(unsigned int)>
+    0.00 :   42b54:        leaq    0x20bf5(%rip), %rdx  # 0x63750
+    0.00 :   42b5b:        xorl    %esi, %esi
+    0.00 :   42b5d:        movq    %r15, %rdi
+    0.00 :   42b60:        callq   0x15430 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::insert(unsigned long, char const*)>
+    0.00 :   42b65:        leaq    -0x14d0(%rbp), %r14
+    0.00 :   42b6c:        movq    %rax, %rsi
+    0.00 :   42b6f:        movq    %r14, %rdi
+    0.00 :   42b72:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   42b77:        movq    -0x14c8(%rbp), %rdx
+    0.00 :   42b7e:        movq    -0x14d0(%rbp), %rsi
+    0.00 :   42b85:        leaq    -0xb00(%rbp), %rdi
+    0.00 :   42b8c:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   42b91:        movl    -0xb00(%rbp), %eax
+    0.00 :   42b97:        leaq    -0xaf8(%rbp), %r12
+    0.00 :   42b9e:        leaq    0x8(%rbx), %rdi
+    0.00 :   42ba2:        movq    %r12, %rsi
+    0.00 :   42ba5:        movl    %eax, (%rbx)
+    0.00 :   42ba7:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   42bac:        movb    $0x0, 0xab8(%rbx)
+    0.00 :   42bb3:        movq    %r12, %rdi
+    0.00 :   42bb6:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   42bbb:        movq    %r14, %rdi
+    0.00 :   42bbe:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   42bc3:        movq    %r15, %rdi
+    0.00 :   42bc6:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   42bcb:        jmp     0x427d1 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd1>
+    0.00 :   42bd0:        movq    -0x2120(%rbp), %rdi
+    0.00 :   42bd7:        leaq    -0x20f8(%rbp), %rsi
+    0.00 :   42bde:        callq   0x39b40 <bool strata::(anonymous namespace)::SectionReader::read<unsigned long>(unsigned long&) [clone .part.0]>
+    0.00 :   42be3:        testb   %al, %al
+    0.00 :   42be5:        je      0x42acf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3cf>
+    0.00 :   42beb:        movq    -0x20f8(%rbp), %r14
+    0.00 :   42bf2:        movq    %r14, %r15
+    0.00 :   42bf5:        jmp     0x42c0b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x50b>
+    0.00 :   42bf7:        leaq    -0xab8(%rbp), %rdi
+    0.00 :   42bfe:        leaq    -0x138(%rax,%r15), %r15
+    0.00 :   42c06:        callq   0x28880 <std::mersenne_twister_engine<unsigned long, 64ul, 312ul, 156ul, 31ul, 13043109905998158313ul, 29ul, 6148914691236517205ul, 17ul, 8202884508482404352ul, 37ul, 18444473444759240704ul, 43ul, 6364136223846793005ul>::_M_gen_rand()>
+    0.00 :   42c0b:        movq    -0xf8(%rbp), %rax
+    0.00 :   42c12:        movl    $0x138, %edx
+    0.00 :   42c17:        subq    %rax, %rdx
+    0.00 :   42c1a:        cmpq    %r15, %rdx
+    0.00 :   42c1d:        jb      0x42bf7 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x4f7>
+    0.00 :   42c1f:        addq    %r15, %rax
+    0.00 :   42c22:        vmovq   %rax, %xmm3
+    0.00 :   42c27:        vpinsrq $0x1, %r14, %xmm3, %xmm0
+    0.00 :   42c2d:        vmovdqu %xmm0, -0xf8(%rbp)
+    0.00 :   42c35:        leaq    -0xd0(%rbp), %rdi
+    0.00 :   42c3c:        movq    %r13, %rsi
+    0.00 :   42c3f:        callq   0x45f80 <std::vector<unsigned char, std::allocator<unsigned char> >::resize(unsigned long)>
+    0.00 :   42c44:        movq    -0xd0(%rbp), %rdi
+    0.00 :   42c4b:        movq    -0xc8(%rbp), %r14
+    0.00 :   42c52:        movq    -0x20e8(%rbp), %r15
+    0.00 :   42c59:        subq    %rdi, %r14
+    0.00 :   42c5c:        cmpq    %r14, %r15
+    0.00 :   42c5f:        jb      0x432e6 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xbe6>
+    0.00 :   42c65:        movq    -0x20f0(%rbp), %rcx
+    0.00 :   42c6c:        testq   %r14, %r14
+    0.00 :   42c6f:        jne     0x432c8 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xbc8>
+    0.00 :   42c75:        movq    -0xac8(%rbp), %rax
+    0.00 :   42c7c:        addq    %r14, %rcx
+    0.00 :   42c7f:        subq    %r14, %r15
+    0.00 :   42c82:        movq    %rcx, -0x20f0(%rbp)
+    0.00 :   42c89:        movq    %r15, -0x20e8(%rbp)
+    0.00 :   42c90:        leaq    0x1(%rax), %rcx
+    0.00 :   42c94:        testq   %r13, %r13
+    0.00 :   42c97:        je      0x42ca5 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x5a5>
+    0.00 :   42c99:        movq    %rcx, %rax
+    0.00 :   42c9c:        mulq    %r13
+    0.00 :   42c9f:        jo      0x4331b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xc1b>
+    0.00 :   42ca5:        imulq   %r13, %rcx
+    0.00 :   42ca9:        leaq    -0xb8(%rbp), %rdi
+    0.00 :   42cb0:        movq    %rcx, %rsi
+    0.00 :   42cb3:        callq   0x46150 <std::vector<unsigned int, std::allocator<unsigned int> >::resize(unsigned long)>
+    0.00 :   42cb8:        movq    -0xb8(%rbp), %rsi
+    0.00 :   42cbf:        movq    -0xb0(%rbp), %rdx
+    0.00 :   42cc6:        movq    -0x2120(%rbp), %rdi
+    0.00 :   42ccd:        subq    %rsi, %rdx
+    0.00 :   42cd0:        sarq    $0x2, %rdx
+    0.00 :   42cd4:        callq   0x39b60 <bool strata::(anonymous namespace)::SectionReader::read_all<unsigned int>(std::span<unsigned int, 18446744073709551615ul>)>
+    0.00 :   42cd9:        testb   %al, %al
+    0.00 :   42cdb:        jne     0x43350 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xc50>
+    0.00 :   42ce1:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   42ce8:        leaq    0x20ae6(%rip), %rsi  # 0x637d5
+    0.00 :   42cef:        movq    %r15, %rdi
+    0.00 :   42cf2:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   42cf7:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   42cfe:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   42d05:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   42d0c:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   42d11:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   42d16:        cmpq    $0x3, %r8
+    0.00 :   42d1a:        jbe     0x4355b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xe5b>
+    0.00 :   42d20:        movl    0x8(%rax), %r14d
+    0.00 :   42d24:        leaq    -0xc(%r15), %rcx
+    0.00 :   42d28:        leaq    -0x20b0(%rbp), %rdi
+    0.00 :   42d2f:        leaq    0xc(%rax), %r15
+    0.00 :   42d33:        movq    %rcx, -0x2118(%rbp)
+    0.00 :   42d3a:        movq    %r15, -0x20f0(%rbp)
+    0.00 :   42d41:        movq    %rcx, -0x20e8(%rbp)
+    0.00 :   42d48:        movq    %rdi, -0x20c0(%rbp)
+    0.00 :   42d4f:        cmpq    $0xf, %r14
+    0.00 :   42d53:        ja      0x43532 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xe32>
+    0.00 :   42d59:        testq   %r14, %r14
+    0.00 :   42d5c:        jne     0x435c9 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xec9>
+    0.00 :   42d62:        movq    -0x20c0(%rbp), %rax
+    0.00 :   42d69:        movq    %r14, -0x20b8(%rbp)
+    0.00 :   42d70:        movb    $0x0, (%rax,%r14)
+    0.00 :   42d75:        movq    -0x20b8(%rbp), %r14
+    0.00 :   42d7c:        movq    -0x20c0(%rbp), %rdi
+    0.00 :   42d83:        cmpq    %r14, -0x2118(%rbp)
+    0.00 :   42d8a:        jb      0x43471 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd71>
+    0.00 :   42d90:        testq   %r14, %r14
+    0.00 :   42d93:        jne     0x43522 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xe22>
+    0.00 :   42d99:        movq    -0x2118(%rbp), %rax
+    0.00 :   42da0:        addq    %r14, %r15
+    0.00 :   42da3:        movl    $0x8, %edx
+    0.00 :   42da8:        leaq    -0x20c0(%rbp), %rsi
+    0.00 :   42daf:        movq    %r15, -0x20f0(%rbp)
+    0.00 :   42db6:        subq    %r14, %rax
+    0.00 :   42db9:        movq    %rsi, -0x2128(%rbp)
+    0.00 :   42dc0:        movq    %rax, -0x20e8(%rbp)
+    0.00 :   42dc7:        leaq    -0x2020(%rbp), %rax
+    0.00 :   42dce:        movq    %rax, %rdi
+    0.00 :   42dd1:        movq    %rax, -0x2118(%rbp)
+    0.00 :   42dd8:        callq   0x5d50 <_init+0xd50>
+    0.00 :   42ddd:        callq   0x5c00 <_init+0xc00>
+    0.00 :   42de2:        movq    %rax, %rdx
+    0.00 :   42de5:        leaq    -0x20f8(%rbp), %r14
+    0.00 :   42dec:        leaq    -0x1fa8(%rbp), %rax
+    0.00 :   42df3:        movq    %rax, %rsi
+    0.00 :   42df6:        movq    %r14, %rdi
+    0.00 :   42df9:        movq    %rax, -0x2158(%rbp)
+    0.00 :   42e00:        callq   0x5810 <_init+0x810>
+    0.00 :   42e05:        movq    %r14, %rdi
+    0.00 :   42e08:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   42e0f:        callq   0x5c70 <_init+0xc70>
+    0.00 :   42e14:        movl    $0x1, %edx
+    0.00 :   42e19:        movq    $0x1571, -0x1ea0(%rbp)
+    0.00 :   42e24:        movabsq $0x5851f42d4c957f2d, %rcx
+    0.00 :   42e2e:        movq    -0x8(%r15,%rdx,8), %rax
+    0.00 :   42e33:        movq    %rax, %rsi
+    0.00 :   42e36:        shrq    $0x3e, %rsi
+    0.00 :   42e3a:        xorq    %rsi, %rax
+    0.00 :   42e3d:        imulq   %rcx, %rax
+    0.00 :   42e41:        addq    %rdx, %rax
+    0.00 :   42e44:        movq    %rax, (%r15,%rdx,8)
+    0.00 :   42e48:        addq    $0x1, %rdx
+    0.00 :   42e4c:        cmpq    $0x138, %rdx
+    0.00 :   42e53:        jne     0x42e2e <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x72e>
+    0.00 :   42e55:        movq    -0x2020(%rbp), %rax
+    0.00 :   42e5c:        movq    -0x2118(%rbp), %rcx
+    0.00 :   42e63:        movq    %r15, %r14
+    0.00 :   42e66:        movq    $0x138, -0x14e0(%rbp)
+    0.00 :   42e71:        addq    -0x18(%rax), %rcx
+    0.00 :   42e75:        movq    %rcx, %rax
+    0.00 :   42e78:        movl    0x18(%rcx), %ecx
+    0.00 :   42e7b:        movl    $0x1002, 0x18(%rax)
+    0.00 :   42e82:        leaq    -0x14e0(%rbp), %rax
+    0.00 :   42e89:        movl    %ecx, -0x214c(%rbp)
+    0.00 :   42e8f:        movq    %rax, -0x2140(%rbp)
+    0.00 :   42e96:        movq    -0x2118(%rbp), %rdi
+    0.00 :   42e9d:        movq    %r14, %rsi
+    0.00 :   42ea0:        callq   0x5940 <_init+0x940>
+    0.00 :   42ea5:        addq    $0x8, %r14
+    0.00 :   42ea9:        cmpq    %r14, -0x2140(%rbp)
+    0.00 :   42eb0:        jne     0x42e96 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x796>
+    0.00 :   42eb2:        movq    -0x2118(%rbp), %r14
+    0.00 :   42eb9:        movq    -0x2140(%rbp), %rsi
+    0.00 :   42ec0:        movq    %r14, %rdi
+    0.00 :   42ec3:        callq   0x5940 <_init+0x940>
+    0.00 :   42ec8:        movq    -0x2020(%rbp), %rax
+    0.00 :   42ecf:        movl    -0x214c(%rbp), %ecx
+    0.00 :   42ed5:        movq    -0x18(%rax), %rax
+    0.00 :   42ed9:        movl    %ecx, -0x2008(%rbp,%rax)
+    0.00 :   42ee0:        testb   $0x5, -0x1f88(%rbp)
+    0.00 :   42ee7:        jne     0x43b6a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x146a>
+    0.00 :   42eed:        movq    %r14, %rdi
+    0.00 :   42ef0:        callq   0x5a80 <_init+0xa80>
+    0.00 :   42ef5:        movq    (%rax), %rdx
+    0.00 :   42ef8:        movq    -0x18(%rdx), %rdx
+    0.00 :   42efc:        testb   $0x2, 0x20(%rax,%rdx)
+    0.00 :   42f01:        je      0x43b6a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x146a>
+    0.00 :   42f07:        movq    -0x2148(%rbp), %rax
+    0.00 :   42f0e:        movl    $0x1, %edx
+    0.00 :   42f13:        leaq    -0x14d0(%rbp), %r14
+    0.00 :   42f1a:        movabsq $0x5851f42d4c957f2d, %rcx
+    0.00 :   42f24:        movq    %rax, -0x14d0(%rbp)
+    0.00 :   42f2b:        movq    -0x8(%r14,%rdx,8), %rax
+    0.00 :   42f30:        movq    %rax, %rsi
+    0.00 :   42f33:        shrq    $0x3e, %rsi
+    0.00 :   42f37:        xorq    %rsi, %rax
+    0.00 :   42f3a:        imulq   %rcx, %rax
+    0.00 :   42f3e:        addq    %rdx, %rax
+    0.00 :   42f41:        movq    %rax, (%r14,%rdx,8)
+    0.00 :   42f45:        addq    $0x1, %rdx
+    0.00 :   42f49:        cmpq    $0x138, %rdx
+    0.00 :   42f50:        jne     0x42f2b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x82b>
+    0.00 :   42f52:        movq    %r15, -0x2140(%rbp)
+    0.00 :   42f59:        movq    %r12, %r15
+    0.00 :   42f5c:        movq    %rbx, %r12
+    0.00 :   42f5f:        movq    %r13, %rbx
+    0.00 :   42f62:        movq    $0x138, -0xb10(%rbp)
+    0.00 :   42f6d:        jmp     0x42f7f <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x87f>
+    0.00 :   42f6f:        movq    %r14, %rdi
+    0.00 :   42f72:        leaq    -0x138(%rax,%rbx), %rbx
+    0.00 :   42f7a:        callq   0x28880 <std::mersenne_twister_engine<unsigned long, 64ul, 312ul, 156ul, 31ul, 13043109905998158313ul, 29ul, 6148914691236517205ul, 17ul, 8202884508482404352ul, 37ul, 18444473444759240704ul, 43ul, 6364136223846793005ul>::_M_gen_rand()>
+    0.00 :   42f7f:        movq    -0xb10(%rbp), %rax
+    0.00 :   42f86:        movl    $0x138, %edx
+    0.00 :   42f8b:        subq    %rax, %rdx
+    0.00 :   42f8e:        cmpq    %rbx, %rdx
+    0.00 :   42f91:        jb      0x42f6f <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x86f>
+    0.00 :   42f93:        movq    %rbx, %rdx
+    0.00 :   42f96:        movq    %r12, %rbx
+    0.00 :   42f99:        movq    %r15, %r12
+    0.00 :   42f9c:        movq    -0x2140(%rbp), %r15
+    0.00 :   42fa3:        leaq    (%rax,%rdx), %rcx
+    0.00 :   42fa7:        movq    %r14, %rdi
+    0.00 :   42faa:        movl    $0x9c0, %edx
+    0.00 :   42faf:        movq    %r15, %rsi
+    0.00 :   42fb2:        movq    %rcx, -0xb10(%rbp)
+    0.00 :   42fb9:        movq    %rcx, -0x2140(%rbp)
+    0.00 :   42fc0:        callq   0x58d0 <_init+0x8d0>
+    0.00 :   42fc5:        testl   %eax, %eax
+    0.00 :   42fc7:        jne     0x42fdd <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x8dd>
+    0.00 :   42fc9:        movq    -0x2140(%rbp), %rcx
+    0.00 :   42fd0:        cmpq    -0x14e0(%rbp), %rcx
+    0.00 :   42fd7:        je      0x43c69 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1569>
+    0.00 :   42fdd:        leaq    -0x20a0(%rbp), %r14
+    0.00 :   42fe4:        leaq    0x210ed(%rip), %rsi  # 0x640d8
+    0.00 :   42feb:        movq    %r14, %rdi
+    0.00 :   42fee:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   42ff3:        movq    -0x2098(%rbp), %rdx
+    0.00 :   42ffa:        movq    -0x20a0(%rbp), %rsi
+    0.00 :   43001:        leaq    -0x2080(%rbp), %rdi
+    0.00 :   43008:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   4300d:        movl    -0x2080(%rbp), %eax
+    0.00 :   43013:        leaq    -0x2078(%rbp), %r15
+    0.00 :   4301a:        movl    %eax, -0x2050(%rbp)
+    0.00 :   43020:        jmp     0x43bad <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x14ad>
+    0.00 :   43025:        movq    -0xaf8(%rbp), %rax
+    0.00 :   4302c:        movq    -0xaf0(%rbp), %r13
+    0.00 :   43033:        xorl    %ecx, %ecx
+    0.00 :   43035:        movb    $0x0, -0x1e90(%rbp)
+    0.00 :   4303c:        movq    %rcx, -0x1e98(%rbp)
+    0.00 :   43043:        movq    %rax, -0x2118(%rbp)
+    0.00 :   4304a:        leaq    0x10(%r13), %r12
+    0.00 :   4304e:        leaq    -0x1e90(%rbp), %rax
+    0.00 :   43055:        movq    %rax, -0x2120(%rbp)
+    0.00 :   4305c:        movq    %rax, -0x1ea0(%rbp)
+    0.00 :   43063:        cmpq    $0xf, %r12
+    0.00 :   43067:        jbe     0x43217 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xb17>
+    0.00 :   4306d:        testq   %r12, %r12
+    0.00 :   43070:        js      0x432a2 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xba2>
+    0.00 :   43076:        movl    $0x1e, %eax
+    0.00 :   4307b:        cmpq    %rax, %r12
+    0.00 :   4307e:        cmovbq  %rax, %r12
+    0.00 :   43082:        movq    %r12, %rdi
+    0.00 :   43085:        addq    $0x1, %rdi
+    0.00 :   43089:        js      0x43283 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xb83>
+    0.00 :   4308f:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43096:        callq   0x5b00 <_init+0xb00>
+    0.00 :   4309b:        movq    %rax, %rcx
+    0.00 :   4309e:        movq    -0x1e98(%rbp), %rax
+    0.00 :   430a5:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   430ac:        leaq    0x1(%rax), %rdx
+    0.00 :   430b0:        testq   %rax, %rax
+    0.00 :   430b3:        je      0x43261 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xb61>
+    0.00 :   430b9:        testq   %rdx, %rdx
+    0.00 :   430bc:        je      0x430c9 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x9c9>
+    0.00 :   430be:        movq    %rcx, %rdi
+    0.00 :   430c1:        callq   0x5a70 <_init+0xa70>
+    0.00 :   430c6:        movq    %rax, %rcx
+    0.00 :   430c9:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   430d0:        movq    %rcx, -0x2128(%rbp)
+    0.00 :   430d7:        movq    %r15, %rdi
+    0.00 :   430da:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   430df:        movq    -0x1e98(%rbp), %rsi
+    0.00 :   430e6:        movq    -0x2128(%rbp), %rcx
+    0.00 :   430ed:        movabsq $0x7fffffffffffffff, %rax
+    0.00 :   430f7:        movq    %r12, -0x1e90(%rbp)
+    0.00 :   430fe:        subq    %rsi, %rax
+    0.00 :   43101:        movq    %rcx, -0x1ea0(%rbp)
+    0.00 :   43108:        cmpq    $0xf, %rax
+    0.00 :   4310c:        jbe     0x43242 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xb42>
+    0.00 :   43112:        leaq    0x10(%rsi), %r14
+    0.00 :   43116:        cmpq    %r14, %r12
+    0.00 :   43119:        jb      0x43226 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xb26>
+    0.00 :   4311f:        vmovdqa 0x219a9(%rip), %xmm0  # 0x64ad0
+    0.00 :   43127:        vmovdqu %xmm0, (%rcx,%rsi)
+    0.00 :   4312c:        movq    -0x1ea0(%rbp), %rax
+    0.00 :   43133:        movq    %r14, -0x1e98(%rbp)
+    0.00 :   4313a:        movb    $0x0, (%rax,%r14)
+    0.00 :   4313f:        movq    -0x1e98(%rbp), %rsi
+    0.00 :   43146:        movabsq $0x7fffffffffffffff, %rax
+    0.00 :   43150:        subq    %rsi, %rax
+    0.00 :   43153:        cmpq    %r13, %rax
+    0.00 :   43156:        jb      0x431f8 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xaf8>
+    0.00 :   4315c:        movq    -0x1ea0(%rbp), %rax
+    0.00 :   43163:        movq    -0x2120(%rbp), %rcx
+    0.00 :   4316a:        leaq    (%r13,%rsi), %r12
+    0.00 :   4316f:        cmpq    %rcx, %rax
+    0.00 :   43172:        je      0x431f1 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xaf1>
+    0.00 :   43174:        movq    -0x1e90(%rbp), %rdx
+    0.00 :   4317b:        cmpq    %r12, %rdx
+    0.00 :   4317e:        jb      0x431d4 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xad4>
+    0.00 :   43180:        testq   %r13, %r13
+    0.00 :   43183:        je      0x431a9 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xaa9>
+    0.00 :   43185:        leaq    (%rax,%rsi), %rdi
+    0.00 :   43189:        cmpq    $0x1, %r13
+    0.00 :   4318d:        je      0x4326b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xb6b>
+    0.00 :   43193:        movq    -0x2118(%rbp), %rsi
+    0.00 :   4319a:        movq    %r13, %rdx
+    0.00 :   4319d:        callq   0x5a70 <_init+0xa70>
+    0.00 :   431a2:        movq    -0x1ea0(%rbp), %rax
+    0.00 :   431a9:        movq    %r12, -0x1e98(%rbp)
+    0.00 :   431b0:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   431b7:        movb    $0x0, (%rax,%r12)
+    0.00 :   431bc:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   431c3:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   431ca:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   431cf:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   431d4:        movq    -0x2118(%rbp), %rcx
+    0.00 :   431db:        movq    %r13, %r8
+    0.00 :   431de:        xorl    %edx, %edx
+    0.00 :   431e0:        movq    %r15, %rdi
+    0.00 :   431e3:        callq   0x46aa0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long)>
+    0.00 :   431e8:        movq    -0x1ea0(%rbp), %rax
+    0.00 :   431ef:        jmp     0x431a9 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xaa9>
+    0.00 :   431f1:        movl    $0xf, %edx
+    0.00 :   431f6:        jmp     0x4317b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xa7b>
+    0.00 :   431f8:        movq    -0x38(%rbp), %rax
+    0.00 :   431fc:        subq    %fs:0x28, %rax
+    0.00 :   43205:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   4320b:        leaq    0x2035d(%rip), %rdi  # 0x6356f
+    0.00 :   43212:        callq   0x5930 <_init+0x930>
+    0.00 :   43217:        xorl    %esi, %esi
+    0.00 :   43219:        movl    $0x10, %r14d
+    0.00 :   4321f:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43226:        movl    $0x10, %r8d
+    0.00 :   4322c:        leaq    0x2054f(%rip), %rcx  # 0x63782
+    0.00 :   43233:        xorl    %edx, %edx
+    0.00 :   43235:        movq    %r15, %rdi
+    0.00 :   43238:        callq   0x46aa0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long)>
+    0.00 :   4323d:        jmp     0x4312c <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xa2c>
+    0.00 :   43242:        movq    -0x38(%rbp), %rax
+    0.00 :   43246:        subq    %fs:0x28, %rax
+    0.00 :   4324f:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   43255:        leaq    0x20313(%rip), %rdi  # 0x6356f
+    0.00 :   4325c:        callq   0x5930 <_init+0x930>
+    0.00 :   43261:        movzbl  (%rsi), %eax
+    0.00 :   43264:        movb    %al, (%rcx)
+    0.00 :   43266:        jmp     0x430c9 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x9c9>
+    0.00 :   4326b:        movq    -0x2118(%rbp), %rax
+    0.00 :   43272:        movzbl  (%rax), %eax
+    0.00 :   43275:        movb    %al, (%rdi)
+    0.00 :   43277:        movq    -0x1ea0(%rbp), %rax
+    0.00 :   4327e:        jmp     0x431a9 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xaa9>
+    0.00 :   43283:        movq    -0x38(%rbp), %rax
+    0.00 :   43287:        subq    %fs:0x28, %rax
+    0.00 :   43290:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   43296:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   4329d:        callq   0x5880 <_init+0x880>
+    0.00 :   432a2:        movq    -0x38(%rbp), %rax
+    0.00 :   432a6:        subq    %fs:0x28, %rax
+    0.00 :   432af:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   432b5:        leaq    0x1fd80(%rip), %rdi  # 0x6303c
+    0.00 :   432bc:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   432c3:        callq   0x5930 <_init+0x930>
+    0.00 :   432c8:        movq    %rcx, %rsi
+    0.00 :   432cb:        movq    %r14, %rdx
+    0.00 :   432ce:        movq    %rcx, -0x2118(%rbp)
+    0.00 :   432d5:        callq   0x5a70 <_init+0xa70>
+    0.00 :   432da:        movq    -0x2118(%rbp), %rcx
+    0.00 :   432e1:        jmp     0x42c75 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x575>
+    0.00 :   432e6:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   432ed:        leaq    0x204b9(%rip), %rsi  # 0x637ad
+    0.00 :   432f4:        movq    %r15, %rdi
+    0.00 :   432f7:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   432fc:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   43303:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   4330a:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   43311:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   43316:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   4331b:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43322:        leaq    0x20495(%rip), %rsi  # 0x637be
+    0.00 :   43329:        movq    %r15, %rdi
+    0.00 :   4332c:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   43331:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   43338:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   4333f:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   43346:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   4334b:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   43350:        leaq    -0xa0(%rbp), %rdi
+    0.00 :   43357:        movq    %r13, %rsi
+    0.00 :   4335a:        callq   0x46320 <std::vector<std::vector<unsigned int, std::allocator<unsigned int> >, std::allocator<std::vector<unsigned int, std::allocator<unsigned int> > > >::resize(unsigned long)>
+    0.00 :   4335f:        xorl    %r14d, %r14d
+    0.00 :   43362:        jmp     0x433bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xcbf>
+    0.02 :   43364:        movq    -0xd0(%rbp), %rax
+    0.02 :   4336b:        imulq   $0x18, %r14, %r15
+    0.00 :   4336f:        movq    -0xa0(%rbp), %rdi
+    0.00 :   43376:        movzbl  (%rax,%r14), %esi
+    0.11 :   4337b:        movq    -0xaf0(%rbp), %rax
+    0.00 :   43382:        addq    %r15, %rdi
+    0.00 :   43385:        addq    $0x1, %rax
+    0.16 :   43389:        imulq   %rax, %rsi
+    0.04 :   4338d:        callq   0x46150 <std::vector<unsigned int, std::allocator<unsigned int> >::resize(unsigned long)>
+    0.02 :   43392:        addq    -0xa0(%rbp), %r15
+    0.00 :   43399:        movq    -0x2120(%rbp), %rdi
+    0.02 :   433a0:        movq    (%r15), %rsi
+    0.07 :   433a3:        movq    0x8(%r15), %rdx
+    0.00 :   433a7:        subq    %rsi, %rdx
+    0.25 :   433aa:        sarq    $0x2, %rdx
+    0.09 :   433ae:        callq   0x39b60 <bool strata::(anonymous namespace)::SectionReader::read_all<unsigned int>(std::span<unsigned int, 18446744073709551615ul>)>
+    0.00 :   433b3:        testb   %al, %al
+    0.00 :   433b5:        je      0x435df <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xedf>
+    0.00 :   433bb:        addq    $0x1, %r14
+    0.14 :   433bf:        cmpq    %r13, %r14
+    0.00 :   433c2:        jne     0x43364 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xc64>
+    0.00 :   433c4:        cmpq    $0x0, -0x20e8(%rbp)
+    0.00 :   433cc:        jne     0x43a13 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1313>
+    0.00 :   433d2:        testq   %r13, %r13
+    0.00 :   433d5:        je      0x436eb <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xfeb>
+    0.00 :   433db:        movq    -0xc8(%rbp), %rsi
+    0.00 :   433e2:        movq    -0xd0(%rbp), %rdx
+    0.00 :   433e9:        cmpq    %rdx, %rsi
+    0.00 :   433ec:        je      0x43782 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1082>
+    0.00 :   433f2:        leaq    0x1(%rdx), %rcx
+    0.00 :   433f6:        movq    %rdx, %rax
+    0.00 :   433f9:        jmp     0x43406 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd06>
+    0.00 :   433fb:        cmpb    (%rcx), %dil
+    0.25 :   433fe:        cmovbq  %rcx, %rax
+    0.38 :   43402:        addq    $0x1, %rcx
+    0.00 :   43406:        movzbl  (%rax), %edi
+    1.27 :   43409:        cmpq    %rcx, %rsi
+    0.00 :   4340c:        jne     0x433fb <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xcfb>
+    0.00 :   4340e:        movzbl  (%rax), %eax
+    0.00 :   43411:        movl    -0x212c(%rbp), %ecx
+    0.00 :   43417:        cmpl    %ecx, %eax
+    0.00 :   43419:        jne     0x436b6 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xfb6>
+    0.00 :   4341f:        movl    -0x2130(%rbp), %eax
+    0.00 :   43425:        cmpq    %r13, %rax
+    0.00 :   43428:        jae     0x4343c <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd3c>
+    0.00 :   4342a:        movzbl  (%rdx,%rax), %eax
+    0.00 :   4342e:        movl    -0x212c(%rbp), %ecx
+    0.00 :   43434:        cmpl    %ecx, %eax
+    0.00 :   43436:        je      0x43701 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1001>
+    0.00 :   4343c:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43443:        leaq    0x20cf6(%rip), %rsi  # 0x64140
+    0.00 :   4344a:        movq    %r15, %rdi
+    0.00 :   4344d:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   43452:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   43459:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   43460:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   43467:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   4346c:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   43471:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43478:        leaq    -0x20c0(%rbp), %rax
+    0.00 :   4347f:        leaq    0x2030d(%rip), %rsi  # 0x63793
+    0.00 :   43486:        movq    %r15, %rdi
+    0.00 :   43489:        movq    %rax, -0x2128(%rbp)
+    0.00 :   43490:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   43495:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   4349c:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   434a3:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   434aa:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   434af:        movl    -0x14d0(%rbp), %eax
+    0.00 :   434b5:        leaq    -0x14c8(%rbp), %r14
+    0.00 :   434bc:        leaq    -0x2048(%rbp), %rdi
+    0.00 :   434c3:        movq    %r14, %rsi
+    0.00 :   434c6:        movl    %eax, -0x2050(%rbp)
+    0.00 :   434cc:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   434d1:        movq    %r14, %rdi
+    0.00 :   434d4:        movb    $0x0, -0x2028(%rbp)
+    0.00 :   434db:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   434e0:        movq    %r15, %rdi
+    0.00 :   434e3:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   434e8:        leaq    -0x20c0(%rbp), %rax
+    0.00 :   434ef:        movq    %rax, -0x2128(%rbp)
+    0.00 :   434f6:        movq    -0x2128(%rbp), %rdi
+    0.00 :   434fd:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   43502:        cmpb    $0x0, -0x2028(%rbp)
+    0.00 :   43509:        je      0x43614 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xf14>
+    0.00 :   4350f:        movq    -0x2050(%rbp), %rax
+    0.00 :   43516:        movq    %rax, -0xf0(%rbp)
+    0.00 :   4351d:        jmp     0x42c35 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x535>
+    0.00 :   43522:        movq    %r14, %rdx
+    0.00 :   43525:        movq    %r15, %rsi
+    0.00 :   43528:        callq   0x5a70 <_init+0xa70>
+    0.00 :   4352d:        jmp     0x42d99 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x699>
+    0.00 :   43532:        leaq    0x1(%r14), %rdi
+    0.00 :   43536:        callq   0x5b00 <_init+0xb00>
+    0.00 :   4353b:        movq    %rax, -0x20c0(%rbp)
+    0.00 :   43542:        movq    %rax, %rdi
+    0.00 :   43545:        movq    %r14, -0x20b0(%rbp)
+    0.00 :   4354c:        movq    %r14, %rdx
+    0.00 :   4354f:        xorl    %esi, %esi
+    0.00 :   43551:        callq   0x5950 <_init+0x950>
+    0.00 :   43556:        jmp     0x42d62 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x662>
+    0.00 :   4355b:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43562:        leaq    0x2022a(%rip), %rsi  # 0x63793
+    0.00 :   43569:        movq    %r15, %rdi
+    0.00 :   4356c:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   43571:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   43578:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   4357f:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   43586:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   4358b:        movl    -0x14d0(%rbp), %eax
+    0.00 :   43591:        leaq    -0x14c8(%rbp), %r14
+    0.00 :   43598:        leaq    -0x2048(%rbp), %rdi
+    0.00 :   4359f:        movq    %r14, %rsi
+    0.00 :   435a2:        movl    %eax, -0x2050(%rbp)
+    0.00 :   435a8:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   435ad:        movq    %r14, %rdi
+    0.00 :   435b0:        movb    $0x0, -0x2028(%rbp)
+    0.00 :   435b7:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   435bc:        movq    %r15, %rdi
+    0.00 :   435bf:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   435c4:        jmp     0x43502 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xe02>
+    0.00 :   435c9:        cmpq    $0x1, %r14
+    0.00 :   435cd:        jne     0x4354c <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xe4c>
+    0.00 :   435d3:        movb    $0x0, -0x20b0(%rbp)
+    0.00 :   435da:        jmp     0x42d62 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x662>
+    0.00 :   435df:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   435e6:        leaq    0x20200(%rip), %rsi  # 0x637ed
+    0.00 :   435ed:        movq    %r15, %rdi
+    0.00 :   435f0:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   435f5:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   435fc:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   43603:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   4360a:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   4360f:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   43614:        movl    -0x2050(%rbp), %eax
+    0.00 :   4361a:        movq    -0x2040(%rbp), %r12
+    0.00 :   43621:        leaq    -0x14b8(%rbp), %rdi
+    0.00 :   43628:        movq    %rdi, -0x14c8(%rbp)
+    0.00 :   4362f:        movq    -0x2048(%rbp), %r13
+    0.00 :   43636:        movl    %eax, -0x14d0(%rbp)
+    0.00 :   4363c:        cmpq    $0xf, %r12
+    0.00 :   43640:        ja      0x43835 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1135>
+    0.00 :   43646:        cmpq    $0x1, %r12
+    0.00 :   4364a:        jne     0x4381c <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x111c>
+    0.00 :   43650:        movzbl  (%r13), %eax
+    0.00 :   43655:        movb    %al, -0x14b8(%rbp)
+    0.00 :   4365b:        movq    -0x14c8(%rbp), %rax
+    0.00 :   43662:        movq    %r12, -0x14c0(%rbp)
+    0.00 :   43669:        leaq    0x8(%rbx), %rdi
+    0.00 :   4366d:        movb    $0x0, (%rax,%r12)
+    0.00 :   43672:        movl    -0x14d0(%rbp), %eax
+    0.00 :   43678:        leaq    -0x14c8(%rbp), %r12
+    0.00 :   4367f:        movq    %r12, %rsi
+    0.00 :   43682:        movl    %eax, (%rbx)
+    0.00 :   43684:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   43689:        movb    $0x0, 0xab8(%rbx)
+    0.00 :   43690:        movq    %r12, %rdi
+    0.00 :   43693:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   43698:        cmpb    $0x0, -0x2028(%rbp)
+    0.00 :   4369f:        jne     0x42b31 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x431>
+    0.00 :   436a5:        leaq    -0x2048(%rbp), %rdi
+    0.00 :   436ac:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   436b1:        jmp     0x42b31 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x431>
+    0.00 :   436b6:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   436bd:        leaq    0x20a54(%rip), %rsi  # 0x64118
+    0.00 :   436c4:        movq    %r15, %rdi
+    0.00 :   436c7:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   436cc:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   436d3:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   436da:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   436e1:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   436e6:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   436eb:        cmpl    $-0x1, -0x212c(%rbp)
+    0.00 :   436f2:        jne     0x436b6 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xfb6>
+    0.00 :   436f4:        cmpl    $-0x1, -0x2130(%rbp)
+    0.00 :   436fb:        jne     0x4343c <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd3c>
+    0.00 :   43701:        movq    -0xd0(%rbp), %r8
+    0.00 :   43708:        xorl    %esi, %esi
+    0.00 :   4370a:        cmpq    %r13, %rsi
+    0.00 :   4370d:        je      0x43893 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1193>
+    0.00 :   43713:        movzbl  (%r8,%rsi), %r9d
+    0.00 :   43718:        xorl    %eax, %eax
+    0.02 :   4371a:        movl    %eax, %r10d
+    0.02 :   4371d:        testq   %rax, %rax
+    0.00 :   43720:        jne     0x43863 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1163>
+    0.00 :   43726:        movq    -0xac8(%rbp), %rdx
+    0.19 :   4372d:        movq    -0xb8(%rbp), %rdi
+    0.02 :   43734:        leaq    0x1(%rdx), %rcx
+    0.05 :   43738:        imulq   %rsi, %rcx
+    0.00 :   4373c:        leaq    (%rdi,%rcx,4), %rcx
+    0.04 :   43740:        movl    (%rcx), %r11d
+    3.76 :   43743:        movq    %r11, %rdi
+    0.02 :   43746:        cmpq    %r11, %rdx
+    0.00 :   43749:        jb      0x43a48 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1348>
+    0.02 :   4374f:        movl    $0x1, %edx
+    0.09 :   43754:        jmp     0x4376f <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x106f>
+    1.07 :   43756:        movl    %edx, %r11d
+    0.63 :   43759:        movl    (%rcx,%r11,4), %r11d
+   18.04 :   4375d:        cmpq    %r13, %r11
+    0.00 :   43760:        jae     0x4378a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x108a>
+    0.68 :   43762:        movzbl  (%r8,%r11), %r11d
+   64.89 :   43767:        cmpl    %r10d, %r11d
+    0.00 :   4376a:        jl      0x4378a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x108a>
+    1.59 :   4376c:        addl    $0x1, %edx
+    0.98 :   4376f:        cmpl    %edx, %edi
+    0.00 :   43771:        jae     0x43756 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1056>
+    0.05 :   43773:        addq    $0x1, %rax
+    0.09 :   43777:        cmpl    %eax, %r9d
+    0.00 :   4377a:        jge     0x4371a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x101a>
+    0.23 :   4377c:        addq    $0x1, %rsi
+    0.00 :   43780:        jmp     0x4370a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x100a>
+    0.00 :   43782:        movq    %rdx, %rax
+    0.00 :   43785:        jmp     0x4340e <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xd0e>
+    0.00 :   4378a:        leaq    -0x2020(%rbp), %r14
+    0.00 :   43791:        movq    %r14, %rdi
+    0.00 :   43794:        movq    %r14, -0x2118(%rbp)
+    0.00 :   4379b:        callq   0x13ea0 <std::__cxx11::to_string(unsigned long)>
+    0.00 :   437a0:        leaq    0x209f1(%rip), %rdx  # 0x64198
+    0.00 :   437a7:        xorl    %esi, %esi
+    0.00 :   437a9:        movq    %r14, %rdi
+    0.00 :   437ac:        callq   0x15430 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::insert(unsigned long, char const*)>
+    0.00 :   437b1:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   437b8:        movq    %rax, %rsi
+    0.00 :   437bb:        movq    %r15, %rdi
+    0.00 :   437be:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   437c3:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   437ca:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   437d1:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   437d8:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   437dd:        movl    -0x14d0(%rbp), %eax
+    0.00 :   437e3:        leaq    -0x14c8(%rbp), %r12
+    0.00 :   437ea:        leaq    0x8(%rbx), %rdi
+    0.00 :   437ee:        movq    %r12, %rsi
+    0.00 :   437f1:        movl    %eax, (%rbx)
+    0.00 :   437f3:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   437f8:        movb    $0x0, 0xab8(%rbx)
+    0.00 :   437ff:        movq    %r12, %rdi
+    0.00 :   43802:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   43807:        movq    %r15, %rdi
+    0.00 :   4380a:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   4380f:        movq    %r14, %rdi
+    0.00 :   43812:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   43817:        jmp     0x42b31 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x431>
+    0.00 :   4381c:        testq   %r12, %r12
+    0.00 :   4381f:        je      0x4365b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xf5b>
+    0.00 :   43825:        movq    %r12, %rdx
+    0.00 :   43828:        movq    %r13, %rsi
+    0.00 :   4382b:        callq   0x5a70 <_init+0xa70>
+    0.00 :   43830:        jmp     0x4365b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xf5b>
+    0.00 :   43835:        testq   %r12, %r12
+    0.00 :   43838:        js      0x43b31 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1431>
+    0.00 :   4383e:        movq    %r12, %rdi
+    0.00 :   43841:        addq    $0x1, %rdi
+    0.00 :   43845:        js      0x43b19 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1419>
+    0.00 :   4384b:        callq   0x5b00 <_init+0xb00>
+    0.00 :   43850:        movq    %rax, -0x14c8(%rbp)
+    0.00 :   43857:        movq    %rax, %rdi
+    0.00 :   4385a:        movq    %r12, -0x14b8(%rbp)
+    0.00 :   43861:        jmp     0x43825 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1125>
+    0.02 :   43863:        movq    -0xaf0(%rbp), %rdx
+    0.00 :   4386a:        imulq   $0x18, %rsi, %rdi
+    0.00 :   4386e:        leaq    -0x1(%rax), %r11
+    0.00 :   43872:        addq    -0xa0(%rbp), %rdi
+    0.00 :   43879:        movq    (%rdi), %rdi
+    3.55 :   4387c:        leaq    0x1(%rdx), %rcx
+    0.00 :   43880:        imulq   %r11, %rcx
+    0.00 :   43884:        leaq    (%rdi,%rcx,4), %rcx
+    0.05 :   43888:        movl    (%rcx), %r11d
+    0.18 :   4388b:        movq    %r11, %rdi
+    0.00 :   4388e:        jmp     0x43746 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1046>
+    0.00 :   43893:        movq    0x20(%r12), %r8
+    0.00 :   43898:        movq    0x18(%r12), %r15
+    0.00 :   4389d:        movq    -0xe8(%rbp), %rdi
+    0.00 :   438a4:        movq    -0xd8(%rbp), %rax
+    0.00 :   438ab:        movq    %r8, %r14
+    0.00 :   438ae:        subq    %r15, %r14
+    0.00 :   438b1:        subq    %rdi, %rax
+    0.00 :   438b4:        cmpq    %r14, %rax
+    0.00 :   438b7:        jae     0x439c9 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x12c9>
+    0.00 :   438bd:        movabsq $0x7ffffffffffffffc, %rax
+    0.00 :   438c7:        cmpq    %r14, %rax
+    0.00 :   438ca:        jb      0x439aa <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x12aa>
+    0.00 :   438d0:        movq    %r14, %rdi
+    0.00 :   438d3:        callq   0x5b00 <_init+0xb00>
+    0.00 :   438d8:        movq    %rax, %rcx
+    0.00 :   438db:        cmpq    $0x4, %r14
+    0.00 :   438df:        jle     0x4399c <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x129c>
+    0.00 :   438e5:        movq    %r14, %rdx
+    0.00 :   438e8:        movq    %r15, %rsi
+    0.00 :   438eb:        movq    %rax, %rdi
+    0.00 :   438ee:        callq   0x5d20 <_init+0xd20>
+    0.00 :   438f3:        movq    %rax, %rcx
+    0.00 :   438f6:        movq    -0xe8(%rbp), %rdi
+    0.00 :   438fd:        movq    -0xd8(%rbp), %rsi
+    0.00 :   43904:        subq    %rdi, %rsi
+    0.00 :   43907:        testq   %rdi, %rdi
+    0.00 :   4390a:        je      0x4391f <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x121f>
+    0.00 :   4390c:        movq    %rcx, -0x2118(%rbp)
+    0.00 :   43913:        callq   0x5b10 <_init+0xb10>
+    0.00 :   43918:        movq    -0x2118(%rbp), %rcx
+    0.00 :   4391f:        movq    %rcx, -0xe8(%rbp)
+    0.00 :   43926:        addq    %r14, %rcx
+    0.00 :   43929:        movq    %rcx, -0xe0(%rbp)
+    0.00 :   43930:        movq    %rcx, -0xd8(%rbp)
+    0.00 :   43937:        leaq    0x30(%r12), %rsi
+    0.00 :   4393c:        leaq    -0x88(%rbp), %rdi
+    0.00 :   43943:        callq   0x392b0 <std::vector<unsigned char, std::allocator<unsigned char> >::operator=(std::vector<unsigned char, std::allocator<unsigned char> > const&) [clone .isra.0]>
+    0.00 :   43948:        movq    -0x88(%rbp), %rax
+    0.00 :   4394f:        movq    -0x80(%rbp), %rcx
+    0.00 :   43953:        xorl    %edx, %edx
+    0.24 :   43955:        cmpq    %rax, %rcx
+    0.00 :   43958:        je      0x43969 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1269>
+    0.00 :   4395a:        cmpb    $0x1, (%rax)
+    0.37 :   4395d:        jne     0x43963 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1263>
+    0.00 :   4395f:        addq    $0x1, %rdx
+    0.27 :   43963:        addq    $0x1, %rax
+    0.00 :   43967:        jmp     0x43955 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1255>
+    0.00 :   43969:        movl    -0x212c(%rbp), %eax
+    0.00 :   4396f:        movq    %rdx, -0x70(%rbp)
+    0.00 :   43973:        movl    %eax, -0x60(%rbp)
+    0.00 :   43976:        testq   %r13, %r13
+    0.00 :   43979:        je      0x43988 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1288>
+    0.00 :   4397b:        movl    -0x2130(%rbp), %eax
+    0.00 :   43981:        movb    $0x1, -0x64(%rbp)
+    0.00 :   43985:        movl    %eax, -0x68(%rbp)
+    0.00 :   43988:        movq    -0x2138(%rbp), %rsi
+    0.00 :   4398f:        movq    %rbx, %rdi
+    0.00 :   43992:        callq   0x467a0 <tl::detail::expected_move_base<strata::HnswIndex, strata::Error, false>::expected_move_base(tl::detail::expected_move_base<strata::HnswIndex, strata::Error, false>&&)>
+    0.00 :   43997:        jmp     0x42b31 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x431>
+    0.00 :   4399c:        vmovss  (%r15), %xmm0
+    0.00 :   439a1:        vmovss  %xmm0, (%rax)
+    0.00 :   439a5:        jmp     0x438f6 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x11f6>
+    0.00 :   439aa:        movq    -0x38(%rbp), %rax
+    0.00 :   439ae:        subq    %fs:0x28, %rax
+    0.00 :   439b7:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   439bd:        leaq    0x20284(%rip), %rdi  # 0x63c48
+    0.00 :   439c4:        callq   0x5930 <_init+0x930>
+    0.00 :   439c9:        movq    -0xe0(%rbp), %rcx
+    0.00 :   439d0:        movq    %rcx, %rdx
+    0.00 :   439d3:        subq    %rdi, %rdx
+    0.00 :   439d6:        cmpq    %r14, %rdx
+    0.00 :   439d9:        jb      0x43ab4 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x13b4>
+    0.00 :   439df:        cmpq    $0x4, %r14
+    0.00 :   439e3:        jle     0x43aa0 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x13a0>
+    0.00 :   439e9:        movq    %r14, %rdx
+    0.00 :   439ec:        movq    %r15, %rsi
+    0.00 :   439ef:        callq   0x5d20 <_init+0xd20>
+    0.00 :   439f4:        movq    %rax, %rdi
+    0.00 :   439f7:        addq    %r14, %rdi
+    0.00 :   439fa:        cmpq    -0xe0(%rbp), %rdi
+    0.00 :   43a01:        je      0x43937 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1237>
+    0.00 :   43a07:        movq    %rdi, -0xe0(%rbp)
+    0.00 :   43a0e:        jmp     0x43937 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1237>
+    0.00 :   43a13:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43a1a:        leaq    0x1fde8(%rip), %rsi  # 0x63809
+    0.00 :   43a21:        movq    %r15, %rdi
+    0.00 :   43a24:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   43a29:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   43a30:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   43a37:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   43a3e:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   43a43:        jmp     0x42aff <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x3ff>
+    0.00 :   43a48:        leaq    -0x2020(%rbp), %r14
+    0.00 :   43a4f:        movq    %r14, %rdi
+    0.00 :   43a52:        movq    %r14, -0x2118(%rbp)
+    0.00 :   43a59:        callq   0x13ea0 <std::__cxx11::to_string(unsigned long)>
+    0.00 :   43a5e:        leaq    0x2070b(%rip), %rdx  # 0x64170
+    0.00 :   43a65:        xorl    %esi, %esi
+    0.00 :   43a67:        movq    %r14, %rdi
+    0.00 :   43a6a:        callq   0x15430 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::insert(unsigned long, char const*)>
+    0.00 :   43a6f:        leaq    -0x1ea0(%rbp), %r15
+    0.00 :   43a76:        movq    %rax, %rsi
+    0.00 :   43a79:        movq    %r15, %rdi
+    0.00 :   43a7c:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   43a81:        movq    -0x1e98(%rbp), %rdx
+    0.00 :   43a88:        movq    -0x1ea0(%rbp), %rsi
+    0.00 :   43a8f:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   43a96:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   43a9b:        jmp     0x437dd <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x10dd>
+    0.00 :   43aa0:        jne     0x439f7 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x12f7>
+    0.00 :   43aa6:        vmovss  (%r15), %xmm0
+    0.00 :   43aab:        vmovss  %xmm0, (%rdi)
+    0.00 :   43aaf:        jmp     0x439f7 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x12f7>
+    0.00 :   43ab4:        leaq    (%r15,%rdx), %r9
+    0.00 :   43ab8:        cmpq    $0x4, %rdx
+    0.00 :   43abc:        jle     0x43b5d <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x145d>
+    0.00 :   43ac2:        movq    %r15, %rsi
+    0.00 :   43ac5:        movq    %r9, -0x2120(%rbp)
+    0.00 :   43acc:        movq    %r8, -0x2118(%rbp)
+    0.00 :   43ad3:        callq   0x5d20 <_init+0xd20>
+    0.00 :   43ad8:        movq    -0xe0(%rbp), %rcx
+    0.00 :   43adf:        movq    -0x2118(%rbp), %r8
+    0.00 :   43ae6:        movq    -0x2120(%rbp), %r9
+    0.00 :   43aed:        subq    %r9, %r8
+    0.00 :   43af0:        movq    %r8, %r14
+    0.00 :   43af3:        cmpq    $0x4, %r8
+    0.00 :   43af7:        jle     0x43b50 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1450>
+    0.00 :   43af9:        movq    %rcx, %rdi
+    0.00 :   43afc:        movq    %r8, %rdx
+    0.00 :   43aff:        movq    %r9, %rsi
+    0.00 :   43b02:        callq   0x5d20 <_init+0xd20>
+    0.00 :   43b07:        movq    %rax, %rcx
+    0.00 :   43b0a:        addq    %r14, %rcx
+    0.00 :   43b0d:        movq    %rcx, -0xe0(%rbp)
+    0.00 :   43b14:        jmp     0x43937 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x1237>
+    0.00 :   43b19:        movq    -0x38(%rbp), %rax
+    0.00 :   43b1d:        subq    %fs:0x28, %rax
+    0.00 :   43b26:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   43b2c:        callq   0x5880 <_init+0x880>
+    0.00 :   43b31:        movq    -0x38(%rbp), %rax
+    0.00 :   43b35:        subq    %fs:0x28, %rax
+    0.00 :   43b3e:        jne     0x42a1b <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x31b>
+    0.00 :   43b44:        leaq    0x1f4f1(%rip), %rdi  # 0x6303c
+    0.00 :   43b4b:        callq   0x5930 <_init+0x930>
+    0.00 :   43b50:        jne     0x43b0a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x140a>
+    0.00 :   43b52:        vmovss  (%r9), %xmm0
+    0.00 :   43b57:        vmovss  %xmm0, (%rcx)
+    0.00 :   43b5b:        jmp     0x43b0a <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x140a>
+    0.00 :   43b5d:        jne     0x43aed <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x13ed>
+    0.00 :   43b5f:        vmovss  (%r15), %xmm0
+    0.00 :   43b64:        vmovss  %xmm0, (%rdi)
+    0.00 :   43b68:        jmp     0x43aed <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x13ed>
+    0.00 :   43b6a:        leaq    -0x2080(%rbp), %r14
+    0.00 :   43b71:        leaq    0x20430(%rip), %rsi  # 0x63fa8
+    0.00 :   43b78:        movq    %r14, %rdi
+    0.00 :   43b7b:        callq   0x39bd0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   43b80:        movq    -0x2078(%rbp), %rdx
+    0.00 :   43b87:        movq    -0x2080(%rbp), %rsi
+    0.00 :   43b8e:        leaq    -0x14d0(%rbp), %rdi
+    0.00 :   43b95:        callq   0x3cb70 <strata::(anonymous namespace)::bad_graph(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]>
+    0.00 :   43b9a:        movl    -0x14d0(%rbp), %eax
+    0.00 :   43ba0:        leaq    -0x14c8(%rbp), %r15
+    0.00 :   43ba7:        movl    %eax, -0x2050(%rbp)
+    0.00 :   43bad:        leaq    -0x2048(%rbp), %rdi
+    0.00 :   43bb4:        movq    %r15, %rsi
+    0.00 :   43bb7:        callq   0x14240 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>
+    0.00 :   43bbc:        movq    %r15, %rdi
+    0.00 :   43bbf:        movb    $0x0, -0x2028(%rbp)
+    0.00 :   43bc6:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   43bcb:        movq    %r14, %rdi
+    0.00 :   43bce:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   43bd3:        leaq    0x288fe(%rip), %rax  # 0x6c4d8 <_ZTVNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE@GLIBCXX_3.4.21+0x18>
+    0.00 :   43bda:        leaq    -0x1fc8(%rbp), %rdi
+    0.00 :   43be1:        movq    %rax, -0x2020(%rbp)
+    0.00 :   43be8:        addq    $0x28, %rax
+    0.00 :   43bec:        movq    %rax, -0x1fa8(%rbp)
+    0.00 :   43bf3:        leaq    0x28c1e(%rip), %rax  # 0x6c818 <_ZTVNSt7__cxx1115basic_stringbufIcSt11char_traitsIcESaIcEEE@GLIBCXX_3.4.21+0x10>
+    0.00 :   43bfa:        movq    %rax, -0x2010(%rbp)
+    0.00 :   43c01:        callq   0x14750 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()>
+    0.00 :   43c06:        leaq    0x28973(%rip), %rax  # 0x6c580 <_ZTVSt15basic_streambufIcSt11char_traitsIcEE@GLIBCXX_3.4+0x10>
+    0.00 :   43c0d:        leaq    -0x1fd8(%rbp), %rdi
+    0.00 :   43c14:        movq    %rax, -0x2010(%rbp)
+    0.00 :   43c1b:        callq   0x5c70 <_init+0xc70>
+    0.00 :   43c20:        movq    0x289f1(%rip), %rax  # 0x6c618 <_ZTTNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE@GLIBCXX_3.4.21+0x8>
+    0.00 :   43c27:        movq    0x289f2(%rip), %rdx  # 0x6c620 <_ZTTNSt7__cxx1119basic_istringstreamIcSt11char_traitsIcESaIcEEE@GLIBCXX_3.4.21+0x10>
+    0.00 :   43c2e:        movq    -0x2158(%rbp), %rdi
+    0.00 :   43c35:        movq    %rax, -0x2020(%rbp)
+    0.00 :   43c3c:        movq    -0x18(%rax), %rax
+    0.00 :   43c40:        movq    %rdx, -0x2020(%rbp,%rax)
+    0.00 :   43c48:        xorl    %eax, %eax
+    0.00 :   43c4a:        movq    %rax, -0x2018(%rbp)
+    0.00 :   43c51:        leaq    0x28858(%rip), %rax  # 0x6c4b0 <_ZTVSt9basic_iosIcSt11char_traitsIcEE@GLIBCXX_3.4+0x10>
+    0.00 :   43c58:        movq    %rax, -0x1fa8(%rbp)
+    0.00 :   43c5f:        callq   0x5850 <_init+0x850>
+    0.00 :   43c64:        jmp     0x434f6 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0xdf6>
+    0.00 :   43c69:        leaq    -0xab8(%rbp), %rdi
+    0.00 :   43c70:        movl    $0x139, %ecx
+    0.00 :   43c75:        movq    %r15, %rsi
+    0.00 :   43c78:        movq    %r13, -0x2050(%rbp)
+    0.00 :   43c7f:        rep             movsq   (%rsi), %es:(%rdi)
+    0.00 :   43c82:        movb    $0x1, -0x2028(%rbp)
+    0.00 :   43c89:        jmp     0x43bd3 <strata::HnswIndex::from_snapshot(strata::Snapshot const&)+0x14d3>
+    0.00 :   43c8e:        endbr64
+    0.00 :   43c92:        movq    %rax, %rbx
+    0.00 :   43c95:        jmp     0x821a <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]>
+    0.00 :   43c9a:        endbr64
+    0.00 :   43c9e:        movq    %rax, %rbx
+    0.00 :   43ca1:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43ca6:        endbr64
+    0.00 :   43caa:        movq    %rax, %rbx
+    0.00 :   43cad:        jmp     0x826d <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x53>
+    0.00 :   43cb2:        endbr64
+    0.00 :   43cb6:        movq    %rax, %rbx
+    0.00 :   43cb9:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43cbe:        endbr64
+    0.00 :   43cc2:        movq    %rax, %rbx
+    0.00 :   43cc5:        jmp     0x82a1 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x87>
+    0.00 :   43cca:        endbr64
+    0.00 :   43cce:        movq    %rax, %rbx
+    0.00 :   43cd1:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43cd6:        endbr64
+    0.00 :   43cda:        movq    %rax, %rbx
+    0.00 :   43cdd:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43ce2:        endbr64
+    0.00 :   43ce6:        movq    %rax, %rbx
+    0.00 :   43ce9:        jmp     0x82bf <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xa5>
+    0.00 :   43cee:        endbr64
+    0.00 :   43cf2:        movq    %rax, %rbx
+    0.00 :   43cf5:        vzeroupper
+    0.00 :   43cf8:        jmp     0x82ca <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xb0>
+    0.00 :   43cfd:        endbr64
+    0.00 :   43d01:        movq    %rax, %rbx
+    0.00 :   43d04:        jmp     0x82db <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xc1>
+    0.00 :   43d09:        endbr64
+    0.00 :   43d0d:        movq    %rax, %rbx
+    0.00 :   43d10:        vzeroupper
+    0.00 :   43d13:        jmp     0x82ca <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xb0>
+    0.00 :   43d18:        endbr64
+    0.00 :   43d1c:        movq    %rax, %rbx
+    0.00 :   43d1f:        jmp     0x82e8 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xce>
+    0.00 :   43d24:        endbr64
+    0.00 :   43d28:        movq    %rax, %rbx
+    0.00 :   43d2b:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43d30:        endbr64
+    0.00 :   43d34:        movq    %rax, %rbx
+    0.00 :   43d37:        vzeroupper
+    0.00 :   43d3a:        jmp     0x8225 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xb>
+    0.00 :   43d3f:        endbr64
+    0.00 :   43d43:        movq    %rax, %rbx
+    0.00 :   43d46:        vzeroupper
+    0.00 :   43d49:        jmp     0x8231 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x17>
+    0.00 :   43d4e:        endbr64
+    0.00 :   43d52:        movq    %rax, %rbx
+    0.00 :   43d55:        vzeroupper
+    0.00 :   43d58:        jmp     0x823d <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x23>
+    0.00 :   43d5d:        endbr64
+    0.00 :   43d61:        movq    %rax, %rbx
+    0.00 :   43d64:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43d69:        endbr64
+    0.00 :   43d6d:        movq    %rax, %rbx
+    0.00 :   43d70:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43d75:        endbr64
+    0.00 :   43d79:        movq    %rax, %rbx
+    0.00 :   43d7c:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43d81:        endbr64
+    0.00 :   43d85:        movq    %rax, %rbx
+    0.00 :   43d88:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43d8d:        endbr64
+    0.00 :   43d91:        movq    %rax, %rbx
+    0.00 :   43d94:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>
+    0.00 :   43d99:        endbr64
+    0.00 :   43d9d:        movq    %rax, %rbx
+    0.00 :   43da0:        jmp     0x827a <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x60>
+    0.00 :   43da5:        endbr64
+    0.00 :   43da9:        movq    %rax, %rbx
+    0.00 :   43dac:        vzeroupper
+    0.00 :   43daf:        jmp     0x8285 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x6b>
+    0.00 :   43db4:        endbr64
+    0.00 :   43db8:        movq    %rax, %rbx
+    0.00 :   43dbb:        jmp     0x830d <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xf3>
+    0.00 :   43dc0:        endbr64
+    0.00 :   43dc4:        movq    %rax, %rbx
+    0.00 :   43dc7:        jmp     0x830d <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xf3>
+    0.00 :   43dcc:        endbr64
+    0.00 :   43dd0:        movq    %rax, %rbx
+    0.00 :   43dd3:        jmp     0x830d <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0xf3>
+    0.00 :   43dd8:        endbr64
+    0.00 :   43ddc:        movq    %rax, %rbx
+    0.00 :   43ddf:        jmp     0x8260 <strata::HnswIndex::from_snapshot(strata::Snapshot const&) [clone .cold]+0x46>

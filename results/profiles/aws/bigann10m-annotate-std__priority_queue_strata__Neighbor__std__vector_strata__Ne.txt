@@ -1,0 +1,133 @@
+ Percent |	Source code & Disassembly of strata_search for cycles (9005 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         : 0     0x45ce0 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()>:
+    1.26 :   45ce0:        endbr64
+    0.00 :   45ce4:        movq    0x8(%rdi), %rax
+    0.02 :   45ce8:        movq    (%rdi), %rcx
+    0.00 :   45ceb:        movq    %rdi, %r9
+    0.29 :   45cee:        movq    %rax, %rdx
+    0.00 :   45cf1:        leaq    -0x8(%rax), %r11
+    0.01 :   45cf5:        subq    %rcx, %rdx
+    0.00 :   45cf8:        cmpq    $0x8, %rdx
+    0.00 :   45cfc:        jg      0x45d08 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x28>
+    0.00 :   45cfe:        movq    %r11, 0x8(%rdi)
+    0.00 :   45d02:        retq
+    0.00 :   45d03:        nopl    (%rax,%rax)
+    1.00 :   45d08:        pushq   %rbp
+    0.02 :   45d09:        movq    %rsp, %rbp
+    0.01 :   45d0c:        pushq   %r14
+    0.00 :   45d0e:        pushq   %r13
+    0.23 :   45d10:        pushq   %r12
+    0.01 :   45d12:        pushq   %rbx
+    0.00 :   45d13:        movq    (%rcx), %rdx
+    0.06 :   45d16:        movl    -0x8(%rax), %r12d
+    1.61 :   45d1a:        vmovss  -0x4(%rax), %xmm1
+    0.06 :   45d1f:        movq    %rdx, -0x8(%rax)
+    0.04 :   45d23:        movq    %r11, %rax
+    0.00 :   45d26:        subq    %rcx, %rax
+    0.20 :   45d29:        movq    %rax, %rbx
+    0.01 :   45d2c:        sarq    $0x3, %rbx
+    0.00 :   45d30:        leaq    -0x1(%rbx), %rdx
+    0.00 :   45d34:        movq    %rbx, %r13
+    1.31 :   45d37:        movq    %rdx, %r10
+    0.02 :   45d3a:        andl    $0x1, %r13d
+    0.02 :   45d3e:        shrq    $0x3f, %r10
+    0.02 :   45d42:        addq    %rdx, %r10
+    0.29 :   45d45:        sarq    %r10
+    0.07 :   45d48:        cmpq    $0x10, %rax
+    0.00 :   45d4c:        jle     0x45e50 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x170>
+    0.01 :   45d52:        xorl    %edi, %edi
+    0.00 :   45d54:        jmp     0x45d77 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x97>
+    0.00 :   45d56:        nopw    %cs:(%rax,%rax)
+    2.51 :   45d60:        ja      0x45d68 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x88>
+    6.47 :   45d62:        movq    %rax, %rsi
+    0.91 :   45d65:        movq    %r8, %rdx
+    5.93 :   45d68:        movq    (%rsi), %rax
+   17.79 :   45d6b:        movq    %rax, (%rcx,%rdi,8)
+    3.78 :   45d6f:        cmpq    %r10, %rdx
+    0.00 :   45d72:        jge     0x45dc0 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0xe0>
+    2.13 :   45d74:        movq    %rdx, %rdi
+    1.49 :   45d77:        leaq    0x1(%rdi), %rax
+    0.25 :   45d7b:        leaq    (%rax,%rax), %r8
+    1.17 :   45d7f:        shlq    $0x4, %rax
+    0.67 :   45d83:        leaq    -0x1(%r8), %rdx
+    0.84 :   45d87:        addq    %rcx, %rax
+    0.14 :   45d8a:        leaq    (%rcx,%rdx,8), %rsi
+    0.13 :   45d8e:        vmovss  0x4(%rsi), %xmm0
+    4.64 :   45d93:        vcomiss 0x4(%rax), %xmm0
+    9.16 :   45d98:        jp      0x45d62 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x82>
+    7.22 :   45d9a:        jne     0x45d60 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x80>
+    0.01 :   45d9c:        movl    (%rsi), %r14d
+    0.04 :   45d9f:        cmpl    %r14d, (%rax)
+    0.01 :   45da2:        cmovaeq %rax, %rsi
+    0.00 :   45da6:        cmovaeq %r8, %rdx
+    0.00 :   45daa:        movq    (%rsi), %rax
+    0.01 :   45dad:        movq    %rax, (%rcx,%rdi,8)
+    0.01 :   45db1:        cmpq    %r10, %rdx
+    0.00 :   45db4:        jl      0x45d74 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x94>
+    0.00 :   45db6:        nopw    %cs:(%rax,%rax)
+    0.84 :   45dc0:        testq   %r13, %r13
+    0.00 :   45dc3:        je      0x45e60 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x180>
+    1.32 :   45dc9:        leaq    -0x1(%rdx), %rdi
+    0.08 :   45dcd:        movq    %rdi, %rax
+    0.04 :   45dd0:        shrq    $0x3f, %rax
+    0.86 :   45dd4:        addq    %rdi, %rax
+    0.30 :   45dd7:        sarq    %rax
+    0.47 :   45dda:        testq   %rdx, %rdx
+    0.00 :   45ddd:        je      0x45ea2 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x1c2>
+    0.20 :   45de3:        leaq    (%rcx,%rax,8), %rsi
+    0.74 :   45de7:        vcomiss 0x4(%rsi), %xmm1
+    5.47 :   45dec:        jp      0x45e30 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x150>
+    1.65 :   45dee:        je      0x45e98 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x1b8>
+    1.10 :   45df4:        jbe     0x45e30 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x150>
+    3.22 :   45df6:        movq    (%rsi), %rdi
+    2.47 :   45df9:        movq    %rdi, (%rcx,%rdx,8)
+    0.52 :   45dfd:        leaq    -0x1(%rax), %rdi
+    0.00 :   45e01:        movq    %rdi, %rdx
+    0.00 :   45e04:        shrq    $0x3f, %rdx
+    0.02 :   45e08:        addq    %rdi, %rdx
+    0.01 :   45e0b:        movq    %rdx, %rdi
+    0.03 :   45e0e:        movq    %rax, %rdx
+    0.13 :   45e11:        sarq    %rdi
+    0.23 :   45e14:        testq   %rax, %rax
+    0.00 :   45e17:        je      0x45ea2 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x1c2>
+    0.32 :   45e1d:        movq    %rdi, %rax
+    0.00 :   45e20:        leaq    (%rcx,%rax,8), %rsi
+    0.30 :   45e24:        vcomiss 0x4(%rsi), %xmm1
+    2.45 :   45e29:        jnp     0x45dee <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x10e>
+    0.00 :   45e2b:        nopl    (%rax,%rax)
+    1.13 :   45e30:        leaq    (%rcx,%rdx,8), %rcx
+    0.38 :   45e34:        movl    %r12d, (%rcx)
+    0.20 :   45e37:        vmovss  %xmm1, 0x4(%rcx)
+    0.02 :   45e3c:        popq    %rbx
+    0.01 :   45e3d:        popq    %r12
+    0.04 :   45e3f:        movq    %r11, 0x8(%r9)
+    0.04 :   45e43:        popq    %r13
+    0.20 :   45e45:        popq    %r14
+    0.52 :   45e47:        popq    %rbp
+    0.02 :   45e48:        retq
+    0.00 :   45e49:        nopl    (%rax)
+    0.01 :   45e50:        testq   %r13, %r13
+    0.00 :   45e53:        jne     0x45e34 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x154>
+    0.00 :   45e55:        movq    %rcx, %rsi
+    0.00 :   45e58:        xorl    %edx, %edx
+    0.00 :   45e5a:        nopw    (%rax,%rax)
+    0.67 :   45e60:        subq    $0x2, %rbx
+    0.06 :   45e64:        movq    %rbx, %rax
+    0.13 :   45e67:        shrq    $0x3f, %rax
+    0.81 :   45e6b:        addq    %rbx, %rax
+    0.24 :   45e6e:        sarq    %rax
+    0.30 :   45e71:        cmpq    %rdx, %rax
+    0.00 :   45e74:        jne     0x45dc9 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0xe9>
+    0.29 :   45e7a:        leaq    0x1(%rdx,%rdx), %rdi
+    0.08 :   45e7f:        movq    (%rcx,%rdi,8), %rax
+    0.04 :   45e83:        movq    %rax, (%rsi)
+    0.03 :   45e86:        movq    %rdx, %rax
+    0.03 :   45e89:        movq    %rdi, %rdx
+    0.02 :   45e8c:        jmp     0x45de3 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x103>
+    0.00 :   45e91:        nopl    (%rax)
+    0.00 :   45e98:        cmpl    %r12d, (%rsi)
+    0.00 :   45e9b:        jae     0x45e30 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x150>
+    0.00 :   45e9d:        jmp     0x45df6 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x116>
+    0.00 :   45ea2:        movq    %rsi, %rcx
+    0.00 :   45ea5:        jmp     0x45e34 <std::priority_queue<strata::Neighbor, std::vector<strata::Neighbor, std::allocator<strata::Neighbor> >, std::less<strata::Neighbor> >::pop()+0x154>
