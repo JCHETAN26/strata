@@ -36,8 +36,13 @@ else
   [[ -f "$ARTIFACTS/server-binaries.tar.gz" ]] || die "no server binaries: run the main stage first"
   W='~'
   BIN='~/bin'
-  mapfile -t shard_hosts < <(tf_out shard_public_ips)
-  mapfile -t shard_private < <(tf_out shard_private_ips)
+  # (No mapfile: macOS ships bash 3.2.)
+  shard_hosts=()
+  while IFS= read -r line; do [[ -n "$line" ]] && shard_hosts+=("$line"); done < <(tf_out shard_public_ips)
+  shard_private=()
+  while IFS= read -r line; do [[ -n "$line" ]] && shard_private+=("$line"); done < <(tf_out shard_private_ips)
+  (( ${#shard_hosts[@]} == ${#shard_private[@]} && ${#shard_hosts[@]} > 0 )) \
+    || die "terraform reported ${#shard_hosts[@]} shard public and ${#shard_private[@]} private addresses"
   coord_host=$(tf_out coordinator_public_ip) coord_private=$(tf_out coordinator_private_ip)
   client_host=$(tf_out client_public_ip)
   cluster_description=$(tf_out cluster_description)

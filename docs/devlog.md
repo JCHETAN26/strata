@@ -2016,3 +2016,12 @@ main stage cost about $26 against the planned $20.5). Teardown then removed the 
   ef=40), and faster only on GloVe-100 (5,185 vs 4,643). With IPC ~0.55, search is bound by
   memory latency, not vector width. So the missing AVX-512 kernel is not why Strata trails
   hnswlib.
+
+## 2026-10-03: Before the cluster stage: run_sharding.sh used bash 4's mapfile
+
+`run_sharding.sh` read the shard addresses with `mapfile`, which the Mac's bash 3.2 doesn't have.
+It would have failed right after `up.sh cluster --apply`, leaving 6 instances billing idle. The
+`LOCAL=1` smoke test never reaches that branch. It now uses a bash 3.2 read loop (tested under
+/bin/bash), which also fails loudly if the public and private address lists don't match. The server
+binaries saved from the main stage (built at 8ae9bf4) still match the code: no changes under
+`server/`, `proto/`, `src/`, or `include/` since then.
