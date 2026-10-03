@@ -31,6 +31,7 @@ from typing import Any
 from benchmeta import (
     REPO_ROOT,
     git_info,
+    hardware_info,
     hardware_note,
     is_development_machine,
     preflight,
@@ -99,8 +100,26 @@ def matches(record: dict[str, Any], dataset: str, args: argparse.Namespace) -> b
     return key != ("strata", "hnsw") or params.get("selection") == "heuristic"
 
 
+def machine_id(hardware: dict[str, Any]) -> str:
+    """Instance type (on EC2) and CPU model: what a table's records must share."""
+    ec2 = hardware.get("ec2") or {}
+    return f"{ec2.get('instance_type', '')} {hardware.get('cpu') or hardware['machine']}".strip()
+
+
+def on_machine(record: dict[str, Any], machine: str) -> bool:
+    """`machine` is "this" (the machine running the report) or a substring of machine_id, such
+    as "c7i.8xlarge" or "Apple M2". Records from different machines never share a table."""
+    if machine == "this":
+        return machine_id(record["hardware"]) == machine_id(hardware_info())
+    return machine in machine_id(record["hardware"])
+
+
 def select(dataset: str, args: argparse.Namespace) -> list[dict[str, Any]]:
-    records = [r for r in latest_records(load_records()) if matches(r, dataset, args)]
+    records = [
+        r
+        for r in latest_records(load_records())
+        if matches(r, dataset, args) and on_machine(r, args.machine)
+    ]
     found = {(r["library"], r["index"]) for r in records}
     missing = [f"{lib}/{idx}" for lib, idx in LIBRARIES if (lib, idx) not in found]
     if missing:
@@ -234,6 +253,12 @@ def main(argv: list[str] | None = None) -> int:
         "--skip-strata",
         action="store_true",
         help="run only the references (a second comparison reusing the Strata records)",
+    )
+    parser.add_argument(
+        "--machine",
+        default="this",
+        help='whose records to report: "this" machine (default), or a substring of the '
+        'instance type and CPU, e.g. "c7i.8xlarge" to report AWS results on the laptop',
     )
     parser.add_argument(
         "--name",

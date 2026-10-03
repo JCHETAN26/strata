@@ -24,6 +24,20 @@ case $stage in
 esac
 log "collected results from the $stage stage into results/ (logs: results/aws/logs/)"
 
+# The comparison tables written on the instance by commits before 2026-10-03 mixed in the Mac
+# records committed in the repo (and took their hardware label). Regenerate them here from the
+# collected records, restricted to the AWS instance type. Harmless when they are already right.
+if [[ $stage == main ]] && command -v uv >/dev/null; then
+  machine=$(sed -n '/variable "main_instance_type"/,/}/s/.*default *= *"\(.*\)"/\1/p' "$TF_DIR/variables.tf")
+  report() { (cd "$REPO_ROOT" && env -u PYTHONPATH uv run python bench/run_hnsw_curves.py \
+    --report-only --machine "$machine" "$@" >/dev/null 2>&1) || true; }
+  report --datasets sift1m glove100 --simd avx2 --name hnsw_vs_reference_x86
+  report --datasets sift1m glove100 --simd native --name hnsw_vs_reference_x86_avx512
+  report --datasets bigann10m --build-threads 16 --simd avx2 --name hnsw_vs_reference_10m
+  report --datasets bigann10m --build-threads 16 --simd native --name hnsw_vs_reference_10m_avx512
+  log "regenerated the comparison tables from $machine records only"
+fi
+
 # Guard: nothing secret may reach results/, which gets committed to a public repo. The instances
 # have no IAM role (so no AWS credentials exist on them), and no script writes keys or the
 # cluster token into results; this check makes that a verified fact rather than an assumption.

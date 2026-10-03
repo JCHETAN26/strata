@@ -1960,3 +1960,17 @@ Both hnswlib builds were checked on the c7i with `bench/simd_info.py`:
 - AVX2-only (`HNSWLIB_NO_NATIVE=1`, `-mavx2 -mfma`): 0 zmm, 552 ymm.
 
 Both pass `verify()`.
+
+## 2026-10-03: AWS comparison tables mixed in Mac records
+
+Parts A–C finished on the c7i, but their comparison tables were wrong in a way that would have
+been easy to publish. Records are kept per machine, the committed Mac records were on the instance
+too, and `run_hnsw_curves.py` selected records by library and parameters only. So the x86 tables
+also listed Strata's NEON runs and the Mac's hnswlib and FAISS runs, and their **Hardware line read
+"Apple M2 (development machine)"**, taken from the first record.
+
+Fixed with `--machine`: by default only records from the machine running the report, or those
+whose instance type and CPU contain a given string (e.g. `c7i.8xlarge`). The four AWS tables were
+regenerated on the laptop from the collected records. `collect.sh` now regenerates them after
+every main-stage collect, because the instance still writes the old versions (it runs the pinned
+commit). The raw records were never affected.
