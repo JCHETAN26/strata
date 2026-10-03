@@ -112,9 +112,11 @@ def qps_at_recall(curve: list[dict[str, Any]], target: float) -> tuple[float, bo
     return None
 
 
-def crossover(raw: dict[str, Any], target: float) -> tuple[float, list[str]]:
+def crossover(raw: dict[str, Any], target: float) -> tuple[float, list[str], str]:
     """The selectivity below which the pre-filter beats the graph at `target` recall, interpolated
-    in log(selectivity) between measured points, plus one explanation line per selectivity."""
+    in log(selectivity) between measured points, plus one explanation line per selectivity, and
+    whether the value is measured ("") or only a bound: "<" when the graph wins at every
+    selectivity measured (the crossover is below the smallest), ">" when the pre-filter does."""
     rows = []
     notes = []
     for _, points in sorted(by_selectivity(raw).items()):
@@ -131,16 +133,23 @@ def crossover(raw: dict[str, Any], target: float) -> tuple[float, list[str]]:
     for (s0, r0), (s1, r1) in itertools.pairwise(rows):
         if r0 < 1 <= r1:
             if r0 <= 0:
-                return s1, notes
+                return s1, notes, ""
             t = (math.log(1) - math.log(r0)) / (math.log(r1) - math.log(r0))
-            return math.exp(math.log(s0) + t * (math.log(s1) - math.log(s0))), notes
+            return math.exp(math.log(s0) + t * (math.log(s1) - math.log(s0))), notes, ""
     if rows and rows[0][1] >= 1:
-        return rows[0][0], notes  # the graph wins everywhere measured
-    return rows[-1][0] if rows else 0.0, notes  # the pre-filter wins everywhere measured
+        return rows[0][0], notes, "<"  # the graph wins everywhere measured
+    return (rows[-1][0] if rows else 0.0), notes, ">"  # the pre-filter wins everywhere measured
+
+
+def measured(meta: dict[str, Any], args: argparse.Namespace, name: str) -> Any:
+    """A setting as the measured run used it (recorded in meta.json), not as this invocation,
+    which may be --report-only with different defaults, has it."""
+    return meta.get("args", {}).get(name, getattr(args, name))
 
 
 def report(args: argparse.Namespace, out_dir: Path, meta: dict[str, Any], threshold: float) -> None:
     git = meta["git"]
+    queries, runs = measured(meta, args, "max_queries"), measured(meta, args, "runs")
     lines = [
         f"# Filtered HNSW search: {args.dataset}",
         "",
@@ -149,7 +158,7 @@ def report(args: argparse.Namespace, out_dir: Path, meta: dict[str, Any], thresh
         f"- **Hardware:** {hardware_note(meta['hardware'])}",
         f"- Commit: {git['commit'][:10]}{' (dirty)' if git['dirty'] else ''}",
         f"- One index (M=16, ef_construction=200, parallel build, saved and reloaded by every "
-        f"process); {args.max_queries} queries; {args.runs} timed runs per point after a warmup; "
+        f"process); {queries} queries; {runs} timed runs per point after a warmup; "
         "single-thread search. Recall@10 is tie-aware against exact filtered search.",
         "- Filters are CompiledFilters evaluated per query inside the timed region, so the "
         "pre-filter pays one filter test per id per query. **Random**: `hash(id) % 100000 < "
@@ -173,8 +182,13 @@ def report(args: argparse.Namespace, out_dir: Path, meta: dict[str, Any], thresh
     detail = []
     for kind in KINDS:
         for target in TARGETS:
-            s, notes = crossover(graph_raw[kind], target)
-            lines.append(f"| {kind} | {target} | {s:.3%} |")
+            s, notes, bound = crossover(graph_raw[kind], target)
+            shown = {
+                "": f"{s:.3%}",
+                "<": f"< {s:.3%} (graph faster at every selectivity measured)",
+                ">": f"> {s:.3%} (pre-filter faster at every selectivity measured)",
+            }[bound]
+            lines.append(f"| {kind} | {target} | {shown} |")
             detail.append(f"- {kind}, recall {target}: " + "; ".join(notes))
     lines += ["", *detail, "", f"Auto threshold used below: **{threshold:.3%}** (the largest).", ""]
 
@@ -187,7 +201,7 @@ def report(args: argparse.Namespace, out_dir: Path, meta: dict[str, Any], thresh
             lines += [
                 f"### {pre['selectivity']:.3%} of vectors match ({pre['matching']:,})"
                 + (
-                    f", {own} of {args.max_queries} queries' own cluster matches"
+                    f", {own} of {queries} queries' own cluster matches"
                     if kind == "correlated"
                     else ""
                 ),
@@ -237,6 +251,7 @@ def compare_report(
 ) -> None:
     """Auto versus forced graph at each selectivity and ef_search, from one labelled session."""
     git = meta["git"]
+    queries, runs = measured(meta, args, "max_queries"), measured(meta, args, "runs")
     lines = [
         f"# Filtered HNSW search, auto versus forced graph: {args.dataset} ({args.label})",
         "",
@@ -244,8 +259,8 @@ def compare_report(
         "",
         f"- **Hardware:** {hardware_note(meta['hardware'])}",
         f"- Commit: {git['commit'][:10]}{' (dirty)' if git['dirty'] else ''}",
-        f"- Same index and filters as `filter_{args.dataset}.md`; {args.max_queries} queries; "
-        f"{args.runs} timed runs per point after a warmup; single thread; auto threshold fixed "
+        f"- Same index and filters as `filter_{args.dataset}.md`; {queries} queries; "
+        f"{runs} timed runs per point after a warmup; single thread; auto threshold fixed "
         f"at {threshold:.3%}. Graph and auto were measured in the same session.",
         "- *auto / graph* is the ratio of mean QPS; 1.00 means auto costs nothing over forcing "
         "the strategy it chose.",

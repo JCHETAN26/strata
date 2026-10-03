@@ -1974,3 +1974,45 @@ whose instance type and CPU contain a given string (e.g. `c7i.8xlarge`). The fou
 regenerated on the laptop from the collected records. `collect.sh` now regenerates them after
 every main-stage collect, because the instance still writes the old versions (it runs the pinned
 commit). The raw records were never affected.
+
+## 2026-10-03: AWS main stage complete; results reviewed before committing
+
+All six steps succeeded on the c7i.8xlarge (setup 22:53 UTC, perf 11:13 UTC). Nobody ran teardown
+right away, so the instance idled about 5 h until its 18 h self-termination (about $7 extra; the
+main stage cost about $26 against the planned $20.5). Teardown then removed the network.
+`check_clean.sh` and a sweep of every region found no instances, volumes, or Elastic IPs.
+
+**Review before committing:**
+- **Comparison tables (A, B):** already fixed to one machine (`--machine`). Recall agrees across
+  libraries, run-to-run stdev is ~1% or less, and Strata's brute force has recall 1.0.
+- **Scaling (C):** search 14.4x at 16 cores (90%), 17.2x at 32 SMT threads. Build 15.3x at 16
+  threads with identical recall and graph statistics.
+- **Filter (D):** two report bugs fixed and both reports regenerated from the raw data. The Mac
+  200k report regenerates byte-identical.
+  - At 10M with random filters, the graph beat the pre-filter at every selectivity measured, but
+    the crossover table printed the smallest measured point (0.100%) as if it were measured. It
+    now says "< 0.100% (graph faster at every selectivity measured)", and the opposite case gets
+    ">".
+  - `--report-only` printed the query count from its own default (500) instead of the run's
+    (200 at 10M). Reports now use the settings recorded in `meta.json`.
+- **Perf (E):** hardware cycles were available (no `cpu-clock` fallback).
+  - `perf stat` shows `cache-misses` as 0 and `LLC-load-misses` as unsupported. The 0 means
+    "not counted on this VM", not zero misses; never quote it.
+  - IPC 0.54 (1M) and 0.58 (10M), memory-bound.
+  - The profile includes loading the index snapshot: about 4% of samples at 1M (`crc32c`, page
+    faults) and about 24% at 10M (`crc32c` 16%, page faults, `from_snapshot`, kernel copies).
+    Within search, `search_layer` (graph traversal, stalled on the prefetched loads) takes 54% and
+    the AVX2 distance kernel 33% (1M). Next time, start recording after the load.
+- gitleaks over `results/`: no leaks. The collect guard quarantined nothing.
+
+**Headlines (like for like, all 256-bit, one thread, same M/ef_construction):**
+- **SIFT1M:** recall equal. hnswlib about 6% faster than Strata (ef=80: 5,392 vs 5,067 QPS), FAISS
+  19% slower (4,107). Strata builds fastest (333 s vs 364 s and 493 s).
+- **GloVe-100:** Strata fastest (ef=80: 5,040 vs 4,643 and 4,394 QPS).
+- **BIGANN-10M:** hnswlib about 7% faster than Strata (ef=80: 4,035 vs 3,767). FAISS reaches
+  slightly higher recall per ef but about 43% lower QPS.
+- **AVX-512 barely changes the references.** FAISS gains about 0–6%. hnswlib's `-march=native`
+  build is slower than its AVX build on SIFT1M (4,888 vs 5,392) and at 10M (6,911 vs 7,032 at
+  ef=40), and faster only on GloVe-100 (5,185 vs 4,643). With IPC ~0.55, search is bound by
+  memory latency, not vector width. So the missing AVX-512 kernel is not why Strata trails
+  hnswlib.
