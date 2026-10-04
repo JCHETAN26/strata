@@ -78,11 +78,20 @@ done
 tls="--tls-cert $W/certs/server.pem --tls-key $W/certs/server.key --token-file $W/certs/token"
 client_tls="--ca $W/certs/ca.pem --token-file $W/certs/token"
 
+# Stops every shard and coordinator, and fails unless they are really gone. Matches the command
+# line (-f): `pkill -x` compares the process name, which Linux truncates to 15 characters, so
+# "strata_coordinator" never matched and old coordinators kept running. gRPC binds with
+# SO_REUSEPORT, so the next coordinator then started on the same port and the kernel spread
+# connections between old and new ones.
 stop_all() {
+  local h
   for h in $(printf '%s\n' "${all_hosts[@]}" | sort -u); do
-    on "$h" "pkill -x strata_shard; pkill -x strata_coordinator; true"
+    on "$h" 'pkill -f "[b]in/strata_(shard|coordinator)"; for i in 1 2 3 4 5 6 7 8 9 10; do
+        pgrep -f "[b]in/strata_(shard|coordinator)" >/dev/null || exit 0; sleep 1; done
+      pkill -9 -f "[b]in/strata_(shard|coordinator)"; sleep 1
+      ! pgrep -f "[b]in/strata_(shard|coordinator)" >/dev/null' \
+      || die "could not stop the servers on $h"
   done
-  sleep 2
 }
 
 # wait_listening HOST LOG: until the server prints its startup line.

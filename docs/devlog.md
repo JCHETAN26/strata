@@ -2025,3 +2025,27 @@ It would have failed right after `up.sh cluster --apply`, leaving 6 instances bi
 /bin/bash), which also fails loudly if the public and private address lists don't match. The server
 binaries saved from the main stage (built at 8ae9bf4) still match the code: no changes under
 `server/`, `proto/`, `src/`, or `include/` since then.
+
+## 2026-10-03: Cluster stage: old coordinators were never stopped
+
+The 2-shard run failed with TLS "unable to get local issuer certificate". The cause:
+- `run_sharding.sh` stopped servers with `pkill -x strata_coordinator`, but `pkill -x` matches
+  the process name, which Linux truncates to 15 characters (`strata_coordina`). Coordinators
+  were therefore never stopped.
+- gRPC binds with SO_REUSEPORT, so each new coordinator started on the same port, and the kernel
+  spread connections between old and new ones.
+- The new run's certificates (new CA) didn't match the old coordinator's, hence the handshake
+  failure.
+
+Earlier, when my tool's time limit killed the first orchestrator, its "2-shard" load (339 s, no
+faster than 1 shard) had gone through the still-running 1-shard coordinator, so every vector
+landed on shard 0. That run was discarded anyway.
+- **The 1-shard results are valid:** no coordinator was running before them.
+- **The fix:** `stop_all` kills by command line (`pkill -f "[b]in/strata_(shard|coordinator)"`),
+  waits, escalates to SIGKILL, and fails unless nothing remains. Tested on a cluster node: the
+  old match found 0 of a running dummy `strata_coordinator`; the new one stops both dummies.
+- **Follow-up:** the servers should disable SO_REUSEPORT (`GRPC_ARG_ALLOW_REUSEPORT=0`) so a
+  second server on a port fails to start instead of silently sharing it. That needs a rebuild,
+  so not during this session.
+- **Operations:** the remaining shard counts run from a detached session
+  (`start_new_session`), because my tool's background time limit had killed the orchestrator.
