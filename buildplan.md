@@ -151,7 +151,7 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 - [x] Thread pool: parallel batch queries
 - [ ] Parallel index build — finish order 2
 - [x] Profile hotspots on the Mac (`sample`; `results/profiles/`)
-- [ ] Profile on Linux with `perf`, including `search_layer`'s own loop — deferred to the AWS session
+- [x] Profile on Linux with `perf`, including `search_layer`'s own loop — AWS (`results/profiles/aws/`)
 - [ ] *Future:* AVX-512 distance kernels (x86 AWS runs compare hnswlib and FAISS at AVX2 like for like, and at AVX-512 against Strata's AVX2 as a labeled second comparison)
 - [x] Record the effect of each optimization separately (`results/ab/`, SIMD and thread results)
 
@@ -204,7 +204,7 @@ that sweep is skipped on the Mac.
 - [ ] Sharding: vectors partitioned across shards
 - [ ] Coordinator: parallel scatter to all shards, gather and merge top-k
 - [ ] Docker Compose running multiple shards on the Oracle machine
-- [ ] Multi-machine scaling run in the AWS session
+- [x] Multi-machine scaling run in the AWS session (`results/server/sharding_aws.md`)
 
 **Measure:** end-to-end gRPC query latency; throughput scaling from 1 to N machines.
 
@@ -232,10 +232,10 @@ answer groundedness on HotpotQA.
 - [x] Linux build and tests on GCC 13, AVX2 verified natively (IdeaPad, 2026-09-25; predates HNSW)
 - [ ] Rebuild and test on Linux with HNSW and everything since (first thing on the Oracle machine)
 - [x] AWS session prepared, not run: plan with costs (`docs/aws-plan.md`), Terraform and scripts (`aws/`)
-- [ ] Full runs on SIFT1M and GloVe-100, averaged over multiple runs — AWS
-- [ ] 10M-vector run — AWS
-- [ ] Filtered-search crossover at 1M and 10M, including 1-3% selectivity (fallback rate) — AWS
-- [ ] Thread scaling 1 → N cores, and multi-machine sharding scaling — AWS
+- [x] Full runs on SIFT1M and GloVe-100, averaged over multiple runs — AWS (`results/hnsw/hnsw_vs_reference_x86*.md`)
+- [x] 10M-vector run — AWS (BIGANN-10M, `results/hnsw/hnsw_vs_reference_10m*.md`)
+- [x] Filtered-search crossover at 1M and 10M, including 1-3% selectivity (fallback rate) — AWS
+- [x] Thread scaling 1 → N cores, and multi-machine sharding scaling — AWS (sharded query capacity barely scales; cause open, see devlog 2026-10-04)
 - [ ] x86 AVX2 results (AWS) + final ARM NEON results (Oracle machine)
 - [ ] README: one-line summary, recall-QPS chart vs. FAISS/hnswlib at the top, architecture diagram,
       results tables with hardware noted — draft with development numbers done; swap in AWS results

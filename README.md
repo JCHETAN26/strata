@@ -4,30 +4,54 @@ A vector search engine written from scratch in C++20 (HNSW, SIMD distance kernel
 quantization, filtered search, durable storage, gRPC sharding), with a retrieval-augmented
 generation layer on top that answers questions from documents with cited sources.
 
-> **Draft. The numbers below are development results** from a fanless MacBook Air (M2): recall
-> is final, while speed is indicative only, because the laptop throttles under load. They will be
-> replaced by x86 results from a dedicated AWS session ([`docs/aws-plan.md`](docs/aws-plan.md))
-> and ARM results from an Oracle Cloud machine. Every number comes from a script in `bench/` and
-> links to its generated table.
+Every number comes from a script in `bench/` that saves raw records (machine, commit, parameters)
+and generates the linked table. Speed results come from a dedicated **AWS c7i.8xlarge** (Intel
+Xeon Platinum 8488C, Sapphire Rapids; 16 physical cores), where results are final. Rows marked
+*M2* are development results from a fanless MacBook Air: their recall is final, their speed
+indicative. The ARM numbers on an Oracle Cloud machine are still to come.
 
-## Results at a glance (development, M2)
+## Results
+
+**Strata against hnswlib and FAISS, like for like.** Same graph parameters (M=16,
+ef_construction=200), one thread, and all three at 256-bit SIMD. Strata uses AVX2; FAISS is held
+to AVX2 and hnswlib is built without AVX-512, each verified at run time. Recall@10 and queries per
+second at ef_search=80:
+
+| | Strata | hnswlib | FAISS |
+|---|---:|---:|---:|
+| SIFT1M: recall / QPS | 0.975 / 5,067 | 0.976 / **5,392** | 0.978 / 4,107 |
+| GloVe-100: recall / QPS | 0.788 / **5,040** | 0.788 / 4,643 | 0.788 / 4,394 |
+| BIGANN-10M: recall / QPS | 0.936 / 3,767 | 0.937 / **4,035** | 0.946 / 2,134 |
+| SIFT1M build, single thread | **333 s** | 364 s | 493 s |
+
+- **Where Strata stands:**
+  - hnswlib leads by 6–7% on SIFT1M and BIGANN-10M.
+  - Strata leads on GloVe-100 and builds SIFT1M fastest.
+  - FAISS reaches slightly higher recall at the same ef_search, but answers 13–43% fewer queries
+    per second than Strata.
+- **The full curves** (ef_search 10–320, five runs per point):
+  [SIFT1M and GloVe-100](results/hnsw/hnsw_vs_reference_x86.md), [10M](results/hnsw/hnsw_vs_reference_10m.md).
+- **AVX-512 barely changes the picture.** With hnswlib and FAISS at AVX-512 (Strata has no
+  AVX-512 kernels yet), FAISS gains 0–6%. hnswlib's AVX-512 build is *slower* than its AVX build on
+  SIFT1M and BIGANN-10M, and faster only on GloVe-100 (5,185 QPS). Search is bound by memory
+  latency, not vector width (see the profile row below).
+  ([SIFT1M and GloVe-100](results/hnsw/hnsw_vs_reference_x86_avx512.md), [10M](results/hnsw/hnsw_vs_reference_10m_avx512.md))
+
+![Recall vs QPS on SIFT1M, x86, all libraries at AVX2](results/plots/hnsw_vs_reference_x86_sift1m.png)
 
 | | result | source |
 |---|---|---|
-| HNSW vs hnswlib / FAISS, SIFT1M, ef_search=40 | recall@10 **0.928** / 0.929 / 0.934 (same M=16, ef_construction=200); QPS 10.7k / 6.2k\* / 12.9k | [table](results/hnsw/hnsw_vs_reference.md) |
-| SIMD (NEON vs scalar), brute force on SIFT1M | **9.2x** | [tables](results/tables.md) |
-| Parallel HNSW build, 200k vectors | **3.2x** with 4 threads, same recall and graph statistics | [table](results/hnsw_build/build_scaling_sift1m-200k-q1000.md) |
-| Snapshot load vs rebuild, 200k vectors | **0.39 s** vs 25.6 s | [table](results/storage/hnsw_persist_sift1m-200k-q1000.md) |
-| Product quantization, SIFT10K, m=16 | **17.6x** smaller index; recall@10 0.996 re-ranking 50 candidates | [design §5](docs/design.md#5-compression-product-quantization) |
-| Filtered search: pre-filter vs graph crossover | **1.0–1.3%** selectivity (random to correlated filters); auto picks per filter, falls back on a budget | [table](results/hnsw_filter/filter_sift1m-200k-q1000.md) |
-| Sharded search, async fan-out vs thread per shard | median latency **−8% / −10%** (2 / 4 shards); throughput **+17% / +23%** with 8 clients | [table](results/server/coordinator_latency_sift1m-200k-q1000.md) |
+| Search thread scaling, SIFT1M, ef_search=80 | 5,238 → **75,353 QPS at 16 cores (14.4x, 90% efficient)**; 89,565 with 32 SMT threads | [table](results/search_scaling/scaling_sift1m.md) |
+| Parallel HNSW build, SIFT1M | 322 s → **21 s with 16 threads (15.3x)**, same recall and graph statistics | [table](results/hnsw_build/build_scaling_sift1m.md) |
+| Where search time goes (`perf`, SIFT1M) | `search_layer`'s traversal **54%** of cycles, the AVX2 distance kernel **33%**; **~0.55 instructions per cycle**: memory-latency bound | [profiles](results/profiles/aws/) |
+| Filtered search: pre-filter vs graph crossover | **0.5% (random filters) to 1.5% (correlated)** at 1M; **below 0.1% to 0.9%** at 10M. Auto picks per filter and falls back on a budget | [1M](results/hnsw_filter/filter_sift1m.md), [10M](results/hnsw_filter/filter_bigann10m.md) |
+| Sharded search over separate machines (SIFT1M, TLS on every hop, client on its own machine) | Loading 1M vectors scales: **345 s → 174 s → 72 s** on 1 / 2 / 4 shards. Query capacity does not: **8.0k → 8.6k → 9.9k QPS**. Every query visits every shard, and the bottleneck in this setup was not isolated. Latency is flat across shard counts: p99 **1.4 ms** at half load, about 2.5 ms per query one at a time. Recall at ef_search=64 rises with shard count (0.964 → 0.989): each shard returns its own top-k | [table](results/server/sharding_aws.md) |
+| Snapshot load vs rebuild, 200k vectors (*M2*) | **0.39 s** vs 25.6 s | [table](results/storage/hnsw_persist_sift1m-200k-q1000.md) |
+| Product quantization, SIFT10K, m=16 (*M2*) | **17.6x** smaller index; recall@10 0.996 re-ranking 50 candidates | [design §5](docs/design.md#5-compression-product-quantization) |
+| SIMD, brute force on SIFT1M (*M2*) | NEON **9.2x** faster than scalar | [tables](results/tables.md) |
+| Sharded search, async fan-out vs thread per shard (*M2*) | median latency **−8% / −10%** (2 / 4 shards); throughput **+17% / +23%** with 8 clients | [table](results/server/coordinator_latency_sift1m-200k-q1000.md) |
 | Hybrid retrieval, HotpotQA (5.2M passages) | nDCG@10: BM25 0.633 (matches Anserini), dense 0.699, **RRF 0.730** | [RAG results](docs/rag-results.md) |
 | Multi-hop QA, HotpotQA subset | answer F1 0.517 → **0.669** with joint two-hop reranking (gold passages: 0.739) | [RAG results](docs/rag-results.md) |
-
-\* hnswlib has no NEON path, so on ARM it computes distances in scalar code; the x86 run is the
-fair speed comparison.
-
-![Recall vs QPS on SIFT1M (Mac development results)](results/plots/hnsw_vs_reference_sift1m.png)
 
 ## How it fits together
 

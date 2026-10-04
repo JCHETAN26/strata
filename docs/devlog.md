@@ -2049,3 +2049,24 @@ landed on shard 0. That run was discarded anyway.
   so not during this session.
 - **Operations:** the remaining shard counts run from a detached session
   (`start_new_session`), because my tool's background time limit had killed the orchestrator.
+
+## 2026-10-04: Cluster stage (part F) results
+
+4 × c7i.xlarge shards, a c7i.xlarge coordinator, and a c7i.2xlarge client, in one placement group,
+TLS and token on every hop, SIFT1M, ef_search=64. Results: `results/server/sharding_aws.md`.
+- **Ingest scales:** 1M vectors through the coordinator in 345 s (1 shard), 174 s (2), and 72 s
+  (4). The 4-shard load is faster than linear because each shard's graph is smaller.
+- **Query capacity barely scales:** 8,035, 8,605, and 9,945 QPS (1.07x and 1.24x). Every query
+  visits every shard, and an HNSW search over half the data costs nearly as much as over all of
+  it. The coordinator (2 cores, TLS to the client plus one call per shard) or the single load
+  client may also cap it. The planned diagnostic (CPU on client, coordinator, and shards during
+  a long saturating load) didn't happen: my restart command broke on zsh array indexing as the
+  session's usage ran out, and the cluster was torn down first so it would stop billing. The
+  cause is **open**. Re-measure with the diagnostic (and with replicas instead of partitions)
+  on the Oracle machine or a later session.
+- **Latency:** about 2.5 ms per query one at a time, at every shard count; p99 1.4 ms at 50% of
+  capacity and 1.7–2.3 ms at 25% and 75%. The open-loop client sent at most 3 µs late (p99), so
+  these latencies are the servers'.
+- **Recall rises with shard count** at a fixed ef_search (0.964, 0.979, 0.989), because each shard
+  returns its own top-k. That is more work per query, and part of why capacity doesn't grow.
+- Teardown: 14 resources destroyed, `check_clean.sh` clean.
