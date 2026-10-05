@@ -1,8 +1,96 @@
 # Strata
 
-A vector search engine written from scratch in C++20 (HNSW, SIMD distance kernels, product
-quantization, filtered search, durable storage, gRPC sharding), with a retrieval-augmented
-generation layer on top that answers questions from documents with cited sources.
+**A vector search engine written from scratch in C++20, with a retrieval-augmented generation
+(RAG) layer that answers questions from documents and cites its sources.**
+
+Give Strata millions of vectors (embeddings of text, images, or anything else) and it finds the
+ones most similar to a query in about a fifth of a millisecond, at 97% recall on SIFT1M. On top of
+that search, a Python layer retrieves passages for a question and has Claude answer it, with
+every claim linked to the sentences that support it.
+
+## What problem it solves
+
+Modern ML models turn data into vectors: two sentences with similar meaning get nearby vectors.
+"Find the documents most relevant to this question" becomes "find the nearest vectors to this
+query vector." Comparing the query with every stored vector is exact but slow: a million vectors
+of 128 floats means 128 million multiply-adds per query. A vector search engine answers the same
+question approximately, touching a tiny fraction of the data, and returns almost the same results
+as the exhaustive search.
+
+That is the retrieval step behind semantic search, recommendations, and RAG systems, the job done
+by libraries such as [hnswlib](https://github.com/nmslib/hnswlib) and
+[FAISS](https://github.com/facebookresearch/faiss) and by databases built on them. Strata does that
+job end to end and measures itself against both libraries.
+
+## What it does
+
+A query flows through these pieces:
+
+1. **Graph search (HNSW).** Vectors are linked into a multi-layer proximity graph
+   ([Malkov & Yashunin, 2018](https://arxiv.org/abs/1603.09320)). Sparse upper layers act as an
+   express lane across the data, and the dense bottom layer refines the answer; a search visits a
+   few thousand vectors instead of a million. Neighbors are chosen with the paper's diversity
+   heuristic, which keeps the graph navigable on clustered data.
+2. **Fast distance math.** Distances are computed by SIMD kernels (AVX2+FMA on x86, NEON on ARM),
+   selected at compile time and tested against a scalar reference implementation.
+3. **Compression (product quantization).** Vectors can be stored as 16-byte codes instead of 512
+   bytes, 17.6x smaller, with an exact re-rank of the best candidates to recover recall.
+4. **Filtered search.** Queries can carry metadata conditions ("year 2020–2024 and source is
+   arxiv"). Strata chooses per query between scanning only the matching vectors and walking the
+   graph while skipping non-matches, using a threshold fitted to measured crossovers.
+5. **Durability.** Every write goes to a checksummed write-ahead log before it is acknowledged;
+   a 200k-vector snapshot loads in 0.39 s instead of a 25.6 s rebuild. Crash tests kill the
+   process mid-write and verify that no acknowledged write is lost.
+6. **Distribution.** A gRPC shard server and a coordinator spread the vectors over machines, send
+   each query to every shard in parallel, and merge the results. TLS and token auth on every hop;
+   a Docker Compose setup runs three shards and a coordinator.
+7. **Answers with citations (RAG).** Python bindings expose the indexes, filters, and kernels. The RAG layer
+   combines keyword search (BM25, scored exactly as Lucene/Anserini) with vector search through
+   reciprocal rank fusion, reranks with a cross-encoder, and has Claude (`claude-haiku-4-5`) write
+   an answer whose every claim cites its supporting sentences.
+
+```
+                 Python: bindings (nanobind), RAG layer (BM25 + dense RRF, rerank, Claude answers)
+                                   │
+ client ──gRPC/TLS──► coordinator ─┼─► shard 0: Collection ─► HnswIndex | BruteForceIndex
+                      (scatter,    ├─► shard 1:   ├─ WAL (every write, CRC'd, LSN-ordered)
+                       merge top-k)└─► shard N:   └─ snapshot (atomic, versioned)
+                                                  distance kernels: scalar | NEON | AVX2
+```
+
+## Quick start
+
+Build the Python package (needs CMake, Ninja, a C++20 compiler, and vcpkg; see [Build](#build)),
+then:
+
+```python
+import numpy as np
+import strata
+
+# Stand-in for real embeddings: 100k vectors in 1,000 clusters.
+rng = np.random.default_rng(0)
+centers = rng.standard_normal((1_000, 128), dtype=np.float32)
+noise = rng.standard_normal((100_000, 128), dtype=np.float32)
+vectors = centers[rng.integers(0, 1_000, 100_000)] + 0.3 * noise
+queries = vectors[:5] + 0.01
+
+index = strata.HnswIndex(128, metric="l2", M=16, ef_construction=200)
+index.add(vectors, threads=4)                          # parallel build
+ids, dists = index.search(queries, 10, ef_search=80)   # (5, 10) each
+
+# Exact answer for comparison: recall is the share of true neighbors found.
+exact = strata.BruteForceIndex(dim=128, metric="l2")
+exact.add(vectors)
+true_ids, _ = exact.search_batch(queries, k=10)
+print(np.mean([len(set(a) & set(b)) / 10 for a, b in zip(ids, true_ids)]))   # 1.0
+
+index.save("index.snap")                               # reload with strata.HnswIndex.load(...)
+```
+
+More examples (product quantization, filters, BM25, hybrid search) are under [Python](#python);
+the C++ API is in [`include/strata/`](include/strata/).
+
+## How it compares
 
 Every number comes from a script in `bench/` that saves raw records (machine, commit, parameters)
 and generates the linked table. Speed results come from a dedicated **AWS c7i.8xlarge** (Intel
@@ -11,7 +99,7 @@ Xeon Platinum 8488C, Sapphire Rapids; 16 physical cores), where results are fina
 indicative. ARM results come from an **Oracle Cloud A1** machine (4 Arm Neoverse-N1 cores;
 other workloads on that shared machine were paused during the runs).
 
-## Results
+### Against hnswlib and FAISS
 
 **Strata against hnswlib and FAISS, like for like.** Same graph parameters (M=16,
 ef_construction=200), one thread, and all three at 256-bit SIMD. Strata uses AVX2; FAISS is held
@@ -40,6 +128,8 @@ second at ef_search=80:
 
 ![Recall vs QPS on SIFT1M, x86, all libraries at AVX2](results/plots/hnsw_vs_reference_x86_sift1m.png)
 
+### Scaling, profiling, and the other components
+
 | | result | source |
 |---|---|---|
 | Search thread scaling, SIFT1M, ef_search=80 | 5,238 → **75,353 QPS at 16 cores (14.4x, 90% efficient)**; 89,565 with 32 SMT threads | [table](results/search_scaling/scaling_sift1m.md) |
@@ -56,22 +146,24 @@ second at ef_search=80:
 | Hybrid retrieval, HotpotQA (5.2M passages) | nDCG@10: BM25 0.633 (matches Anserini), dense 0.699, **RRF 0.730** | [RAG results](docs/rag-results.md) |
 | Multi-hop QA, HotpotQA subset | answer F1 0.517 → **0.669** with joint two-hop reranking (gold passages: 0.739) | [RAG results](docs/rag-results.md) |
 
-## How it fits together
-
-```
-                 Python: bindings (nanobind), RAG layer (BM25 + dense RRF, rerank, Claude answers)
-                                   │
- client ──gRPC/TLS──► coordinator ─┼─► shard 0: Collection ─► HnswIndex | BruteForceIndex
-                      (scatter,    ├─► shard 1:   ├─ WAL (every write, CRC'd, LSN-ordered)
-                       merge top-k)└─► shard N:   └─ snapshot (atomic, versioned)
-                                                  distance kernels: scalar | NEON | AVX2
-```
+## Documentation
 
 - **[`docs/design.md`](docs/design.md):** the design choices and trade-offs (graph parameters,
   compression, filtering strategies, sharding, storage), with the numbers behind them.
 - **[`docs/explainers/hnsw.md`](docs/explainers/hnsw.md):** the HNSW core, function by function.
+- **[`docs/rag-results.md`](docs/rag-results.md):** retrieval and answer quality for the RAG layer.
 - **[`docs/devlog.md`](docs/devlog.md):** decisions and what went wrong, in order.
 - **[`buildplan.md`](buildplan.md):** the roadmap.
+
+## Known limitations
+
+- **Sharded query capacity barely grows with machines** (1.24x on 4 shards). Ingest scales and
+  latency stays flat, but the bottleneck for queries was not isolated.
+- **No AVX-512 kernels.** Profiling shows search is memory-latency bound, so the expected gain is
+  small (the reference libraries gain at most 6%), but it is not measured for Strata.
+- **hnswlib is 6–7% faster** on SIFT1M and BIGANN-10M at equal SIMD width on x86.
+- **Ids are 32-bit**, and a multi-shard insert batch is not atomic (retries are idempotent; see
+  [Limits and failure behavior](#limits-and-failure-behavior)).
 
 ## Build
 
@@ -184,8 +276,8 @@ each call to a shard.
 
 ## Python
 
-The bindings (nanobind, built by scikit-build-core) expose brute-force search, product
-quantization, filtered search, and the distance kernels. `VCPKG_ROOT` must be set. On Linux the
+The bindings (nanobind, built by scikit-build-core) expose HNSW and brute-force search,
+product quantization, filtered search, BM25 and hybrid search, and the distance kernels. `VCPKG_ROOT` must be set. On Linux the
 module is built with `/usr/bin/g++-13` when it is installed (matching the `linux-*` presets); to
 use another compiler, pass `-C cmake.define.CMAKE_CXX_COMPILER=...` to pip (`CXX` is not used,
 since build frontends always set it). An existing `build/python/` keeps the compiler recorded in
@@ -242,8 +334,8 @@ docs, scores = hybrid.search_doc_ids(["aspirin"], queries[:1], k=2, method="rrf"
 - Other dtypes/layouts (float64, slices) are converted with one copy.
 - Searches release the GIL and share the index's lock, so Python threads search in parallel.
   `add()`/`remove()` take the lock exclusively: inserts are serialized.
-- `strata.HnswIndex` raises `NotImplementedError` until `src/index/hnsw.cpp` exists; then it
-  switches on at the next `pip install -e .`.
+- `strata.HnswIndex` has the same `search_filtered`, plus `remove(id)` (tombstone delete),
+  `save(path)` / `HnswIndex.load(path)`, and `threads=` on `add` and the searches.
 - `strata.build_info()` reports the kernel, compiler, and floating-point flags. The binding
   tests compare against the C++ build bit for bit when these match, and within a relative
   tolerance of 1e-5 when they don't (`tests/python/test_bindings.py`).
