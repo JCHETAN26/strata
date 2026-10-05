@@ -8,7 +8,8 @@ Every number comes from a script in `bench/` that saves raw records (machine, co
 and generates the linked table. Speed results come from a dedicated **AWS c7i.8xlarge** (Intel
 Xeon Platinum 8488C, Sapphire Rapids; 16 physical cores), where results are final. Rows marked
 *M2* are development results from a fanless MacBook Air: their recall is final, their speed
-indicative. The ARM numbers on an Oracle Cloud machine are still to come.
+indicative. ARM results come from an **Oracle Cloud A1** machine (4 Arm Neoverse-N1 cores;
+other workloads on that shared machine were paused during the runs).
 
 ## Results
 
@@ -43,6 +44,8 @@ second at ef_search=80:
 |---|---|---|
 | Search thread scaling, SIFT1M, ef_search=80 | 5,238 → **75,353 QPS at 16 cores (14.4x, 90% efficient)**; 89,565 with 32 SMT threads | [table](results/search_scaling/scaling_sift1m.md) |
 | Parallel HNSW build, SIFT1M | 322 s → **21 s with 16 threads (15.3x)**, same recall and graph statistics | [table](results/hnsw_build/build_scaling_sift1m.md) |
+| **ARM** (Oracle A1, NEON), SIFT1M, ef_search=80 | Strata **4,455 QPS** @ 0.975 vs FAISS 4,034 @ 0.978 (both NEON) vs hnswlib 1,971 (no NEON path, scalar); build **431 s** vs 584 s / 1,065 s | [table](results/hnsw/hnsw_vs_reference_arm.md) |
+| **ARM** thread scaling, 4 cores | search **3.4x** (85% efficient), build 433 s → 131 s (**3.3x**), same recall | [search](results/search_scaling/scaling_sift1m-arm.md), [build](results/hnsw_build/build_scaling_sift1m-arm.md) |
 | Where search time goes (`perf`, SIFT1M) | `search_layer`'s traversal **54%** of cycles, the AVX2 distance kernel **33%**; **~0.55 instructions per cycle**: memory-latency bound | [profiles](results/profiles/aws/) |
 | Filtered search: pre-filter vs graph crossover | **0.5% (random filters) to 1.5% (correlated)** at 1M; **below 0.1% to 0.9%** at 10M. Auto picks per filter and falls back on a budget | [1M](results/hnsw_filter/filter_sift1m.md), [10M](results/hnsw_filter/filter_bigann10m.md) |
 | Sharded search over separate machines (SIFT1M, TLS on every hop, client on its own machine) | Loading 1M vectors scales: **345 s → 174 s → 72 s** on 1 / 2 / 4 shards. Query capacity does not: **8.0k → 8.6k → 9.9k QPS**. Every query visits every shard, and the bottleneck in this setup was not isolated. Latency is flat across shard counts: p99 **1.4 ms** at half load, about 2.5 ms per query one at a time. Recall at ef_search=64 rises with shard count (0.964 → 0.989): each shard returns its own top-k | [table](results/server/sharding_aws.md) |
@@ -132,6 +135,9 @@ build/server/server/strata_shard --dir /tmp/s0 --dim 128 --port 50051 &
 build/server/server/strata_shard --dir /tmp/s1 --dim 128 --port 50052 &
 build/server/server/strata_coordinator --dim 128 --port 50050 --shard localhost:50051 --shard localhost:50052
 ```
+
+For three shards and a coordinator in Docker Compose, with TLS and a token on every hop and each
+shard's data in its own volume, see [`deploy/docker/README.md`](deploy/docker/README.md).
 
 #### Securing the server
 

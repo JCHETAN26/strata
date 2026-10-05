@@ -3,8 +3,9 @@
 > Speed numbers come from a dedicated **AWS c7i.8xlarge** (Xeon Platinum 8488C, Sapphire Rapids;
 > 16 physical cores), and the sharding numbers from a 6-machine cluster of c7i instances
 > ([`aws-plan.md`](aws-plan.md)). Numbers marked *M2* are development results from a fanless
-> MacBook Air: their recall is final, their speed indicative. The ARM results from the Oracle
-> machine are still to come. Every number links to the generated table it comes from.
+> MacBook Air: their recall is final, their speed indicative. ARM numbers come from an Oracle
+> Cloud A1 machine (4 Arm Neoverse-N1 cores). Every number links to the generated table it comes
+> from.
 
 Strata is a vector search engine in C++20: exact and HNSW search with SIMD distance kernels,
 product quantization, metadata filtering, durable storage with a write-ahead log, a gRPC shard
@@ -77,6 +78,10 @@ The deviations are listed in the explainer (section 8).
     than FAISS everywhere.
   - Sources: [`hnsw_vs_reference_x86.md`](../results/hnsw/hnsw_vs_reference_x86.md),
     [`_10m.md`](../results/hnsw/hnsw_vs_reference_10m.md).
+- **On ARM** (Oracle A1, SIFT1M, ef_search=80): Strata 4,455 QPS against FAISS 4,034, both at
+  NEON width, with the same recall, and the fastest build (431 s vs 584 s). hnswlib has no NEON
+  path, so on ARM it runs scalar (1,971 QPS, 1,065 s build); that comparison measures its missing
+  kernel, not the algorithm ([`hnsw_vs_reference_arm.md`](../results/hnsw/hnsw_vs_reference_arm.md)).
 - **Search is memory-latency bound,** not compute bound. `perf` on x86 (SIFT1M) shows
   `search_layer`'s traversal taking **54%** of cycles, mostly stalled on the prefetched neighbor
   and vector loads, and the AVX2 distance kernel 33%, at **~0.55 instructions per cycle**. That
@@ -96,6 +101,8 @@ The deviations are listed in the explainer (section 8).
   - Result on x86, SIFT1M: 322 s → **21 s with 16 threads (15.3x)**, with the same recall and
     graph statistics (mean degree, reachability). Source:
     [`build_scaling_sift1m`](../results/hnsw_build/build_scaling_sift1m.md).
+- **On ARM's 4 cores:** search 3.4x (85%) and build 3.3x, with the same recall
+  ([`scaling_sift1m-arm`](../results/search_scaling/scaling_sift1m-arm.md)).
 - **Search scales with cores:** 14.4x at 16 threads (90% efficiency) and 17.2x with 32 SMT
   threads, on one shared index ([`scaling_sift1m`](../results/search_scaling/scaling_sift1m.md)).
 

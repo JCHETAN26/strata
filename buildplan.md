@@ -205,7 +205,7 @@ that sweep is skipped on the Mac.
 - [x] gRPC API: insert, insert batch (idempotent retries), search, delete, stats; TLS + token
 - [x] Sharding: vectors partitioned across shards (round-robin, 32-bit global ids)
 - [x] Coordinator: parallel scatter to all shards (async gRPC), gather and merge top-k
-- [ ] Docker Compose running multiple shards on the Oracle machine
+- [x] Docker Compose running multiple shards on the Oracle machine (`deploy/docker/`: 3 shards + coordinator, TLS + token, tested end to end)
 - [ ] Diagnose why sharded query capacity barely grows (1.24x on 4 machines; devlog 2026-10-04)
 - [x] Multi-machine scaling run in the AWS session (`results/server/sharding_aws.md`)
 
@@ -233,13 +233,13 @@ answer groundedness on HotpotQA.
 ## Phase 9 — Final results & polish (AWS session, then the Oracle machine)
 
 - [x] Linux build and tests on GCC 13, AVX2 verified natively (IdeaPad, 2026-09-25; predates HNSW)
-- [ ] Rebuild and test on Linux with HNSW and everything since: x86 done on AWS (GCC 13, all tests); ARM on the Oracle machine
+- [x] Rebuild and test on Linux with HNSW and everything since: x86 on AWS, ARM on Oracle (release, ASan, TSan, server: all tests, 0 warnings)
 - [x] AWS session prepared, not run: plan with costs (`docs/aws-plan.md`), Terraform and scripts (`aws/`)
 - [x] Full runs on SIFT1M and GloVe-100, averaged over multiple runs — AWS (`results/hnsw/hnsw_vs_reference_x86*.md`)
 - [x] 10M-vector run — AWS (BIGANN-10M, `results/hnsw/hnsw_vs_reference_10m*.md`)
 - [x] Filtered-search crossover at 1M and 10M, including 1-3% selectivity (fallback rate) — AWS
 - [x] Thread scaling 1 → N cores, and multi-machine sharding scaling — AWS (sharded query capacity barely scales; cause open, see devlog 2026-10-04)
-- [ ] x86 AVX2 results (AWS: done) + final ARM NEON results (Oracle machine)
+- [x] x86 AVX2 results (AWS) + final ARM NEON results (Oracle A1: SIFT1M comparison, 1–4 core scaling)
 - [x] README: one-line summary, recall-QPS chart vs. FAISS/hnswlib at the top, architecture diagram,
       results tables with hardware noted (x86 results in; ARM numbers come with the Oracle item above)
 - [x] Design doc: graph parameters, compression, filtering strategies, sharding trade-offs

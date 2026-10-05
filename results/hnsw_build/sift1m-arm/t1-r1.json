@@ -1,0 +1,92 @@
+{
+  "harness": "strata_search",
+  "build_type": "Release",
+  "asserts": false,
+  "compiler": "13.4.0",
+  "index": "hnsw",
+  "build_params": {
+    "M": 16,
+    "ef_construction": 200,
+    "selection": "heuristic"
+  },
+  "build_seconds": 432.283207,
+  "graph": {
+    "max_level": 5,
+    "nodes_per_layer": [
+      1000000,
+      62312,
+      3911,
+      250,
+      21,
+      1
+    ],
+    "layer0_mean_degree": 21.110958,
+    "layer0_reachable_fraction": 1
+  },
+  "metric": "l2",
+  "kernel": "neon",
+  "k": 10,
+  "threads": 1,
+  "warmup_passes": 1,
+  "num_base": 1000000,
+  "index_bytes": 512000000,
+  "rerank_bytes": 0,
+  "num_queries": 10000,
+  "dim": 128,
+  "points": [
+    {
+      "search_params": {
+        "ef_search": 10
+      },
+      "runs": [
+        {
+          "search_seconds": 0.562662116,
+          "qps": 17772.6556,
+          "recall": 0.71111,
+          "recall_by_id": 0.71037,
+          "latency_mean_us": 56.2084713,
+          "latency_p50_us": 54.56,
+          "latency_p95_us": 79.561,
+          "latency_p99_us": 97.12,
+          "latency_max_us": 154.64
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 40
+      },
+      "runs": [
+        {
+          "search_seconds": 1.30975383,
+          "qps": 7635.02254,
+          "recall": 0.92829,
+          "recall_by_id": 0.92741,
+          "latency_mean_us": 130.888027,
+          "latency_p50_us": 131.881,
+          "latency_p95_us": 168.201,
+          "latency_p99_us": 185.241,
+          "latency_max_us": 251.441
+        }
+      ]
+    },
+    {
+      "search_params": {
+        "ef_search": 160
+      },
+      "runs": [
+        {
+          "search_seconds": 3.96327883,
+          "qps": 2523.16338,
+          "recall": 0.99393,
+          "recall_by_id": 0.99326,
+          "latency_mean_us": 396.206534,
+          "latency_p50_us": 410.682,
+          "latency_p95_us": 492.762,
+          "latency_p99_us": 521.562,
+          "latency_max_us": 585.563
+        }
+      ]
+    }
+  ]
+}

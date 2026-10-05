@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-10-05T19:40:15.305651+00:00",
+  "git": {
+    "commit": "9ffc017ee822f3ba25d24d5d4ea3f0647976f6b1",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "aarch64",
+    "os": "Linux 6.8.0-1062-oracle",
+    "logical_cpus": 4,
+    "load_average_1m_5m_15m": [
+      1.28,
+      1.67,
+      1.77
+    ],
+    "cpu": "aarch64",
+    "memory_gib": 23.4,
+    "cpu_flags_avx2": false,
+    "cpu_governor": null,
+    "kernel": "6.8.0-1062-oracle",
+    "topology": {
+      "sockets": 1,
+      "cores_per_socket": 4,
+      "threads_per_core": 1,
+      "physical_cores": 4,
+      "l3_cache": null,
+      "flags_avx512f": false
+    },
+    "ec2": null
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": null,
+    "hosted": null
+  },
+  "args": {
+    "dataset": "sift1m",
+    "threads": "1,2,4",
+    "rounds": "2",
+    "M": "16",
+    "ef_construction": "200",
+    "ef_search": "10,40,160",
+    "cooldown": "10",
+    "build_dir": "/home/ubuntu/projects/strata/build/release",
+    "report_only": "False",
+    "label": "arm"
+  }
+}

@@ -2130,3 +2130,51 @@ always passes it).
   answers 13–43% fewer QPS), not "13–43% faster". Sharded *query* capacity is deliberately not
   claimed.
 - Tests: 254 core, 282 server, 142 Python.
+
+## 2026-10-05: Oracle ARM session: Linux ARM check, final ARM numbers, Docker Compose
+
+Oracle Cloud `VM.Standard.A1.Flex`, 4 Arm Neoverse-N1 cores, 24 GB, Ubuntu 22.04, shared with
+Vigil.
+
+**Linux ARM check:** `linux-release`, `linux-asan`, and `linux-tsan` each pass 254/254, and
+`linux-server-release` passes 282/282, all with GCC 13. The first ARM server build found 7 GCC-only
+warnings in `server/`; they were fixed (`98dd664`), and the rebuild has 0 warnings.
+
+**Benchmarks, with Vigil frozen** (`docker pause` of its 6 containers, unpaused on exit, plus a 3 h
+watchdog; your choice):
+- **SIFT1M, single thread, ef_search 80:** Strata 4,455 QPS @ 0.975, FAISS 4,034 @ 0.978 (both
+  NEON), hnswlib 1,971 (no NEON path, scalar). Builds: 431 s, 584 s, and 1,065 s.
+- **Scaling on 4 cores:** search 3.4x (85%), build 3.3x, with the same recall.
+
+**Bugs found on the way:**
+- **The scaling runners silently reused another machine's runs.** They resume by skipping run
+  files that exist, and the AWS runs committed for `sift1m` sat at the same paths, so part C
+  "finished" in seconds. `--label` now keeps each machine's runs apart. Part C was rerun in a
+  second quiet window.
+- **The build-scaling report printed the invocation's cool-down,** not the recorded run's (the
+  same bug as the filter report).
+- **ARM CPUs were recorded as just `aarch64`:** `/proc/cpuinfo` has no model name there. The
+  recorder now asks `lscpu` and Oracle's metadata service (shape, OCPUs, memory, availability
+  domain). The ARM records already written keep their bare label; the report falls back to their
+  recorded core count. Raw records are not edited after the fact.
+
+**Docker Compose (`deploy/docker/`):** 3 shards and a coordinator, TLS and a token on every hop,
+data in named volumes, the coordinator published on loopback only. Tested end to end on the ARM
+machine:
+- 10k vectors inserted through the coordinator, recall 1.0;
+- a client without the token is refused;
+- a restarted shard recovers from its volume, and recall is still 1.0.
+
+Three design corrections came out of testing:
+1. **The base image is Ubuntu 24.04.** GCC 13 binaries need `GLIBCXX_3.4.32`, which stock 22.04
+   doesn't have.
+2. **Containers run as the host user** (`STRATA_UID`/`STRATA_GID`) instead of a fixed uid, so the
+   mounted key and token stay mode 600 and are still readable by a client on the host (an ACL
+   approach needed `setfacl`, which isn't installed by default).
+3. **Command flags are written as separate arguments,** because the servers don't parse
+   `--flag=value`.
+
+**Ops:**
+- The Mac lost its Tailscale connection to the machine once, mid-build; the build itself finished
+  unaffected.
+- My `pkill -f "sleep 10800"` matched its own SSH command line. Use the `[s]leep` bracket form.

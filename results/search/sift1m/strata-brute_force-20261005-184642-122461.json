@@ -1,0 +1,199 @@
+{
+  "timestamp": "2026-10-05T18:46:42.064948+00:00",
+  "git": {
+    "commit": "98dd664bd44f3fcb918aaa78f2b3eeaf2b6474f5",
+    "dirty": false
+  },
+  "hardware": {
+    "machine": "aarch64",
+    "os": "Linux 6.8.0-1062-oracle",
+    "logical_cpus": 4,
+    "load_average_1m_5m_15m": [
+      1.01,
+      0.97,
+      0.69
+    ],
+    "cpu": "aarch64",
+    "memory_gib": 23.4,
+    "cpu_flags_avx2": false,
+    "cpu_governor": null,
+    "kernel": "6.8.0-1062-oracle",
+    "topology": {
+      "sockets": 1,
+      "cores_per_socket": 4,
+      "threads_per_core": 1,
+      "physical_cores": 4,
+      "l3_cache": null,
+      "flags_avx512f": false
+    },
+    "ec2": null
+  },
+  "accelerator": {
+    "gpus": [],
+    "cuda": null,
+    "hosted": null
+  },
+  "dataset": {
+    "name": "sift1m",
+    "source_url": "http://ann-benchmarks.com/sift-128-euclidean.hdf5",
+    "source_sha256": "dd6f0a6ed6b7ebb8934680f861a33ed01ff33991eaee4fd60914d854a0ca5984",
+    "metric": "l2",
+    "base_shape": [
+      1000000,
+      128
+    ],
+    "query_shape": [
+      10000,
+      128
+    ],
+    "groundtruth_shape": [
+      10000,
+      100
+    ]
+  },
+  "library": "strata",
+  "index": "brute_force",
+  "build_params": {
+    "kernel": "neon"
+  },
+  "build_seconds": 0.189178823,
+  "k": 10,
+  "threads": 1,
+  "num_queries": 1000,
+  "command": [
+    "/home/ubuntu/projects/strata/build/release/bench/strata_search",
+    "--data",
+    "/home/ubuntu/projects/strata/data/sift1m",
+    "--metric",
+    "l2",
+    "--index",
+    "brute_force",
+    "--k",
+    "10",
+    "--runs",
+    "3",
+    "--max-queries",
+    "1000",
+    "--kernel",
+    "best",
+    "--threads",
+    "1"
+  ],
+  "points": [
+    {
+      "search_params": {},
+      "runs": [
+        {
+          "search_seconds": 48.4183074,
+          "qps": 20.6533449,
+          "recall": 1,
+          "recall_by_id": 0.9991,
+          "latency_mean_us": 48418.0527,
+          "latency_p50_us": 48307.6,
+          "latency_p95_us": 49648.766,
+          "latency_p99_us": 50395.049,
+          "latency_max_us": 51420.772
+        },
+        {
+          "search_seconds": 48.6989079,
+          "qps": 20.5343414,
+          "recall": 1,
+          "recall_by_id": 0.9991,
+          "latency_mean_us": 48698.6563,
+          "latency_p50_us": 48650.961,
+          "latency_p95_us": 49698.726,
+          "latency_p99_us": 50135.808,
+          "latency_max_us": 50812.21
+        },
+        {
+          "search_seconds": 48.6425665,
+          "qps": 20.5581258,
+          "recall": 1,
+          "recall_by_id": 0.9991,
+          "latency_mean_us": 48642.3267,
+          "latency_p50_us": 48565.041,
+          "latency_p95_us": 49770.966,
+          "latency_p99_us": 50419.169,
+          "latency_max_us": 51806.094
+        }
+      ],
+      "summary": {
+        "qps": {
+          "mean": 20.581937366666665,
+          "median": 20.5581258,
+          "stdev": 0.06297381426754649,
+          "min": 20.5343414,
+          "max": 20.6533449
+        },
+        "recall": {
+          "mean": 1.0,
+          "median": 1,
+          "stdev": 0.0,
+          "min": 1,
+          "max": 1
+        },
+        "recall_by_id": {
+          "mean": 0.9991,
+          "median": 0.9991,
+          "stdev": 0.0,
+          "min": 0.9991,
+          "max": 0.9991
+        },
+        "latency_mean_us": {
+          "mean": 48586.34523333333,
+          "median": 48642.3267,
+          "stdev": 148.44203764720237,
+          "min": 48418.0527,
+          "max": 48698.6563
+        },
+        "latency_p50_us": {
+          "mean": 48507.867333333335,
+          "median": 48565.041,
+          "stdev": 178.6779650665798,
+          "min": 48307.6,
+          "max": 48650.961
+        },
+        "latency_p95_us": {
+          "mean": 49706.15266666667,
+          "median": 49698.726,
+          "stdev": 61.43758241771197,
+          "min": 49648.766,
+          "max": 49770.966
+        },
+        "latency_p99_us": {
+          "mean": 50316.67533333334,
+          "median": 50395.049,
+          "stdev": 157.09929280660026,
+          "min": 50135.808,
+          "max": 50419.169
+        }
+      }
+    }
+  ],
+  "raw": {
+    "harness": "strata_search",
+    "build_type": "Release",
+    "asserts": false,
+    "compiler": "13.4.0",
+    "index": "brute_force",
+    "build_params": {},
+    "build_seconds": 0.189178823,
+    "graph": null,
+    "metric": "l2",
+    "kernel": "neon",
+    "k": 10,
+    "threads": 1,
+    "warmup_passes": 1,
+    "num_base": 1000000,
+    "index_bytes": 512000000,
+    "rerank_bytes": 0,
+    "num_queries": 1000,
+    "dim": 128,
+    "simd": {
+      "isa": "NEON",
+      "width_bits": 128,
+      "how": "compile time (-mavx2 -mfma on x86, NEON on ARM)",
+      "disassembly": null
+    }
+  }
+}

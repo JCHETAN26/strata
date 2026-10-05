@@ -47,7 +47,8 @@ def hardware_info() -> dict[str, Any]:
     elif platform.system() == "Linux":
         cpuinfo = Path("/proc/cpuinfo").read_text()
         match = re.search(r"model name\s*:\s*(.+)", cpuinfo)
-        info["cpu"] = match.group(1).strip() if match else platform.processor()
+        # ARM's /proc/cpuinfo has no model name; lscpu decodes it (e.g. "ARM Neoverse-N1").
+        info["cpu"] = match.group(1).strip() if match else _lscpu_model() or platform.processor()
         meminfo = Path("/proc/meminfo").read_text()
         match = re.search(r"MemTotal:\s*(\d+) kB", meminfo)
         info["memory_gib"] = round(int(match.group(1)) / 2**20, 1) if match else None
@@ -57,7 +58,43 @@ def hardware_info() -> dict[str, Any]:
         info["kernel"] = platform.release()
         info["topology"] = _lscpu_topology()
         info["ec2"] = ec2_info()
+        if info["ec2"] is None:
+            info["oci"] = oci_info()
     return info
+
+
+def _lscpu_model() -> str | None:
+    out = _run(["lscpu"])
+    fields = {
+        k.strip(): v.strip() for k, v in (ln.split(":", 1) for ln in out.splitlines() if ":" in ln)
+    }
+    model = fields.get("Model name")
+    if not model or model == "-":
+        return None
+    vendor = fields.get("Vendor ID", "")
+    return f"{vendor} {model}" if vendor and not model.startswith(vendor) else model
+
+
+def oci_info(timeout: float = 0.5) -> dict[str, Any] | None:
+    """Shape, OCPUs, memory, and availability domain from the Oracle Cloud instance metadata
+    service (v2); None when not on OCI."""
+    import urllib.request
+
+    request = urllib.request.Request(
+        "http://169.254.169.254/opc/v2/instance/", headers={"Authorization": "Bearer Oracle"}
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            data = json.loads(response.read().decode())
+    except (OSError, ValueError):
+        return None
+    config = data.get("shapeConfig") or {}
+    return {
+        "shape": data.get("shape"),
+        "ocpus": config.get("ocpus"),
+        "memory_gb": config.get("memoryInGBs"),
+        "availability_domain": data.get("availabilityDomain"),
+    }
 
 
 def _lscpu_topology() -> dict[str, Any] | None:
@@ -264,6 +301,18 @@ def hardware_note(hardware: dict[str, Any]) -> str:
             f"{cpu} (fanless development machine): recall is valid; QPS is indicative only. "
             "Final speed comparisons run on dedicated hardware (Phase 9)."
         )
+    topology = hardware.get("topology") or {}
+    cores = topology.get("physical_cores")
+    oci = hardware.get("oci")
+    if oci:
+        return (
+            f"Oracle Cloud {oci['shape']} ({cpu}, {oci['ocpus']:g} OCPUs, "
+            f"{oci['memory_gb']:g} GB, {oci['availability_domain']}), "
+            f"kernel {hardware.get('kernel')}"
+        )
+    if cpu == hardware.get("machine") and cores:
+        # The CPU model was not recorded (ARM Linux before lscpu was consulted).
+        return f"{cpu}, {cores} cores (model not recorded), kernel {hardware.get('kernel')}"
     ec2 = hardware.get("ec2")
     if ec2:
         topology = hardware.get("topology") or {}

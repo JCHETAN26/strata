@@ -26,6 +26,10 @@ development results.
   curves, 5 runs per point), like for like at 256-bit SIMD with each library's instruction set
   verified at run time. Strata was within 6–7% of hnswlib on SIFT1M and BIGANN-10M, fastest on
   GloVe-100 (5,040 QPS at recall 0.79), and 15–77% faster than FAISS.
+- **Cross-platform.** The same code on ARM (Oracle Cloud A1, NEON kernels): about 10% faster than
+  FAISS at equal SIMD width on SIFT1M (4,455 vs 4,034 QPS, same recall), fastest build, and 3.4x
+  search scaling on 4 cores. All tests pass under ASan, UBSan, and TSan on macOS ARM, Linux ARM,
+  and Linux x86, with zero GCC and Clang warnings.
 - **Parallelism.** Parallel graph construction with a striped lock table: 322 s → 21 s on 16
   threads (15.3x) with identical recall and graph statistics. Search throughput 14.4x on 16 cores
   (90% efficiency).
@@ -64,6 +68,7 @@ development results.
   [`coordinator_latency_sift1m-200k-q1000.md`](../results/server/coordinator_latency_sift1m-200k-q1000.md) (*M2*)
 - RAG: [`docs/rag-results.md`](rag-results.md)
 - Crash tests: [`tests/crash_recovery_test.cpp`](../tests/crash_recovery_test.cpp)
+- ARM: [`results/hnsw/hnsw_vs_reference_arm.md`](../results/hnsw/hnsw_vs_reference_arm.md), [`scaling_sift1m-arm.md`](../results/search_scaling/scaling_sift1m-arm.md)
 
 Not claimed: sharded *query* capacity barely grew with machines (1.24x on 4; cause still open), so
 the sharding bullet claims ingest and latency only.

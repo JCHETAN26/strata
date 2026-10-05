@@ -1,0 +1,53 @@
+# Three shards and a coordinator on one machine, TLS and a shared token on every hop.
+# Setup and usage: deploy/docker/README.md.
+name: strata
+
+x-shard: &shard
+  image: strata-server
+  restart: unless-stopped
+  user: "${STRATA_UID:-1000}:${STRATA_GID:-1000}"
+  volumes:
+    - ./certs:/certs:ro
+  networks: [strata]
+
+services:
+  shard0:
+    <<: *shard
+    command: [strata_shard, --dir, /data/shard, --dim, "128", --index, hnsw, --listen, 0.0.0.0,
+              --port, "50051", --tls-cert, /certs/server.pem, --tls-key, /certs/server.key,
+              --token-file, /certs/token]
+    volumes: [./certs:/certs:ro, shard0:/data]
+  shard1:
+    <<: *shard
+    command: [strata_shard, --dir, /data/shard, --dim, "128", --index, hnsw, --listen, 0.0.0.0,
+              --port, "50051", --tls-cert, /certs/server.pem, --tls-key, /certs/server.key,
+              --token-file, /certs/token]
+    volumes: [./certs:/certs:ro, shard1:/data]
+  shard2:
+    <<: *shard
+    command: [strata_shard, --dir, /data/shard, --dim, "128", --index, hnsw, --listen, 0.0.0.0,
+              --port, "50051", --tls-cert, /certs/server.pem, --tls-key, /certs/server.key,
+              --token-file, /certs/token]
+    volumes: [./certs:/certs:ro, shard2:/data]
+  coordinator:
+    image: strata-server
+    restart: unless-stopped
+    user: "${STRATA_UID:-1000}:${STRATA_GID:-1000}"
+    depends_on: [shard0, shard1, shard2]
+    # The order of --shard flags is part of every id: never reorder or remove one.
+    command: [strata_coordinator, --dim, "128", --shard, shard0:50051, --shard, shard1:50051,
+              --shard, shard2:50051, --shard-ca, /certs/ca.pem, --shard-token-file, /certs/token,
+              --listen, 0.0.0.0, --port, "50050", --tls-cert, /certs/server.pem, --tls-key,
+              /certs/server.key, --token-file, /certs/token]
+    volumes: [./certs:/certs:ro]
+    networks: [strata]
+    # Published on the host's loopback only; clients elsewhere need their own TLS route.
+    ports: ["127.0.0.1:50050:50050"]
+
+networks:
+  strata: {}
+
+volumes:
+  shard0: {}
+  shard1: {}
+  shard2: {}
