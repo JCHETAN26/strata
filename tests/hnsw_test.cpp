@@ -233,7 +233,7 @@ TEST(Hnsw, ConcurrentSearchesMatchSerial) {
     threads.emplace_back([&, t] {
       for (std::size_t q = 0; q < queries.rows(); ++q) {
         auto found = index.search(queries.row(q), 10, 50);
-        mismatches[t] += (found && *found == serial[q]) ? 0 : 1;
+        mismatches[t] += (found && *found == serial[q]) ? 0U : 1U;
       }
     });
   }
@@ -295,7 +295,7 @@ TEST_F(HnswGraph, EntryPointIsOnTopLayer) {
 TEST_F(HnswGraph, LevelDistributionMatchesMl) {
   std::size_t upper = 0;
   for (VectorId id = 0; id < kSize; ++id) {
-    upper += index_->level(id) >= 1 ? 1 : 0;
+    upper += index_->level(id) >= 1 ? 1U : 0U;
   }
   EXPECT_GT(upper, 228U);
   EXPECT_LT(upper, 397U);

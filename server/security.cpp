@@ -236,6 +236,10 @@ Expected<std::unique_ptr<grpc::Server>> start_server(const ListenConfig& config,
   }
   const std::string address = host_port(config.host, config.port);
   grpc::ServerBuilder builder;
+  // No SO_REUSEPORT: a second server on a port already in use must fail to start, not share it.
+  // With gRPC's default (on), a stale coordinator silently shared its port with a new one during
+  // the cluster benchmark, and the kernel split connections between them (devlog 2026-10-03).
+  builder.AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 0);
   builder.AddListeningPort(address, *credentials, bound_port);
   builder.RegisterService(service);
   if (config.max_threads > 0) {

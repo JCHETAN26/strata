@@ -244,7 +244,7 @@ answer groundedness on HotpotQA.
       results tables with hardware noted (x86 results in; ARM numbers come with the Oracle item above)
 - [x] Design doc: graph parameters, compression, filtering strategies, sharding trade-offs
       (`docs/design.md`, x86 results; ARM numbers come with the Oracle item above)
-- [ ] Fill in resume bullets with real numbers
+- [x] Fill in resume bullets with real numbers (`docs/resume-bullets.md`, each number sourced)
 - [x] Make the repo public
 
 ---

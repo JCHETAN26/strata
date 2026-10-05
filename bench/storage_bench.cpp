@@ -1,7 +1,7 @@
 // Storage benchmark: insert throughput and latency per sync mode, checkpoint (snapshot) time, and
 // recovery time from a WAL-only directory vs. a snapshot. Prints one JSON object.
 //
-//   strata_storage_bench --data data/siftsmall --dir /tmp/strata_storage_bench \
+//   strata_storage_bench --data data/siftsmall --dir /tmp/strata_storage_bench
 //                        --fsync-inserts 500 --runs 3
 
 #include <algorithm>

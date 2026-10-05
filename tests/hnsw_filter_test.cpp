@@ -353,7 +353,7 @@ TEST_F(HnswFilter, ConcurrentFilteredSearchesMatchSerial) {
     threads.emplace_back([&, t] {
       for (std::size_t q = 0; q < queries_.rows(); ++q) {
         auto found = run(q, f, {});
-        mismatches[t] += (found && *found == serial[q]) ? 0 : 1;
+        mismatches[t] += (found && *found == serial[q]) ? 0U : 1U;
       }
     });
   }

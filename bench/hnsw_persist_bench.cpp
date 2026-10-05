@@ -1,6 +1,6 @@
 // HNSW persistence: how long a build takes versus saving and loading the finished graph.
 //
-//   strata_hnsw_persist_bench --data data/sift1m-200k-q1000 --out /tmp/hnsw.snap \
+//   strata_hnsw_persist_bench --data data/sift1m-200k-q1000 --out /tmp/hnsw.snap
 //       [--M 16] [--ef-construction 200] [--ef-search 64]
 //
 // One run per process (bench/run_hnsw_persist_bench.py runs several, with cool-downs between):

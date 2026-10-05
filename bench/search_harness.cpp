@@ -8,7 +8,7 @@
 // commit, hardware, and dataset metadata and saves the result under results/.
 //
 //   strata_search --data data/siftsmall --metric l2 --index brute_force
-//   strata_search --data data/siftsmall --metric l2 --index hnsw --M 16 --ef-construction 200 \
+//   strata_search --data data/siftsmall --metric l2 --index hnsw --M 16 --ef-construction 200
 //                 --ef-search 10,20,40,80,160
 
 #include <algorithm>

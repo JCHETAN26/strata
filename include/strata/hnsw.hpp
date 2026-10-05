@@ -74,7 +74,7 @@ struct FilteredSearchOptions {
   FilterStrategy strategy = FilterStrategy::kAuto;
   // kAuto: use the pre-filter when the estimated selectivity is below this. Unset: the size-aware
   // default_prefilter_below(size()).
-  std::optional<double> prefilter_below;
+  std::optional<double> prefilter_below{};
   // kAuto: a graph search that computes more than (fallback_budget + estimated selectivity) *
   // size() distances gives up, and the pre-filter answers instead. That is about the pre-filter's
   // own cost in distance computations: one filter test per id (about a tenth of a distance, hence
@@ -83,7 +83,7 @@ struct FilteredSearchOptions {
   // kAuto: the filter's selectivity, if the caller already knows it (for example, counted once for
   // a batch of queries sharing a filter). Unset: estimated per call, from a cached sample for a
   // CompiledFilter or a popcount for a Bitset.
-  std::optional<double> selectivity;
+  std::optional<double> selectivity{};
 };
 
 // What a filtered search did, for measurement and debugging.

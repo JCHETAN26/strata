@@ -102,6 +102,22 @@ TEST(ExposurePolicy, StartServerRefusesUnsafeExposure) {
   EXPECT_NE(server.error().message.find("refusing"), std::string::npos);
 }
 
+TEST(ExposurePolicy, SecondServerOnTheSamePortFailsToStart) {
+  v1::VectorService::Service first_service;
+  v1::VectorService::Service second_service;
+  ListenConfig config;  // 127.0.0.1, plaintext
+  int port = 0;
+  auto first = start_server(config, &first_service, &port);
+  ASSERT_TRUE(first.has_value()) << first.error().message;
+  ASSERT_GT(port, 0);
+
+  config.port = port;
+  int second_port = 0;
+  auto second = start_server(config, &second_service, &second_port);
+  EXPECT_FALSE(second.has_value()) << "a second server shared port " << port;
+  (*first)->Shutdown();
+}
+
 TEST(ExposurePolicy, ShortTokensAreRejected) {
   const fs::path path = fs::temp_directory_path() / "strata_short_token";
   {

@@ -2109,3 +2109,24 @@ always passes it).
   2–5x slower there, never less exact.
 - **Tests:** 254/254 C++ (2 new), 142 Python. HNSW explainer section 11 updated in the same
   commit, per CLAUDE.md.
+
+## 2026-10-04: GCC warnings, servers refuse a shared port, resume bullets
+
+- **GCC warnings: 63 → 0** in Strata's sources (GCC 14 `-fsyntax-only` with the project's warning
+  flags, run on the Mac; the Linux build on the Oracle machine is the final check, including
+  `server/`).
+  - `-Wmissing-field-initializers` (52): GCC, unlike clang, warns when a designated initializer
+    skips a member without a default initializer. Fixed at the source with `{}` initializers on
+    7 members (`FilteredSearchOptions`, `Filter::Node`, `CompiledFilter::Op`).
+  - `-Wsign-conversion` (7): `count += cond ? 1 : 0` into a `size_t`; now unsigned literals.
+  - `-Wcomment` (4): `\` at the end of `//` usage examples, which GCC reads as a line
+    continuation.
+- **Servers no longer share a port:** `start_server` sets `GRPC_ARG_ALLOW_REUSEPORT=0`, so a stale
+  coordinator can't silently share its port with a new one (the cluster-stage bug). The new test
+  `SecondServerOnTheSamePortFailsToStart` fails without the fix ("a second server shared port")
+  and passes with it.
+- **`docs/resume-bullets.md`:** short and long versions, every number linked to its results
+  table. Checking them caught an inverted comparison: Strata is 15–77% faster than FAISS (FAISS
+  answers 13–43% fewer QPS), not "13–43% faster". Sharded *query* capacity is deliberately not
+  claimed.
+- Tests: 254 core, 282 server, 142 Python.

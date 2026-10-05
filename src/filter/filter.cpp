@@ -67,11 +67,11 @@ const AttributeTable::Column* AttributeTable::find(const std::string& name) cons
 
 struct Filter::Node {
   enum class Kind { kEquals, kRange, kIn, kAll, kAny, kNot } kind;
-  std::string column;
-  std::vector<AttributeValue> values;  // kEquals (one), kIn
+  std::string column{};
+  std::vector<AttributeValue> values{};  // kEquals (one), kIn
   std::int64_t lo = 0;
   std::int64_t hi = 0;
-  std::vector<Filter> children;
+  std::vector<Filter> children{};
 };
 
 Filter Filter::equals(std::string column, AttributeValue value) {
@@ -282,7 +282,7 @@ double CompiledFilter::estimate_selectivity(std::size_t samples, std::uint64_t s
   std::uniform_int_distribution<std::size_t> pick(0, rows_ - 1);
   std::size_t hits = 0;
   for (std::size_t s = 0; s < samples; ++s) {
-    hits += eval(0, static_cast<VectorId>(pick(rng))) ? 1 : 0;
+    hits += eval(0, static_cast<VectorId>(pick(rng))) ? 1U : 0U;
   }
   return static_cast<double>(hits) / static_cast<double>(samples);
 }

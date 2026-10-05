@@ -135,9 +135,9 @@ struct CompiledFilter::Op {
   const std::vector<std::uint32_t>* codes = nullptr;
   std::int64_t lo = 0;
   std::int64_t hi = 0;
-  std::vector<std::uint32_t> code_set;  // sorted, distinct; kCodeIn
-  std::vector<std::int64_t> int_set;    // sorted, distinct; kIntIn
-  std::vector<std::size_t> children;    // kAll, kAny, kNot
+  std::vector<std::uint32_t> code_set{};  // sorted, distinct; kCodeIn
+  std::vector<std::int64_t> int_set{};    // sorted, distinct; kIntIn
+  std::vector<std::size_t> children{};    // kAll, kAny, kNot
 };
 
 }  // namespace strata

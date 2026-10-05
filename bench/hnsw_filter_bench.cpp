@@ -1,7 +1,7 @@
 // Filtered HNSW search: recall and QPS per (filter kind, selectivity, strategy, ef_search).
 //
-//   strata_hnsw_filter_bench --data data/sift1m-200k-q1000 --snapshot /tmp/idx.snap \
-//       --clusters-cache /tmp/clusters.bin --kind random|correlated --phase graph|auto \
+//   strata_hnsw_filter_bench --data data/sift1m-200k-q1000 --snapshot /tmp/idx.snap
+//       --clusters-cache /tmp/clusters.bin --kind random|correlated --phase graph|auto
 //       [--selectivities 0.001,0.01,0.1,0.5] [--ef-search 10,20,40,80,160,320] [--runs 3]
 //       [--max-queries 500] [--threshold 0.02] [--build-threads 4]
 //
@@ -240,7 +240,7 @@ double query_recall(const FilterCase& c, std::size_t q, const std::vector<strata
   }
   std::size_t hits = 0;
   for (const auto& nb : got) {
-    hits += (nb.distance <= t.kth && c.filter->matches(nb.id)) ? 1 : 0;
+    hits += (nb.distance <= t.kth && c.filter->matches(nb.id)) ? 1U : 0U;
   }
   return static_cast<double>(std::min(hits, t.expected)) / static_cast<double>(t.expected);
 }
@@ -366,7 +366,7 @@ int main(int argc, char** argv) {
     for (std::size_t q = 0; q < num_queries; ++q) {
       c.own_match[q] =
           std::ranges::find(chosen, static_cast<std::int64_t>(clusters.queries[q])) != chosen.end();
-      n_match += c.own_match[q] ? 1 : 0;
+      n_match += c.own_match[q] ? 1U : 0U;
       auto exact = check(index->search_filtered(ds.query.row(q), kK, compiled,
                                                 {.strategy = strata::FilterStrategy::kPreFilter}));
       c.truth[q] = {.expected = exact.size(), .kth = exact.empty() ? 0.0F : exact.back().distance};

@@ -27,7 +27,7 @@ double reference_score(const std::vector<Tokens>& docs, const Tokens& query, std
   std::size_t non_empty = 0;
   for (const auto& doc : docs) {
     total += static_cast<double>(doc.size());
-    non_empty += doc.empty() ? 0 : 1;
+    non_empty += doc.empty() ? 0U : 1U;
   }
   const double n = static_cast<double>(non_empty);
   const double avgdl = total / n;
