@@ -65,6 +65,11 @@ def spread(values: list[float], digits: int) -> str:
 
 
 def report(args: argparse.Namespace, out_dir: Path, meta: dict[str, Any]) -> None:
+    # Settings as the measured runs used them (meta.json), not this invocation's defaults.
+    run_args = meta.get("args", {})
+    graph_m = run_args.get("M", args.M)
+    ef_construction = run_args.get("ef_construction", args.ef_construction)
+    cooldown = run_args.get("cooldown", args.cooldown)
     by_threads: dict[int, list[dict[str, Any]]] = {}
     for path in sorted(out_dir.glob("t*-r*.json")):
         t = int(path.stem.split("-")[0][1:])
@@ -83,8 +88,8 @@ def report(args: argparse.Namespace, out_dir: Path, meta: dict[str, Any]) -> Non
         "- **Indicative only:** the M2 has 4 performance cores and no fan; the full 1-16 thread "
         "curve comes from the AWS session (Phase 9).",
         f"- Commit: {git['commit'][:10]}{' (dirty)' if git['dirty'] else ''}",
-        f"- M={args.M}, ef_construction={args.ef_construction}; runs interleaved across thread "
-        f"counts, {args.cooldown} s cool-down between runs; mean ± stdev over runs. 1 thread is "
+        f"- M={graph_m}, ef_construction={ef_construction}; runs interleaved across thread "
+        f"counts, {cooldown} s cool-down between runs; mean ± stdev over runs. 1 thread is "
         "the sequential, deterministic build; more threads use the parallel add_batch.",
         "- Quality per run: recall@10 (tie-aware, against exact ground truth) from one search pass "
         "per ef_search; layer-0 reachability from the entry point; mean layer-0 out-degree.",
@@ -109,7 +114,7 @@ def report(args: argparse.Namespace, out_dir: Path, meta: dict[str, Any]) -> Non
             + f" | {reach} | {degree} |"
         )
     lines.append("")
-    out = OUT_ROOT / f"build_scaling_{args.dataset}.md"
+    out = OUT_ROOT / f"build_scaling_{out_dir.name}.md"
     out.write_text("\n".join(lines))
     print(f"wrote {out.relative_to(REPO_ROOT)}")
 
@@ -125,9 +130,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cooldown", type=int, default=60)
     parser.add_argument("--build-dir", type=Path, default=REPO_ROOT / "build" / "release")
     parser.add_argument("--report-only", action="store_true")
+    parser.add_argument(
+        "--label",
+        help="keep this machine's runs and report apart (results/.../<dataset>-<label>): the "
+        "runner resumes by skipping runs whose files exist, so runs from another machine in the "
+        "same folder would be silently reused",
+    )
     args = parser.parse_args(argv)
 
-    out_dir = OUT_ROOT / args.dataset
+    name = f"{args.dataset}-{args.label}" if args.label else args.dataset
+    out_dir = OUT_ROOT / name
     out_dir.mkdir(parents=True, exist_ok=True)
     meta_path = out_dir / "meta.json"
     if meta_path.exists():

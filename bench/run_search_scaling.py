@@ -132,7 +132,7 @@ def report(args: argparse.Namespace, out_dir: Path) -> None:
                 f"{mean:,.0f} ± {sd:,.0f} | {speedup:.2f}x | {speedup / t * min(runs):.0%} |"
             )
     lines.append("")
-    table = out_dir.parent / f"scaling_{args.dataset}.md"
+    table = out_dir.parent / f"scaling_{out_dir.name}.md"
     table.write_text("\n".join(lines))
     print(f"wrote {table.relative_to(REPO_ROOT)}")
 
@@ -150,8 +150,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cooldown", type=int, default=10)
     parser.add_argument("--build-dir", type=Path, default=REPO_ROOT / "build" / "release")
     parser.add_argument("--report-only", action="store_true")
+    parser.add_argument(
+        "--label",
+        help="keep this machine's runs and report apart (results/.../<dataset>-<label>): the "
+        "runner resumes by skipping runs whose files exist, so runs from another machine in the "
+        "same folder would be silently reused",
+    )
     args = parser.parse_args(argv)
-    out_dir = REPO_ROOT / "results" / "search_scaling" / args.dataset
+    name = f"{args.dataset}-{args.label}" if args.label else args.dataset
+    out_dir = REPO_ROOT / "results" / "search_scaling" / name
     if not args.report_only:
         out_dir.mkdir(parents=True, exist_ok=True)
         if not (out_dir / "meta.json").exists():

@@ -34,6 +34,7 @@ aws/.ssh/
 aws/.certs/
 aws/.artifacts/
 aws/.quarantine/
+deploy/docker/certs/
 
 # Terraform, anywhere in the repo. State and plan files hold resource details and any sensitive
 # values passed in; tfvars are where people put secrets; crash logs can contain both.
