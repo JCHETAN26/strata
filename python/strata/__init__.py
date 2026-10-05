@@ -42,8 +42,12 @@ from strata._core import (
 )
 
 if has_hnsw:
-    from strata._core import HnswIndex
+    from strata._core import HnswIndex, default_prefilter_below
 else:
+
+    def default_prefilter_below(n: int) -> float:  # type: ignore[misc]
+        """Default 'auto' filtered-search threshold (needs the HNSW core)."""
+        raise NotImplementedError("HNSW core not built")
 
     class HnswIndex:  # type: ignore[no-redef]
         """HNSW index (not built: src/index/hnsw.cpp does not exist yet).
@@ -74,6 +78,7 @@ __all__ = [
     "ProductQuantizer",
     "build_info",
     "cosine_distance",
+    "default_prefilter_below",
     "distances",
     "fuse_rrf",
     "fuse_weighted",

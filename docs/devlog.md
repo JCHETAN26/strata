@@ -2091,3 +2091,21 @@ TLS and token on every hop, SIFT1M, ef_search=64. Results: `results/server/shard
   the graph beats the pre-filter even at 0.1% for random filters (≥443 vs 26 QPS at 1%). With the
   default, auto would take the ~17x slower path there. The benchmark derived its own threshold
   (0.89%) and is unaffected.
+
+## 2026-10-04: Size-aware auto-filter threshold
+
+`FilteredSearchOptions::prefilter_below` is now optional. Unset, `search_filtered` uses
+`default_prefilter_below(size())` = 1.48% × (n / 1M)^-0.22, clamped to [0.05%, 5%]: the power
+law through the largest crossovers measured on x86 (1.48% at 1M, 0.89% at 10M). It is exposed in
+Python as `strata.default_prefilter_below`. The bench's `--threshold` is optional too (the driver
+always passes it).
+- **Why:** the fixed 1.3% sent 10M-vector filters between 0.89% and 1.3% to the pre-filter, where
+  the graph is faster.
+- **A correction to the design doc:** I had written "~17x slower". That came from the crossover
+  table's recall-0.95 operating point, which uses very low ef. At ef 40 the measured gap is about
+  5x for random filters and 1.4x for correlated ones.
+- **Remaining limit, documented in the explainer:** the threshold follows the correlated
+  crossover, so at 10M random filters between ~0.2% and 0.9% still take the pre-filter, which is
+  2–5x slower there, never less exact.
+- **Tests:** 254/254 C++ (2 new), 142 Python. HNSW explainer section 11 updated in the same
+  commit, per CLAUDE.md.

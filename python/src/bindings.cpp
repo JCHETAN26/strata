@@ -450,7 +450,7 @@ strata::FilteredSearchOptions filter_options(std::size_t ef_search, const std::s
                                              double fallback_budget) {
   return {.ef_search = ef_search,
           .strategy = parse_strategy(strategy),
-          .prefilter_below = prefilter_below.value_or(strata::kDefaultPrefilterBelow),
+          .prefilter_below = prefilter_below,
           .fallback_budget = fallback_budget};
 }
 #endif
@@ -1279,6 +1279,10 @@ list gets 0; fused = sum weights[i] * norm_i. Returns (ids, scores), shape (num_
   // Bound only when src/index/hnsw.cpp exists; otherwise strata.HnswIndex (in __init__.py) raises
   // NotImplementedError.
 #ifdef STRATA_HAS_HNSW
+  m.def("default_prefilter_below", &strata::default_prefilter_below, "n"_a,
+        "The default 'auto' filtered-search threshold for an index of n ids: below this "
+        "selectivity the exact pre-filter is used. 1.48% at 1M, 0.89% at 10M, clamped to "
+        "[0.05%, 5%]; see docs/explainers/hnsw.md section 11.");
   nb::class_<PyHnsw>(m, "HnswIndex",
                      R"doc(Hierarchical Navigable Small World graph (approximate k-NN).
 
@@ -1370,8 +1374,9 @@ exclusive lock, so inserts are serialized.)doc")
           "(default: exact pre-filter below prefilter_below selectivity, else the graph, falling "
           "back to the pre-filter when a graph search exceeds (fallback_budget + selectivity) * "
           "len(index) distance computations), 'graph' (approximate, non-matching nodes are "
-          "traversed but never returned), or 'prefilter' (exact). prefilter_below defaults to the "
-          "measured crossover, which depends on index size.")
+          "traversed but never returned), or 'prefilter' (exact). prefilter_below defaults to "
+          "strata.default_prefilter_below(len(index)): the measured crossover, which falls as the "
+          "index grows (1.48% at 1M, 0.89% at 10M).")
       .def(
           "search_filtered",
           [](const PyHnsw& self, const FloatArray& queries, std::size_t k, const IdArray& f,

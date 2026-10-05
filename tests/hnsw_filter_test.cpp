@@ -251,6 +251,35 @@ TEST_F(HnswFilter, KnownSelectivityIsUsedInsteadOfAnEstimate) {
 }
 
 // The auto estimate is cached on the filter: repeated queries, and copies of the filter, reuse it.
+TEST(HnswFilterThreshold, DefaultFallsWithIndexSize) {
+  // Anchored on the crossovers measured on x86: 1.48% at 1M, 0.89% at 10M.
+  EXPECT_NEAR(default_prefilter_below(1'000'000), 0.0148, 1e-9);
+  EXPECT_NEAR(default_prefilter_below(10'000'000), 0.0089, 0.0001);
+  // Monotone: a bigger index makes the pre-filter relatively dearer.
+  double previous = 1.0;
+  for (std::size_t n :
+       {100'000ULL, 1'000'000ULL, 10'000'000ULL, 100'000'000ULL, 1'000'000'000ULL}) {
+    const double t = default_prefilter_below(n);
+    EXPECT_LT(t, previous) << n;
+    previous = t;
+  }
+  // Clamped at both ends; an empty index does not divide by zero.
+  EXPECT_EQ(default_prefilter_below(0), kPrefilterBelowMax);
+  EXPECT_EQ(default_prefilter_below(1), kPrefilterBelowMax);
+  EXPECT_EQ(default_prefilter_below(std::size_t{1} << 60), kPrefilterBelowMin);
+}
+
+TEST_F(HnswFilter, AutoUsesTheSizeAwareDefaultUnlessGiven) {
+  // kCount = 4000 ids: the size-aware default is ~4.99%, so a ~3% filter goes to the pre-filter;
+  // the old fixed 1.3% would have sent it to the graph. An explicit prefilter_below still wins.
+  ASSERT_GT(default_prefilter_below(kCount), 0.04);
+  FilteredSearchStats stats;
+  ASSERT_TRUE(run(0, filter(30), {.fallback_budget = 0}, &stats));  // ~3%
+  EXPECT_EQ(stats.used, FilterStrategy::kPreFilter);
+  ASSERT_TRUE(run(0, filter(30), {.prefilter_below = 0.013, .fallback_budget = 0}, &stats));
+  EXPECT_EQ(stats.used, FilterStrategy::kGraph);
+}
+
 TEST_F(HnswFilter, SelectivityEstimateIsCachedPerFilter) {
   const auto f = filter(20);  // near the default threshold, so the precise sample is used too
   const double coarse = f.coarse_selectivity();

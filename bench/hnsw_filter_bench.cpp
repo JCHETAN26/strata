@@ -90,7 +90,7 @@ struct Options {
   std::vector<double> ef_search{10, 20, 40, 80, 160, 320};
   std::size_t runs = 3;
   std::size_t max_queries = 500;
-  double threshold = strata::kDefaultPrefilterBelow;
+  std::optional<double> threshold;  // unset: the size-aware default_prefilter_below(n)
   std::size_t build_threads = 4;
 };
 
@@ -390,8 +390,9 @@ int main(int argc, char** argv) {
             << "\", \"target_selectivity\": " << s << ", \"selectivity\": " << actual
             << ", \"matching\": " << matching << ", \"queries_own_match\": " << n_match
             << ", \"strategy\": \"" << strategy << "\", \"ef_search\": " << ef
-            << ", \"threshold\": " << opt.threshold << ", \"runs\": ["
-            << measure(c, options, opt.runs) << "]}";
+            << ", \"threshold\": "
+            << (opt.threshold ? std::to_string(*opt.threshold) : std::string("null"))
+            << ", \"runs\": [" << measure(c, options, opt.runs) << "]}";
       points += point.str();
       std::cerr << "  " << strategy << " ef=" << ef << " done\n";
     }

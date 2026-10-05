@@ -191,7 +191,7 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 - [x] Strategy B: filter during graph traversal (best for broad filters) — finish order 3
 - [x] Automatic strategy selection based on estimated selectivity (`estimate_selectivity` exists) — finish order 3
 
-- [ ] Size-aware auto-filter threshold: the fixed 1.3% default fits 1M but is too high at 10M (design doc §9)
+- [x] Size-aware auto-filter threshold: `default_prefilter_below(n)` = 1.48% × (n/1M)^-0.22, fitted to the 1M and 10M crossovers
 
 **Measure:** recall and QPS at 1%, 10%, 50% filter selectivity for each strategy (crossover chart).
 Done on the 200k subset (Mac). In the AWS session the crossover is re-measured at 1M and 10M, and

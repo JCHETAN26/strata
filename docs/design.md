@@ -178,7 +178,9 @@ recall 0.95–0.99, random to correlated filters):
   - In the 1–3% band just above it, the graph's budget fallback fires: up to two-thirds of
     queries at low ef_search for correlated filters at 1M, at most 22% at 10M.
   - Recall stays at the graph's level either way.
-- **The default threshold (1.3%) fits 1M but is too high at 10M** (see section 9).
+- **The default threshold is size-aware:** `1.48% × (n / 1M)^-0.22` (2.1% at 200k, 0.89% at 10M),
+  fitted to the measured crossovers. Passing a value overrides it per call. It follows the
+  correlated crossover, because auto cannot tell the filter kinds apart (see section 9).
 
 ## 7. Sharding
 
@@ -241,10 +243,10 @@ recall 0.95–0.99, random to correlated filters):
 
 - **hnswlib is 6–7% faster** than Strata on SIFT1M and BIGANN-10M (like for like, x86).
   Strata leads only on GloVe-100.
-- **The auto-filter threshold is fixed, not size-aware.** The default 1.3% fits 1M, but at 10M
-  the graph beats the pre-filter even at 0.1% for random filters (at 1%: at least 443 vs 26 QPS
-  at recall 0.95). With the default, auto would choose the ~17x slower path there. The threshold
-  should scale with index size, or be calibrated per index.
+- **Auto can't tell random filters from correlated ones.** The default threshold now scales
+  with index size, but it follows the higher, correlated crossover. At 10M, random filters
+  between about 0.2% and 0.9% still get the exact pre-filter where the graph is 2–5x faster
+  (ef_search 40). Recall is unaffected.
 - **Sharded query capacity does not grow with machines** (1.24x on 4). Replicas, not partitions,
   are the tool for query rate. Diagnosing the remaining limit (coordinator, client) is open.
 - **No group commit:** durable single inserts are slow.

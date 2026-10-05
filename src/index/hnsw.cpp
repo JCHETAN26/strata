@@ -342,12 +342,14 @@ Expected<std::vector<Neighbor>> HnswIndex::search_filtered_impl(
 
   FilterStrategy strategy = options.strategy;
   if (strategy == FilterStrategy::kAuto) {
+    // The threshold scales with the index size unless the caller fixes it (see
+    // default_prefilter_below). size() counts deleted ids too, as the pre-filter scans them.
+    const double threshold = options.prefilter_below.value_or(default_prefilter_below(size()));
     // A caller that already knows the selectivity (e.g. counted once for a batch) passes it.
-    st.estimated_selectivity = options.selectivity
-                                   ? *options.selectivity
-                                   : source.selectivity(options.prefilter_below, st.resampled);
-    strategy = st.estimated_selectivity < options.prefilter_below ? FilterStrategy::kPreFilter
-                                                                  : FilterStrategy::kGraph;
+    st.estimated_selectivity =
+        options.selectivity ? *options.selectivity : source.selectivity(threshold, st.resampled);
+    strategy =
+        st.estimated_selectivity < threshold ? FilterStrategy::kPreFilter : FilterStrategy::kGraph;
   }
 
   if (strategy == FilterStrategy::kGraph) {

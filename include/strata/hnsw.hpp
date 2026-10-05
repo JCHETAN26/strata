@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -47,18 +49,32 @@ enum class FilterStrategy {
   kPreFilter,
 };
 
-// Default for FilteredSearchOptions::prefilter_below: 1.3%, the crossover measured on 200k SIFT
-// vectors (1.03-1.28% across random and cluster-correlated filters at recall 0.95-0.99; the
-// largest, rounded: results/hnsw_filter/filter_sift1m-200k-q1000.md, docs/explainers/hnsw.md
-// section 11). It depends on index size: the pre-filter's cost grows with n, the graph's with ef /
-// selectivity. Re-measured at 1M and 10M in the AWS session.
-inline constexpr double kDefaultPrefilterBelow = 0.013;
+// The default kAuto threshold for an index of n ids: the selectivity below which the exact
+// pre-filter is expected to beat the graph. It falls with n, because the pre-filter's cost grows in
+// proportion to n while the graph's grows slowly. A power law through the crossovers measured with
+// one method on x86 (the largest over random and cluster-correlated filters, recall 0.95-0.99):
+// 1.48% at 1M (SIFT1M) and 0.89% at 10M (BIGANN-10M), so
+//     threshold(n) = 1.48% * (n / 1M)^-0.22,    clamped to [0.05%, 5%].
+// The largest crossover is used because kAuto cannot tell a correlated filter from a random one,
+// and the correlated crossover is the higher one. Random filters cross lower, so at large n they
+// can still get the pre-filter where the graph is faster (slower, never less exact). See
+// docs/explainers/hnsw.md section 11. Pass FilteredSearchOptions::prefilter_below to override.
+inline constexpr double kPrefilterBelowAt1M = 0.0148;
+inline constexpr double kPrefilterBelowExponent = -0.22;
+inline constexpr double kPrefilterBelowMin = 0.0005;
+inline constexpr double kPrefilterBelowMax = 0.05;
+[[nodiscard]] inline double default_prefilter_below(std::size_t n) noexcept {
+  const double scaled = kPrefilterBelowAt1M *
+                        std::pow(static_cast<double>(n > 0 ? n : 1) / 1e6, kPrefilterBelowExponent);
+  return std::clamp(scaled, kPrefilterBelowMin, kPrefilterBelowMax);
+}
 
 struct FilteredSearchOptions {
   std::size_t ef_search = 64;
   FilterStrategy strategy = FilterStrategy::kAuto;
-  // kAuto: use the pre-filter when the estimated selectivity is below this.
-  double prefilter_below = kDefaultPrefilterBelow;
+  // kAuto: use the pre-filter when the estimated selectivity is below this. Unset: the size-aware
+  // default_prefilter_below(size()).
+  std::optional<double> prefilter_below;
   // kAuto: a graph search that computes more than (fallback_budget + estimated selectivity) *
   // size() distances gives up, and the pre-filter answers instead. That is about the pre-filter's
   // own cost in distance computations: one filter test per id (about a tenth of a distance, hence

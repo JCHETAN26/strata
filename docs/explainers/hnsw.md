@@ -853,8 +853,9 @@ match.
    Python binding does this, counting its bitset once per batch instead of once per query.
    Caching is correct only because a `CompiledFilter` must not outlive changes to its table (the
    table must not be appended to while the filter is in use), so the estimate cannot go stale.
-2. **Choose.** Pre-filter if the estimate is below `prefilter_below` (default: the measured
-   crossover, next subsection), otherwise the graph.
+2. **Choose.** Pre-filter if the estimate is below `prefilter_below`, otherwise the graph. Unset,
+   `prefilter_below` is `default_prefilter_below(size())`: a size-aware threshold fitted to the
+   crossovers measured at 1M and 10M (the "Depends on n" subsection below).
 3. **Fall back.** A graph search that computes more than
    `(fallback_budget + estimated selectivity) × n` distances gives up, and the pre-filter answers
    that query. That budget is about the pre-filter's own cost in distance units: one filter test
@@ -891,8 +892,9 @@ which the pre-filter's QPS beats the graph's QPS at that recall:
 | random | 1.03% | 1.04% |
 | correlated | 1.25% | 1.28% |
 
-`kDefaultPrefilterBelow` is the largest, rounded: **1.3%**. Auto cannot tell at query time whether a
-filter is correlated, and the pre-filter is exact, so erring toward it is the safe side. Either
+The largest, rounded, was the original fixed default: **1.3%**. Auto cannot tell at query time
+whether a filter is correlated, and the pre-filter is exact, so erring toward it is the safe side.
+(That fixed default was later replaced by a size-aware one; see "Depends on n".) Either
 side of the crossover the gap is large: at 0.1% random the pre-filter runs at 2.3k QPS against the
 graph's 28-317 QPS (ef 320 down to 10), and at 50% the graph runs at 2.7k-43k QPS against the
 pre-filter's 204.
@@ -928,7 +930,40 @@ one side, e.g. forced graph ±999 QPS at random 10%, ef 40) is Mac measurement n
 auto. In the benchmark one filter serves all queries, so only the warmup pays for sampling; a
 workload that compiles a new filter for every query still pays once per filter.
 
-**Depends on n.** The pre-filter's cost grows with the index size, the graph's with
-ef / selectivity (and slowly with n), so the crossover moves with n. It is re-measured at 1M and
-10M in the AWS session before being quoted as general.
+**Depends on n: the size-aware default.** The pre-filter's cost grows with the index size; the
+graph's grows with ef / selectivity and only slowly with n. So the crossover falls as n grows.
+Measured on x86 with one method (`results/hnsw_filter/filter_sift1m.md`,
+`filter_bigann10m.md`), at recall 0.95–0.99:
+
+| index | random filters | correlated filters | largest |
+|---|---:|---:|---:|
+| 1M (SIFT1M) | 0.51% | 1.33–1.48% | **1.48%** |
+| 10M (BIGANN-10M) | below 0.1% (the graph won at every point) | 0.79–0.89% | **0.89%** |
+
+In speed terms (ef_search 40): from 1M to 10M the pre-filter's QPS falls about 11x (it scans every
+id), the graph's about 1.6x.
+
+`default_prefilter_below(n)` is the power law through the two largest crossovers,
+`1.48% × (n / 1M)^-0.22`, clamped to [0.05%, 5%]: 2.1% at 200k, 0.89% at 10M, 0.54% at 100M. It
+replaced the fixed 1.3%, which fit 1M but at 10M sent filters between 0.89% and 1.3% to the
+pre-filter where the graph is faster (at 1% and ef 40: 26 vs 134 QPS for random filters, 10 vs 14
+for correlated).
+
+Three choices, and their limits:
+- **Follow the larger (correlated) crossover.** Auto cannot tell a correlated filter from a
+  random one by its selectivity, and erring toward the pre-filter costs speed, never recall.
+  The price: at 10M, random filters between about 0.2% and 0.9% still get the pre-filter, which is
+  2–5x slower than the graph there. Telling the kinds apart would need a signal beyond selectivity,
+  such as whether the matches near the query are dense. That is future work.
+- **Two points, one exponent.** The fit rests on two sizes of SIFT-family data. Its 200k value
+  (2.1%) is above the 1.28% measured on the 200k subset by the crossover table's low-ef method; at
+  ef 40 the pre-filter there still wins at 1.1% (959 vs 459 QPS), so the higher threshold is
+  consistent with practical ef. Other data (dimension, distance cost) will shift the constants.
+  `prefilter_below` overrides it per call, and the benchmark derives a threshold for a given index.
+- **Clamps.** Below 0.05% the pre-filter is always cheap enough to use; above 5% the graph always
+  wins at the sizes measured. The clamps keep the extrapolation from running off at tiny or huge n.
+
+Tests: `HnswFilterThreshold.DefaultFallsWithIndexSize` (anchors, monotonicity, clamps) and
+`HnswFilter.AutoUsesTheSizeAwareDefaultUnlessGiven` (an unset threshold uses the size-aware one, an
+explicit one still wins).
 
