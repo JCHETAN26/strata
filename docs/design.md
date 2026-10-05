@@ -1,10 +1,10 @@
 # Strata design
 
-> **Draft. The numbers here are development results** from a fanless MacBook Air (M2): recall
-> values are final, and speed numbers are indicative only, because the laptop throttles under
-> sustained load. They will be replaced by the x86 results from the AWS session
-> ([`aws-plan.md`](aws-plan.md)) and the ARM results from the Oracle machine. Every number links
-> to the generated table it comes from.
+> Speed numbers come from a dedicated **AWS c7i.8xlarge** (Xeon Platinum 8488C, Sapphire Rapids;
+> 16 physical cores), and the sharding numbers from a 6-machine cluster of c7i instances
+> ([`aws-plan.md`](aws-plan.md)). Numbers marked *M2* are development results from a fanless
+> MacBook Air: their recall is final, their speed indicative. The ARM results from the Oracle
+> machine are still to come. Every number links to the generated table it comes from.
 
 Strata is a vector search engine in C++20: exact and HNSW search with SIMD distance kernels,
 product quantization, metadata filtering, durable storage with a write-ahead log, a gRPC shard
@@ -34,8 +34,12 @@ its own line-by-line explainer: [`explainers/hnsw.md`](explainers/hnsw.md).
 
 - **Scalar code is the reference.** NEON (ARM) and AVX2+FMA (x86) kernels are chosen at compile
   time, and each has a test asserting it matches scalar within a documented tolerance.
-- **Measured:** brute force over SIFT1M runs at 85.5 QPS with NEON vs 9.3 QPS scalar, a **9.2x**
-  speedup (single thread). On SIFT10K it is 6.2x. Source: [`results/tables.md`](../results/tables.md).
+- **Measured (*M2*):** brute force over SIFT1M runs at 85.5 QPS with NEON vs 9.3 QPS scalar, a
+  **9.2x** speedup (single thread). On SIFT10K it is 6.2x. Source:
+  [`results/tables.md`](../results/tables.md). The AVX2-vs-scalar speedup has not been measured
+  on x86 yet.
+- **Share of search time:** on x86, the AVX2 distance kernel takes **33%** of search cycles on
+  SIFT1M; the graph traversal around it takes most of the rest (section 3).
 - **Why compile-time selection:**
   - Runtime dispatch would put an indirect call in the innermost loop.
   - The targets are known: the Mac and the Oracle machine are ARM, AWS is x86 with AVX2.
@@ -58,11 +62,28 @@ The deviations are listed in the explainer (section 8).
   ef=40, and the mean layer-0 degree drops from 24.8 to 16.6. Source:
   [`selection_comparison.md`](../results/selection/selection_comparison.md),
   [`tables.md`](../results/tables.md).
-- **Against hnswlib and FAISS** (SIFT1M, single thread, same M and ef_construction). Recall
-  matches at every ef_search; Strata 0.9283 vs hnswlib 0.9288 vs FAISS 0.9344 at ef=40. Mac QPS
-  (indicative): Strata 10,685, hnswlib 6,194, FAISS 12,902. The hnswlib number is unfair on ARM
-  (no NEON path); the x86 run settles the speed comparison. Source:
-  [`hnsw_vs_reference.md`](../results/hnsw/hnsw_vs_reference.md).
+- **Against hnswlib and FAISS, like for like on x86.** Same M and ef_construction, one thread,
+  all three at 256-bit SIMD (FAISS held to AVX2, hnswlib built without AVX-512, both verified at
+  run time). At ef_search=80:
+
+  | | Strata | hnswlib | FAISS |
+  |---|---:|---:|---:|
+  | SIFT1M recall / QPS | 0.975 / 5,067 | 0.976 / 5,392 | 0.978 / 4,107 |
+  | GloVe-100 recall / QPS | 0.788 / 5,040 | 0.788 / 4,643 | 0.788 / 4,394 |
+  | BIGANN-10M recall / QPS | 0.936 / 3,767 | 0.937 / 4,035 | 0.946 / 2,134 |
+
+  - Recall matches hnswlib at every ef_search, as expected from the same algorithm and parameters.
+  - hnswlib is 6–7% faster on SIFT1M and BIGANN-10M; Strata is fastest on GloVe-100 and faster
+    than FAISS everywhere.
+  - Sources: [`hnsw_vs_reference_x86.md`](../results/hnsw/hnsw_vs_reference_x86.md),
+    [`_10m.md`](../results/hnsw/hnsw_vs_reference_10m.md).
+- **Search is memory-latency bound,** not compute bound. `perf` on x86 (SIFT1M) shows
+  `search_layer`'s traversal taking **54%** of cycles, mostly stalled on the prefetched neighbor
+  and vector loads, and the AVX2 distance kernel 33%, at **~0.55 instructions per cycle**. That
+  is why wider vectors barely help the references: at AVX-512, FAISS gains 0–6%, and hnswlib's
+  AVX-512 build is *slower* than its AVX build on SIFT1M and BIGANN-10M
+  ([`_x86_avx512.md`](../results/hnsw/hnsw_vs_reference_x86_avx512.md)). The levers that matter
+  are memory layout and prefetching, not SIMD width.
 - **Memory layout:**
   - Vectors are stored contiguously.
   - Each node's neighbor lists are fixed-capacity slices of flat arrays.
@@ -72,8 +93,11 @@ The deviations are listed in the explainer (section 8).
   - `add_batch` with a thread pool.
   - Each node's lists are guarded by one lock from a striped table (65,536 stripes); no thread
     holds two node locks at once, so lock ordering can't deadlock.
-  - Result: 3.2x faster with 4 threads on the 200k subset, with identical recall and graph
-    statistics. Source: [`build_scaling`](../results/hnsw_build/build_scaling_sift1m-200k-q1000.md).
+  - Result on x86, SIFT1M: 322 s → **21 s with 16 threads (15.3x)**, with the same recall and
+    graph statistics (mean degree, reachability). Source:
+    [`build_scaling_sift1m`](../results/hnsw_build/build_scaling_sift1m.md).
+- **Search scales with cores:** 14.4x at 16 threads (90% efficiency) and 17.2x with 32 SMT
+  threads, on one shared index ([`scaling_sift1m`](../results/search_scaling/scaling_sift1m.md)).
 
 ## 4. Deletes and persistence
 
@@ -94,8 +118,8 @@ The deviations are listed in the explainer (section 8).
     cross-platform loads in format v2.
   - Recovery loads the snapshot, then replays later WAL records by LSN, so the recovered graph is
     bit-identical to the one that crashed.
-  - Loading a 200k index takes **0.39 s**, against **25.6 s** to rebuild it
-    ([`persist`](../results/storage/hnsw_persist_sift1m-200k-q1000.md)).
+  - Loading a 200k index takes **0.39 s**, against **25.6 s** to rebuild it (*M2*,
+    [`persist`](../results/storage/hnsw_persist_sift1m-200k-q1000.md)).
 
 ## 5. Compression: product quantization
 
@@ -105,7 +129,7 @@ The deviations are listed in the explainer (section 8).
   - Search uses asymmetric distance: precomputed per-query lookup tables against the full-precision
     query.
   - Re-ranking uses the original vectors for the top candidates.
-- **Trade-off:** memory against recall, recovered by re-ranking. On SIFT10K (codes plus codebooks
+- **Trade-off:** memory against recall, recovered by re-ranking. On SIFT10K (*M2*; codes plus codebooks
   against 5.12 MB of raw float32):
 
   | m (bytes/vector) | index size | recall@10, no re-rank | re-rank 20 | re-rank 50 | re-rank 100 |
@@ -139,13 +163,22 @@ Three strategies, plus automatic selection between them.
   - A graph search that exceeds its budget, `(fallback_budget + selectivity) × n` distance
     computations, falls back to the pre-filter, so a bad estimate costs time, not recall.
 
-**Measured crossover** on the 200k subset: at **1.03–1.28%** selectivity the pre-filter overtakes
-the graph (random to correlated filters, recall targets 0.95 and 0.99). The default threshold is
-1.3%, the safe side.
-- The crossover depends on n: the pre-filter scales with n, the graph with ef / selectivity.
-- So it is re-measured at 1M and 10M on AWS, with a dense 1–3% sweep that counts how often auto
-  falls back.
-- Source: [`filter`](../results/hnsw_filter/filter_sift1m-200k-q1000.md).
+**Measured crossover** (the selectivity below which the pre-filter is faster than the graph at
+recall 0.95–0.99, random to correlated filters):
+
+| index size | crossover | source |
+|---|---|---|
+| 200k (*M2*) | 1.03–1.28% | [`filter`](../results/hnsw_filter/filter_sift1m-200k-q1000.md) |
+| 1M (x86) | 0.51–1.48% | [`filter_sift1m`](../results/hnsw_filter/filter_sift1m.md) |
+| 10M (x86) | below 0.1% (random; the graph won at every selectivity measured) to 0.89% (correlated) | [`filter_bigann10m`](../results/hnsw_filter/filter_bigann10m.md) |
+
+- **It falls as n grows,** as expected: the pre-filter's cost grows with n, the graph's barely does.
+- **The fallback does its job:**
+  - Below the threshold, auto pre-filters and has recall 1.0.
+  - In the 1–3% band just above it, the graph's budget fallback fires: up to two-thirds of
+    queries at low ef_search for correlated filters at 1M, at most 22% at 10M.
+  - Recall stays at the graph's level either way.
+- **The default threshold (1.3%) fits 1M but is too high at 10M** (see section 9).
 
 ## 7. Sharding
 
@@ -164,9 +197,23 @@ the graph (random to correlated filters, recall targets 0.95 and 0.99). The defa
     a deadline per call. The coordinator merges the per-shard top-k lists by (distance, id).
   - This replaced one thread per shard per query. On the Mac: median latency **−8% (2 shards) and
     −10% (4 shards)**, and throughput with 8 clients **+17% and +23%** (recall identical).
-  - Tail latency on one shared-core laptop was noisy in both modes. It is re-measured on separate
-    machines on AWS.
-  - Source: [`coordinator_latency`](../results/server/coordinator_latency_sift1m-200k-q1000.md).
+  - These fan-out numbers are from the *M2* (shared cores). Source:
+    [`coordinator_latency`](../results/server/coordinator_latency_sift1m-200k-q1000.md).
+- **Measured across machines** (x86, SIFT1M: 1, 2, and 4 shard machines, a coordinator, and a
+  separate load client, with TLS on every hop;
+  [`sharding_aws`](../results/server/sharding_aws.md)):
+  - **Ingest scales:** 1M vectors in 345 s, 174 s, and 72 s. Each shard's graph is smaller, so 4
+    shards beat linear.
+  - **Query capacity barely does:** 8.0k, 8.6k, and 9.9k QPS (1.24x on 4 machines). With
+    round-robin partitioning every query visits every shard, and an HNSW search over 1/N of the
+    data costs nearly as much as over all of it (search cost grows roughly with log n). Partitions
+    add capacity for data size, not for query rate. Whether the coordinator or the single load
+    client also capped it was not isolated (open; see section 9).
+  - **Latency is flat across shard counts:** p99 1.4 ms at half load, about 2.5 ms per query one at
+    a time. Latency measured from each query's due time, with the client sending on schedule (p99
+    lateness ≤ 3 µs).
+  - **Recall rises with shard count** at a fixed ef_search (0.964 → 0.979 → 0.989), because each
+    shard returns its own top-k. That is also more total work per query.
 - **InsertBatch is not atomic across shards:**
   - The response lists each input's id, or a reserved "not inserted" value, plus the first error.
   - A retry carries those ids back, and the shard checks them against the stored vectors instead
@@ -192,14 +239,20 @@ the graph (random to correlated filters, recall targets 0.95 and 0.99). The defa
 
 ## 9. Known weaknesses
 
-- **FAISS leads at low ef_search on the Mac** (34k vs 24k QPS at ef=10 on SIFT1M). Whether that
-  holds on x86 is one of the AWS questions.
+- **hnswlib is 6–7% faster** than Strata on SIFT1M and BIGANN-10M (like for like, x86).
+  Strata leads only on GloVe-100.
+- **The auto-filter threshold is fixed, not size-aware.** The default 1.3% fits 1M, but at 10M
+  the graph beats the pre-filter even at 0.1% for random filters (at 1%: at least 443 vs 26 QPS
+  at recall 0.95). With the default, auto would choose the ~17x slower path there. The threshold
+  should scale with index size, or be calibrated per index.
+- **Sharded query capacity does not grow with machines** (1.24x on 4). Replicas, not partitions,
+  are the tool for query rate. Diagnosing the remaining limit (coordinator, client) is open.
 - **No group commit:** durable single inserts are slow.
 - **Tombstones are never compacted.**
 - **The bulk load into a shard is single-threaded** (insert by insert through the WAL), which
   limits sharded runs to about 1M vectors for now.
 - **No AVX-512 kernels** (future work). On AVX-512 x86 CPUs, FAISS and hnswlib can use 512-bit
-  vectors while Strata uses 256-bit. The x86 comparison is therefore run twice: at AVX2 for all
-  three (the like-for-like result), and with the references at AVX-512, labeled as such.
+  vectors while Strata uses 256-bit. The x86 comparison was run both ways. Given that search is
+  memory bound, AVX-512 did not help the references much, so this is low priority.
 - **No ThreadSanitizer run of the server** against stock gRPC builds (protobuf changes its layout
   under TSan).

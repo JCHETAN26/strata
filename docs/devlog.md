@@ -2070,3 +2070,24 @@ TLS and token on every hop, SIFT1M, ef_search=64. Results: `results/server/shard
 - **Recall rises with shard count** at a fixed ef_search (0.964, 0.979, 0.989), because each shard
   returns its own top-k. That is more work per query, and part of why capacity doesn't grow.
 - Teardown: 14 resources destroyed, `check_clean.sh` clean.
+
+## 2026-10-04: Build plan and design doc brought up to date
+
+- **Build plan:**
+  - Ticked items that were done but never checked off, each verified in the repo: parallel
+    build, HNSW snapshots and deletes, the gRPC API, sharding and the coordinator, and the repo
+    being public.
+  - Filled the metrics tracker with the measured results.
+  - Added two follow-ups: diagnose sharded query capacity, and a size-aware filter threshold.
+- **Design doc:** x86 results replace the development numbers wherever they exist; *M2* labels
+  mark the rest. New content:
+  - the like-for-like comparison;
+  - the memory-bound profile (search_layer 54% of cycles, AVX2 distance 33%, ~0.55 IPC), which
+    explains why AVX-512 barely helps;
+  - build and search scaling;
+  - the crossover at 200k, 1M, and 10M;
+  - the cross-machine sharding results.
+- **New weakness found while writing it:** the auto-filter threshold is fixed at 1.3%, but at 10M
+  the graph beats the pre-filter even at 0.1% for random filters (≥443 vs 26 QPS at 1%). With the
+  default, auto would take the ~17x slower path there. The benchmark derived its own threshold
+  (0.89%) and is unaffected.

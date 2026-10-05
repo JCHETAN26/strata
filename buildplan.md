@@ -149,7 +149,7 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 - [x] Contiguous vector storage, compact neighbor lists, prefetching in `search_layer` (~2x on the 200k subset)
 - [x] Prefetching in the upper-layer walk: tried, no gain distinguishable from noise on the M2, not kept; re-test on x86
 - [x] Thread pool: parallel batch queries
-- [ ] Parallel index build — finish order 2
+- [x] Parallel index build: striped locks, 15.3x with 16 threads on x86 (`results/hnsw_build/build_scaling_sift1m.md`)
 - [x] Profile hotspots on the Mac (`sample`; `results/profiles/`)
 - [x] Profile on Linux with `perf`, including `search_layer`'s own loop — AWS (`results/profiles/aws/`)
 - [ ] *Future:* AVX-512 distance kernels (x86 AWS runs compare hnswlib and FAISS at AVX2 like for like, and at AVX-512 against Strata's AVX2 as a labeled second comparison)
@@ -162,10 +162,10 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 ## Phase 4 — Persistence & crash recovery (≈1 week, Mac)
 
 - [x] Save and load index to/from disk (snapshot of vectors + tombstones)
-- [ ] Save and load the HNSW graph in snapshots — finish order 1
+- [x] Save and load the HNSW graph in snapshots (format v3, portable across libc++ and libstdc++)
 - [x] Write-ahead log: log every insert before applying it
 - [x] Deletes via tombstones (brute force)
-- [ ] HNSW deletes (tombstones skipped during search) — finish order 1
+- [x] HNSW deletes (tombstones skipped during search; `results/hnsw_deletes/`)
 - [ ] *Optional:* WAL group commit (durable inserts are capped at ~330/s by one fsync each)
 - [x] Crash tests: kill mid-insert, restart, verify no acknowledged write is lost or corrupted
 
@@ -191,6 +191,8 @@ hnswlib at every ef_search; QPS is indicative only, and final speed comparisons 
 - [x] Strategy B: filter during graph traversal (best for broad filters) — finish order 3
 - [x] Automatic strategy selection based on estimated selectivity (`estimate_selectivity` exists) — finish order 3
 
+- [ ] Size-aware auto-filter threshold: the fixed 1.3% default fits 1M but is too high at 10M (design doc §9)
+
 **Measure:** recall and QPS at 1%, 10%, 50% filter selectivity for each strategy (crossover chart).
 Done on the 200k subset (Mac). In the AWS session the crossover is re-measured at 1M and 10M, and
 those sweeps add 1-3% selectivity (near the threshold) to measure how often auto's fallback fires;
@@ -200,10 +202,11 @@ that sweep is skipped on the Mac.
 
 ## Phase 7 — Server & sharding (1–2 weeks, Oracle ARM machine; scaling on AWS)
 
-- [ ] gRPC API: insert, search, delete
-- [ ] Sharding: vectors partitioned across shards
-- [ ] Coordinator: parallel scatter to all shards, gather and merge top-k
+- [x] gRPC API: insert, insert batch (idempotent retries), search, delete, stats; TLS + token
+- [x] Sharding: vectors partitioned across shards (round-robin, 32-bit global ids)
+- [x] Coordinator: parallel scatter to all shards (async gRPC), gather and merge top-k
 - [ ] Docker Compose running multiple shards on the Oracle machine
+- [ ] Diagnose why sharded query capacity barely grows (1.24x on 4 machines; devlog 2026-10-04)
 - [x] Multi-machine scaling run in the AWS session (`results/server/sharding_aws.md`)
 
 **Measure:** end-to-end gRPC query latency; throughput scaling from 1 to N machines.
@@ -230,19 +233,19 @@ answer groundedness on HotpotQA.
 ## Phase 9 — Final results & polish (AWS session, then the Oracle machine)
 
 - [x] Linux build and tests on GCC 13, AVX2 verified natively (IdeaPad, 2026-09-25; predates HNSW)
-- [ ] Rebuild and test on Linux with HNSW and everything since (first thing on the Oracle machine)
+- [ ] Rebuild and test on Linux with HNSW and everything since: x86 done on AWS (GCC 13, all tests); ARM on the Oracle machine
 - [x] AWS session prepared, not run: plan with costs (`docs/aws-plan.md`), Terraform and scripts (`aws/`)
 - [x] Full runs on SIFT1M and GloVe-100, averaged over multiple runs — AWS (`results/hnsw/hnsw_vs_reference_x86*.md`)
 - [x] 10M-vector run — AWS (BIGANN-10M, `results/hnsw/hnsw_vs_reference_10m*.md`)
 - [x] Filtered-search crossover at 1M and 10M, including 1-3% selectivity (fallback rate) — AWS
 - [x] Thread scaling 1 → N cores, and multi-machine sharding scaling — AWS (sharded query capacity barely scales; cause open, see devlog 2026-10-04)
-- [ ] x86 AVX2 results (AWS) + final ARM NEON results (Oracle machine)
-- [ ] README: one-line summary, recall-QPS chart vs. FAISS/hnswlib at the top, architecture diagram,
-      results tables with hardware noted — draft with development numbers done; swap in AWS results
-- [ ] Design doc: graph parameters, compression, filtering strategies, sharding trade-offs —
-      draft (`docs/design.md`) with development numbers done; swap in AWS results
+- [ ] x86 AVX2 results (AWS: done) + final ARM NEON results (Oracle machine)
+- [x] README: one-line summary, recall-QPS chart vs. FAISS/hnswlib at the top, architecture diagram,
+      results tables with hardware noted (x86 results in; ARM numbers come with the Oracle item above)
+- [x] Design doc: graph parameters, compression, filtering strategies, sharding trade-offs
+      (`docs/design.md`, x86 results; ARM numbers come with the Oracle item above)
 - [ ] Fill in resume bullets with real numbers
-- [ ] Make the repo public
+- [x] Make the repo public
 
 ---
 
@@ -250,17 +253,17 @@ answer groundedness on HotpotQA.
 
 | Metric | How measured | Phase | Resume? | Result |
 |---|---|---|---|---|
-| Recall@10 vs. QPS (vs. FAISS, hnswlib) | ann-benchmarks methodology, SIFT1M & GloVe-100 | 2, 9 | Yes | |
-| p99 query latency | Benchmark harness | 2, 9 | README | |
-| SIMD speedup (AVX2 and NEON) | Kernel benchmark vs. scalar | 3 | Yes | |
-| Multithreaded QPS scaling | 1 → 16 threads | 3 | README | |
-| Index build time | Timed per dataset | 3, 9 | README | |
-| Crash recovery correctness | Repeated kill/restart tests | 4 | README | |
-| Memory reduction with PQ, recall retained | Compression sweep | 5 | Yes | |
-| Filtered search recall/QPS by selectivity | 1% / 10% / 50% | 6 | README | |
-| Sharded throughput scaling | 1 → N VMs | 7 | Maybe | |
-| nDCG@10 (BEIR) | Keyword / vector / hybrid / hybrid+rerank | 8 | Yes | |
-| Answer groundedness | HotpotQA subset | 8 | Yes | |
+| Recall@10 vs. QPS (vs. FAISS, hnswlib) | ann-benchmarks methodology, SIFT1M & GloVe-100 | 2, 9 | Yes | x86, all at AVX2, ef=80: SIFT1M 5,067 QPS @ 0.975 (hnswlib 5,392, FAISS 4,107); GloVe-100 5,040 (fastest); 10M 3,767 (hnswlib 4,035) |
+| p99 query latency | Benchmark harness | 2, 9 | README | x86 single thread SIFT1M ef=80: p50 204 µs, p99 271 µs; sharded over the network: p99 1.4 ms at half load |
+| SIMD speedup (AVX2 and NEON) | Kernel benchmark vs. scalar | 3 | Yes | NEON 9.2x on SIFT1M brute force (M2); AVX2 vs scalar not yet measured on x86 |
+| Multithreaded QPS scaling | 1 → 16 threads | 3 | README | 14.4x at 16 cores (90%), 17.2x with 32 SMT threads (x86) |
+| Index build time | Timed per dataset | 3, 9 | README | SIFT1M 333 s single thread (fastest of the three); 21 s with 16 threads (15.3x) |
+| Crash recovery correctness | Repeated kill/restart tests | 4 | README | No acknowledged write lost across kill-mid-write tests (`tests/crash_recovery_test.cpp`) |
+| Memory reduction with PQ, recall retained | Compression sweep | 5 | Yes | 17.6x smaller (m=16), recall@10 0.996 re-ranking 50 (SIFT10K, M2) |
+| Filtered search recall/QPS by selectivity | 1% / 10% / 50% | 6 | README | Pre-filter vs graph crossover 0.5–1.5% at 1M, <0.1–0.9% at 10M; auto mode recall 1.0 below threshold (x86) |
+| Sharded throughput scaling | 1 → N VMs | 7 | Maybe | Ingest 4.8x on 4 shards; query capacity only 1.24x (cause open) |
+| nDCG@10 (BEIR) | Keyword / vector / hybrid / hybrid+rerank | 8 | Yes | HotpotQA 5.2M: BM25 0.633, dense 0.699, RRF 0.730; SciFact BM25 0.6789 (= Anserini) |
+| Answer groundedness | HotpotQA subset | 8 | Yes | Answer F1 0.669, joint (answer + supporting facts) F1 0.564, 12% abstained (gold passages: 0.739 / 0.634) |
 
 ---
 
