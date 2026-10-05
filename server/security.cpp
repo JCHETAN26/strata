@@ -24,7 +24,9 @@ bool constant_time_equal(std::string_view a, std::string_view b) {
   }
   unsigned char diff = 0;
   for (std::size_t i = 0; i < a.size(); ++i) {
-    diff |= static_cast<unsigned char>(a[i]) ^ static_cast<unsigned char>(b[i]);
+    // ^ promotes to int; the result of two unsigned chars always fits back in one.
+    diff = static_cast<unsigned char>(
+        diff | (static_cast<unsigned char>(a[i]) ^ static_cast<unsigned char>(b[i])));
   }
   return diff == 0;
 }

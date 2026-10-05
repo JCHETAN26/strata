@@ -28,17 +28,17 @@ namespace strata::server {
 struct ListenConfig {
   std::string host = "127.0.0.1";
   int port = 0;
-  std::filesystem::path tls_cert_file;  // PEM certificate chain the server presents
-  std::filesystem::path tls_key_file;   // PEM private key for it
-  std::filesystem::path token_file;     // shared token clients must present (needs TLS)
-  bool insecure = false;                // allow a non-loopback listen without TLS and a token
-  int max_threads = 0;                  // cap on gRPC server threads; 0 = gRPC's default
+  std::filesystem::path tls_cert_file{};  // PEM certificate chain the server presents
+  std::filesystem::path tls_key_file{};   // PEM private key for it
+  std::filesystem::path token_file{};     // shared token clients must present (needs TLS)
+  bool insecure = false;                  // allow a non-loopback listen without TLS and a token
+  int max_threads = 0;                    // cap on gRPC server threads; 0 = gRPC's default
 };
 
 // How the coordinator connects to its shards. Empty ca_file means plaintext (shards on loopback).
 struct ShardClientConfig {
-  std::filesystem::path ca_file;     // PEM root certificate(s) the shards' certificates chain to
-  std::filesystem::path token_file;  // token sent to the shards (needs ca_file)
+  std::filesystem::path ca_file{};     // PEM root certificate(s) the shards' certificates chain to
+  std::filesystem::path token_file{};  // token sent to the shards (needs ca_file)
 };
 
 // Minimum token length. A token is a shared secret; this rejects obviously weak ones (the setup
