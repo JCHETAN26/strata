@@ -1,0 +1,124 @@
+# Builds and tests Strata on the three platforms it must support (CLAUDE.md "Machines"):
+# Linux x86 (AVX2 kernels), Linux ARM and macOS ARM (NEON kernels), with the sanitizer presets.
+# Benchmarks are not run here: shared CI runners give meaningless timings.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # SIFT10K, for the recall tests (they skip without it). Downloaded once and cached.
+  dataset:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - id: cache
+        uses: actions/cache@v4
+        with:
+          path: data/siftsmall
+          key: siftsmall-${{ hashFiles('scripts/prepare_datasets.py') }}
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          python3 -m pip install --quiet numpy
+          python3 scripts/prepare_datasets.py siftsmall
+      - uses: actions/upload-artifact@v4
+        with:
+          name: siftsmall
+          path: data/siftsmall
+          retention-days: 1
+
+  cpp:
+    needs: dataset
+    name: C++ ${{ matrix.preset }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, preset: linux-release }
+          - { os: ubuntu-24.04, preset: linux-asan }
+          - { os: ubuntu-24.04, preset: linux-tsan }
+          - { os: ubuntu-24.04-arm, preset: linux-release }
+          - { os: ubuntu-24.04-arm, preset: linux-asan }
+          - { os: macos-15, preset: release }
+          - { os: macos-15, preset: asan }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: siftsmall
+          path: data/siftsmall
+      - name: Install Ninja
+        run: |
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build g++-13
+          else
+            brew install ninja
+          fi
+      - name: Allow ThreadSanitizer's memory layout
+        if: contains(matrix.preset, 'tsan')
+        # Newer kernels randomize mmap more than TSan's shadow memory mapping allows.
+        run: sudo sysctl vm.mmap_rnd_bits=28
+      - uses: ./.github/actions/setup-vcpkg
+        with:
+          cache-key: core
+      - run: cmake --preset ${{ matrix.preset }}
+      - run: cmake --build --preset ${{ matrix.preset }}
+      - run: ctest --preset ${{ matrix.preset }}
+
+  python:
+    needs: dataset
+    name: Python bindings and RAG layer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: siftsmall
+          path: data/siftsmall
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build g++-13
+      - uses: ./.github/actions/setup-vcpkg
+        with:
+          cache-key: core
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+      - name: Lint
+        run: |
+          uv run --no-project --with ruff ruff check .
+          uv run --no-project --with ruff ruff format --check --exclude kaggle --exclude '*.md' .
+      - name: Build the bindings
+        run: uv sync --locked
+      - name: Build the C++ reference the binding tests compare against
+        run: |
+          cmake --preset linux-release
+          cmake --build --preset linux-release --target strata_reference
+      - run: make test-python
+
+  # The gRPC shard server and coordinator. gRPC comes from vcpkg and takes a long time to build
+  # the first time; after that it comes from the binary cache.
+  server:
+    name: Server (gRPC, Linux x86)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ninja-build g++-13
+      - uses: ./.github/actions/setup-vcpkg
+        with:
+          cache-key: server
+      - run: cmake --preset linux-server
+      - run: cmake --build --preset linux-server
+      - run: ctest --preset linux-server

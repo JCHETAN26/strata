@@ -1,0 +1,28 @@
+name: Set up vcpkg
+description: >
+  Clones vcpkg at the manifest's builtin-baseline, bootstraps it, exports VCPKG_ROOT, and restores
+  the vcpkg binary cache, so dependencies are built once per runner type and manifest.
+inputs:
+  cache-key:
+    description: Distinguishes caches whose packages differ (e.g. the server feature adds gRPC).
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Clone and bootstrap vcpkg
+      shell: bash
+      run: |
+        baseline=$(python3 -c "import json; print(json.load(open('vcpkg.json'))['builtin-baseline'])")
+        # A full clone: vcpkg resolves versions from the baseline commit in its own git history.
+        git clone --quiet https://github.com/microsoft/vcpkg.git "$RUNNER_TEMP/vcpkg"
+        git -C "$RUNNER_TEMP/vcpkg" checkout --quiet "$baseline"
+        "$RUNNER_TEMP/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+        echo "VCPKG_ROOT=$RUNNER_TEMP/vcpkg" >> "$GITHUB_ENV"
+        echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/.cache/vcpkg-bin" >> "$GITHUB_ENV"
+        mkdir -p "$HOME/.cache/vcpkg-bin"
+    - name: Restore vcpkg binary cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/vcpkg-bin
+        key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-key }}-${{ hashFiles('vcpkg.json') }}
+        restore-keys: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-key }}-

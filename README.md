@@ -1,5 +1,7 @@
 # Strata
 
+[![CI](https://github.com/JCHETAN26/strata/actions/workflows/ci.yml/badge.svg)](https://github.com/JCHETAN26/strata/actions/workflows/ci.yml)
+
 **A vector search engine written from scratch in C++20, with a retrieval-augmented generation
 (RAG) layer that answers questions from documents and cites its sources.**
 
@@ -194,6 +196,10 @@ ctest --preset debug
 | `linux-profile` | Release | Linux only: release flags plus `-g -fno-omit-frame-pointer`, for `perf` call graphs |
 
 Build output goes to `build/<preset>/`.
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `release` and `asan` on Linux
+x86, Linux ARM, and macOS ARM, `tsan` on Linux x86, the Python tests and lint, and the server
+tests, on every push and pull request.
 
 ### gRPC server and sharding coordinator (optional)
 
