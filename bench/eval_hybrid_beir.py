@@ -154,8 +154,10 @@ def run_dataset(dataset: str, args: argparse.Namespace) -> int:
     curve: dict[float, float] = {}
     if "weighted" in selected and tuning_split is not None:
         n_tune = len(splits[tuning_split])
-        print(f"  tuning weighted weight on {tuning_split} ({n_tune} q), "
-              f"{len(WEIGHT_GRID)} points:", flush=True)
+        print(
+            f"  tuning weighted weight on {tuning_split} ({n_tune} q), {len(WEIGHT_GRID)} points:",
+            flush=True,
+        )
         for w in WEIGHT_GRID:
             curve[w] = evaluate(tuning_split, "weighted", w)["nDCG@10"]
             print(f"    weight={w:.2f}  nDCG@10 {curve[w]:.4f}", flush=True)
