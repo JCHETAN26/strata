@@ -505,7 +505,7 @@ TEST_F(CollectionTest, ConcurrentSearchesDuringWrites) {
   ASSERT_TRUE(c);
   std::atomic<bool> done{false};
   std::atomic<std::size_t> searches{0};
-  std::vector<std::jthread> readers;
+  std::vector<std::thread> readers;
   for (int t = 0; t < 3; ++t) {
     readers.emplace_back([&] {
       while (!done.load()) {
@@ -526,7 +526,9 @@ TEST_F(CollectionTest, ConcurrentSearchesDuringWrites) {
     }
   }
   done = true;
-  readers.clear();
+  for (auto& r : readers) {
+    r.join();
+  }
   EXPECT_GT(searches.load(), 0U);
   EXPECT_EQ(c->live_size(), 270U);
 }

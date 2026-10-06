@@ -49,8 +49,11 @@ jobs:
           - { os: ubuntu-24.04, preset: linux-release }
           - { os: ubuntu-24.04, preset: linux-asan }
           - { os: ubuntu-24.04, preset: linux-tsan }
+          # No ASan on Linux ARM: GCC's ASan on the ARM runner is ~80x slower than on x86 for
+          # the compute-heavy tests (KMeans 35 s vs 0.45 s), so the suite doesn't fit in a job.
+          # The NEON kernels run under ASan on macOS ARM (clang) below; linux-asan on ARM was
+          # verified manually on the Oracle A1 machine (docs/devlog.md).
           - { os: ubuntu-24.04-arm, preset: linux-release }
-          - { os: ubuntu-24.04-arm, preset: linux-asan }
           - { os: macos-15, preset: release }
           - { os: macos-15, preset: asan }
     steps:

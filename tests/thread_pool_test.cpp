@@ -70,7 +70,7 @@ TEST(ThreadPool, UsesMultipleThreads) {
 TEST(ThreadPool, ConcurrentCallersAreSerialized) {
   ThreadPool pool(4);
   std::atomic<std::size_t> total{0};
-  std::vector<std::jthread> callers;
+  std::vector<std::thread> callers;
   for (int c = 0; c < 4; ++c) {
     callers.emplace_back([&] {
       for (int job = 0; job < 50; ++job) {
@@ -78,7 +78,9 @@ TEST(ThreadPool, ConcurrentCallersAreSerialized) {
       }
     });
   }
-  callers.clear();  // join
+  for (auto& c : callers) {
+    c.join();
+  }
   EXPECT_EQ(total.load(), 4U * 50U * 100U);
 }
 

@@ -169,9 +169,10 @@ second at ef_search=80:
 
 ## Build
 
-Requirements: CMake ≥ 3.25, Ninja, a C++20 compiler (Apple clang 15+ or GCC 12+/Clang 16+), and
-[vcpkg](https://github.com/microsoft/vcpkg). Dependencies (GoogleTest, Google Benchmark) are pinned
-in `vcpkg.json` and installed automatically on first configure.
+Requirements: CMake ≥ 3.25, Ninja, a C++20 compiler (Apple clang 16+, i.e. Xcode 16+, or GCC 13
+on Linux, which the `linux-*` presets use), and [vcpkg](https://github.com/microsoft/vcpkg).
+Dependencies (GoogleTest, Google Benchmark) are pinned in `vcpkg.json` and installed
+automatically on first configure.
 
 ```sh
 # one-time vcpkg setup
@@ -197,9 +198,9 @@ ctest --preset debug
 
 Build output goes to `build/<preset>/`.
 
-CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs `release` and `asan` on Linux
-x86, Linux ARM, and macOS ARM, `tsan` on Linux x86, the Python tests and lint, and the server
-tests, on every push and pull request.
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every push and pull request:
+`release` on Linux x86, Linux ARM, and macOS ARM; `asan` on Linux x86 and macOS ARM; `tsan` on
+Linux x86; the Python tests and lint; and the server tests.
 
 ### gRPC server and sharding coordinator (optional)
 

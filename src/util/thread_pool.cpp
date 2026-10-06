@@ -20,9 +20,11 @@ ThreadPool::~ThreadPool() {
     stop_ = true;
   }
   work_ready_.notify_all();
-  // Join now, while mutex_ and the condition variables are still alive. Leaving it to member
-  // destruction would join last (workers_ is declared first), after the state they use is gone.
-  workers_.clear();
+  // Join now, while mutex_ and the condition variables are still alive (workers_ is declared
+  // first, so member destruction would reach it last, after the state the workers use is gone).
+  for (auto& w : workers_) {
+    w.join();
+  }
 }
 
 void ThreadPool::run_chunks() {

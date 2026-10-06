@@ -2178,3 +2178,21 @@ Three design corrections came out of testing:
 - The Mac lost its Tailscale connection to the machine once, mid-build; the build itself finished
   unaffected.
 - My `pkill -f "sleep 10800"` matched its own SSH command line. Use the `[s]leep` bracket form.
+
+## 2026-10-06: Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) builds and tests on every push: `release` on Linux
+x86, Linux ARM, and macOS ARM; `asan` on Linux x86 and macOS ARM; `tsan` on Linux x86; the
+Python tests (including the bit-for-bit comparison with the C++ build on SIFT10K) and ruff; and
+the gRPC server tests. vcpkg is pinned to the manifest's baseline and its binary cache is kept
+between runs (the first gRPC build took 59 minutes).
+
+What the first run found:
+- **`std::jthread` doesn't exist in Xcode 16's libc++** (GitHub's macos-15 runner). My Mac's
+  newer toolchain hid it, and the README claimed Apple clang 15+. The thread pool and two tests now use
+  `std::thread` with explicit joins; the README states the toolchains CI actually tests.
+- **GCC's ASan on the GitHub ARM runner is ~80x slower than on x86** for compute-heavy tests
+  (KMeans 35 s vs 0.45 s; one PQ test took 72 minutes), while the same tests under clang's ASan on
+  the Mac ARM are normal speed. The cause was not isolated. CI drops `linux-asan` on ARM: the
+  NEON kernels still run under ASan on macOS ARM, and `linux-asan` on ARM passed on the Oracle
+  machine.

@@ -45,7 +45,8 @@ class ThreadPool {
   void run_chunks();
 
   // Joined explicitly in ~ThreadPool, before the synchronization members below are destroyed.
-  std::vector<std::jthread> workers_;
+  // std::thread, not std::jthread: Xcode 16's libc++ (Apple clang 16) has no jthread.
+  std::vector<std::thread> workers_;
 
   std::mutex call_mutex_;  // serializes parallel_for calls
 
